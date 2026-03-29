@@ -169,6 +169,372 @@
 		"version": "0.1.0",
 		"category": "display-components"
 	},
+	"calendar-apple": {
+		"title": "Calendar (Apple)",
+		"published": true,
+		"createdAt": "2026-03-29T00:00:00Z",
+		"updatedAt": "2026-03-29T00:00:00Z",
+		"description": "Apple Calendar style import powered by public ICS feeds.",
+		"componentPath": "./screens/calendar-apple",
+		"hasDataFetch": true,
+		"props": {
+			"providerLabel": "Apple",
+			"title": "Apple Calendar",
+			"subtitle": "Next 3 events",
+			"timeZone": "America/New_York",
+			"updatedAt": "Mar 29, 11:40 PM",
+			"note": "Add a public ICS feed to load live events.",
+			"events": [
+				{
+					"id": "sample-1",
+					"summary": "Project standup",
+					"description": "Quick sync with the BYOS crew.",
+					"location": "Studio",
+					"dayLabel": "Sun, Mar 29",
+					"timeLabel": "09:00 AM - 10:00 AM",
+					"startIso": "2026-03-29T13:00:00.000Z",
+					"endIso": "2026-03-29T14:00:00.000Z",
+					"allDay": false,
+					"isToday": true
+				},
+				{
+					"id": "sample-2",
+					"summary": "Ship new recipes",
+					"description": "Calendar, Parcel, DSN, FlightBoard, Pokemon.",
+					"location": "GitHub",
+					"dayLabel": "Mon, Mar 30",
+					"timeLabel": "10:00 AM - 12:00 PM",
+					"startIso": "2026-03-30T14:00:00.000Z",
+					"endIso": "2026-03-30T16:00:00.000Z",
+					"allDay": false,
+					"isToday": false
+				}
+			]
+		},
+		"params": {
+			"icsUrl": {
+				"type": "string",
+				"label": "ICS URL",
+				"description": "Public Apple/iCloud ICS feed URL.",
+				"default": "",
+				"placeholder": "https://example.com/calendar.ics"
+			},
+			"calendarName": {
+				"type": "string",
+				"label": "Calendar Name",
+				"description": "Optional title override.",
+				"default": "Apple Calendar"
+			},
+			"headers": {
+				"type": "string",
+				"label": "Headers",
+				"description": "Optional headers in key=value or Header: Value format, separated by new lines.",
+				"default": ""
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Time Zone",
+				"description": "IANA time zone used for display.",
+				"default": "America/New_York"
+			}
+		},
+		"tags": ["calendar", "ics", "apple", "import"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"calendar-google": {
+		"title": "Calendar (Google)",
+		"published": true,
+		"createdAt": "2026-03-29T00:00:00Z",
+		"updatedAt": "2026-03-29T00:00:00Z",
+		"description": "Google Calendar style import using public ICS feeds for BYOS compatibility.",
+		"componentPath": "./screens/calendar-google",
+		"hasDataFetch": true,
+		"props": {
+			"providerLabel": "Google",
+			"title": "Google Calendar",
+			"subtitle": "Next 3 events",
+			"timeZone": "America/New_York",
+			"updatedAt": "Mar 29, 11:40 PM",
+			"note": "Use a public Google Calendar ICS feed for live events.",
+			"events": [
+				{
+					"id": "sample-1",
+					"summary": "Design review",
+					"description": "Check recipe layout and bitmap output.",
+					"location": "Meet",
+					"dayLabel": "Sun, Mar 29",
+					"timeLabel": "02:00 PM - 03:00 PM",
+					"startIso": "2026-03-29T18:00:00.000Z",
+					"endIso": "2026-03-29T19:00:00.000Z",
+					"allDay": false,
+					"isToday": true
+				},
+				{
+					"id": "sample-2",
+					"summary": "Hardware check-in",
+					"description": "Validate the screen on device.",
+					"location": "Workshop",
+					"dayLabel": "Tue, Mar 31",
+					"timeLabel": "11:30 AM - 12:00 PM",
+					"startIso": "2026-03-31T15:30:00.000Z",
+					"endIso": "2026-03-31T16:00:00.000Z",
+					"allDay": false,
+					"isToday": false
+				}
+			]
+		},
+		"params": {
+			"icsUrl": {
+				"type": "string",
+				"label": "ICS URL",
+				"description": "Public Google Calendar ICS feed URL.",
+				"default": "",
+				"placeholder": "https://calendar.google.com/calendar/ical/..."
+			},
+			"calendarName": {
+				"type": "string",
+				"label": "Calendar Name",
+				"description": "Optional title override.",
+				"default": "Google Calendar"
+			},
+			"headers": {
+				"type": "string",
+				"label": "Headers",
+				"description": "Optional headers in key=value or Header: Value format, separated by new lines.",
+				"default": ""
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Time Zone",
+				"description": "IANA time zone used for display.",
+				"default": "America/New_York"
+			}
+		},
+		"tags": ["calendar", "ics", "google", "import"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"parcel": {
+		"title": "Parcel",
+		"published": true,
+		"createdAt": "2026-03-29T00:00:00Z",
+		"updatedAt": "2026-03-29T00:00:00Z",
+		"description": "Parcel package tracking import using the official Parcel external API.",
+		"componentPath": "./screens/parcel",
+		"hasDataFetch": true,
+		"props": {
+			"filterMode": "Tracked",
+			"style": "Detailed",
+			"updatedAt": "Mar 29, 11:40 PM",
+			"note": "Add your Parcel app external API key to load live deliveries.",
+			"deliveries": [
+				{
+					"title": "TRMNL Mount",
+					"status": "In Transit",
+					"latest": "Departed regional hub",
+					"deliveryBy": "Tomorrow",
+					"days": "1 day"
+				},
+				{
+					"title": "E-ink cleaning kit",
+					"status": "Out for Delivery",
+					"latest": "Courier is nearby",
+					"deliveryBy": "Today",
+					"days": "0 days"
+				}
+			]
+		},
+		"params": {
+			"apiKey": {
+				"type": "string",
+				"label": "API Key",
+				"description": "Parcel external API key.",
+				"default": ""
+			},
+			"filterMode": {
+				"type": "string",
+				"label": "Filter Mode",
+				"description": "Parcel filter mode, for example all or active.",
+				"default": "all"
+			},
+			"style": {
+				"type": "string",
+				"label": "Style",
+				"description": "Optional display label.",
+				"default": "detailed"
+			}
+		},
+		"tags": ["parcel", "shipping", "packages", "api"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"nasa-deep-space-network": {
+		"title": "NASA Deep Space Network",
+		"published": true,
+		"createdAt": "2026-03-29T00:00:00Z",
+		"updatedAt": "2026-03-29T00:00:00Z",
+		"description": "Displays live DSN station traffic via the community TRMNL DSN endpoint.",
+		"componentPath": "./screens/nasa-deep-space-network",
+		"hasDataFetch": true,
+		"props": {
+			"updatedAt": "Mar 29, 11:40 PM",
+			"note": "Data source: NASA DSN Now via trmnl-dsn.",
+			"stations": [
+				{
+					"name": "Madrid",
+					"craftCount": 2,
+					"signalCount": 5,
+					"crafts": [
+						{
+							"name": "James Webb",
+							"downlink": "K 28 Mbps",
+							"uplink": "S 4.6 kW"
+						}
+					]
+				},
+				{
+					"name": "Goldstone",
+					"craftCount": 1,
+					"signalCount": 1,
+					"crafts": [
+						{
+							"name": "Juno",
+							"downlink": "-",
+							"uplink": "X 18 kW"
+						}
+					]
+				},
+				{
+					"name": "Canberra",
+					"craftCount": 3,
+					"signalCount": 5,
+					"crafts": [
+						{
+							"name": "MMS 3",
+							"downlink": "S 2 Mbps",
+							"uplink": "S 0.2 kW"
+						}
+					]
+				}
+			]
+		},
+		"params": {},
+		"tags": ["nasa", "space", "dsn", "live-data"],
+		"author": {
+			"name": "Schrockwell",
+			"github": "schrockwell"
+		},
+		"renderSettings": {},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"flightboard": {
+		"title": "FlightBoard",
+		"published": true,
+		"createdAt": "2026-03-29T00:00:00Z",
+		"updatedAt": "2026-03-29T00:00:00Z",
+		"description": "Airport activity board powered by live aircraft state vectors near a selected airport.",
+		"componentPath": "./screens/flightboard",
+		"hasDataFetch": true,
+		"props": {
+			"airportName": "John F. Kennedy International Airport",
+			"airportCode": "JFK",
+			"updatedAt": "Mar 29, 11:40 PM",
+			"note": "Airport activity approximation powered by OpenSky live state vectors.",
+			"flights": [
+				{
+					"callsign": "DAL2417",
+					"country": "United States",
+					"status": "Approach",
+					"altitude": "5,200 ft",
+					"speed": "172 kt",
+					"distance": "11 km"
+				},
+				{
+					"callsign": "JBU529",
+					"country": "United States",
+					"status": "Ground",
+					"altitude": "-",
+					"speed": "18 kt",
+					"distance": "3 km"
+				}
+			]
+		},
+		"params": {
+			"airportCode": {
+				"type": "string",
+				"label": "Airport Code",
+				"description": "IATA or ICAO airport code.",
+				"default": "JFK"
+			},
+			"radiusKm": {
+				"type": "number",
+				"label": "Radius (km)",
+				"description": "Bounding radius around the airport.",
+				"default": 60
+			}
+		},
+		"tags": ["aviation", "airport", "flightboard", "live-data"],
+		"author": {
+			"name": "Alex Varney",
+			"github": "alexvarney"
+		},
+		"renderSettings": {},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"whos-that-pokemon": {
+		"title": "Who's That Pokemon",
+		"published": true,
+		"createdAt": "2026-03-29T00:00:00Z",
+		"updatedAt": "2026-03-29T00:00:00Z",
+		"description": "Daily random Pokemon import based on the community TRMNL recipe feed.",
+		"componentPath": "./screens/whos-that-pokemon",
+		"hasDataFetch": true,
+		"props": {
+			"name": "Fennekin",
+			"types": "Fire",
+			"species": "Fox Pokemon",
+			"height": "0.4 m",
+			"weight": "9.4 kg",
+			"abilities": "Blaze, Magician",
+			"artwork": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/653.png",
+			"updatedAt": "Mar 29, 01:08 PM",
+			"note": "Daily Pokemon import."
+		},
+		"params": {
+			"dataUrl": {
+				"type": "string",
+				"label": "Data URL",
+				"description": "Optional override for the JSON feed.",
+				"default": "https://raw.githubusercontent.com/sriniketh/trmnl-plugin-whos-that-pokemon/refs/heads/main/pokemon_data/response.json"
+			}
+		},
+		"tags": ["pokemon", "daily", "community", "api"],
+		"author": {
+			"name": "Sriniketh",
+			"github": "sriniketh"
+		},
+		"renderSettings": {},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
 	"not-found": {
 		"title": "Not Found Recipe",
 		"published": true,

@@ -124,6 +124,18 @@ Visit `/recipes` to browse screens and compare direct vs. bitmap rendering. To a
 
 See `docs/recipes.md` for more detail.
 
+### Added TRMNL-style imports
+- `calendar-apple` and `calendar-google`: both use public ICS feeds in BYOS. Main params: `icsUrl`, `calendarName`, `headers`, `timezone`.
+- `parcel`: uses Parcel's external API. Main params: `apiKey`, `filterMode`, `style`.
+- `nasa-deep-space-network`: no setup required for preview; pulls live data from the community DSN endpoint.
+- `flightboard`: airport activity approximation around a selected airport. Main params: `airportCode`, `radiusKm`.
+- `whos-that-pokemon`: daily Pokemon screen using the community JSON feed. Main param: `dataUrl` if you want to override the source.
+
+### Setup notes
+- Apple Calendar and Google Calendar are implemented as ICS imports instead of OAuth, which keeps them simple and BYOS-compatible.
+- Several of these recipes include fallback/sample data so they still render in `/recipes` even when live credentials or feeds are missing.
+- `trmnl_preview` is not included as a recipe because it is a local plugin development server, not a screen recipe. If needed, it should be added as a separate dev workflow/tooling step.
+
 ## Documentation
 - API endpoints and payloads: `docs/api.md`
 - Recipes reference: `app/recipes/README.md`
