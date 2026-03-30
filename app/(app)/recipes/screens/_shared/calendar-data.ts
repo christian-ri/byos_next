@@ -5,17 +5,30 @@ import {
 	parseLooseHeaderString,
 } from "@/app/(app)/recipes/screens/_shared/fetch-utils";
 
-export type CalendarEvent = {
+export type CalendarLayout = "default" | "week" | "month";
+
+export type CalendarDayEvent = {
 	id: string;
 	summary: string;
 	description: string;
 	location: string;
-	dayLabel: string;
-	timeLabel: string;
-	startIso: string;
-	endIso: string;
 	allDay: boolean;
+	multiDay: boolean;
+	startsToday: boolean;
+	endsToday: boolean;
+	continuesBefore: boolean;
+	continuesAfter: boolean;
+	timeLabel: string;
+};
+
+export type CalendarDay = {
+	key: string;
+	label: string;
+	shortLabel: string;
+	dayNumber: string;
 	isToday: boolean;
+	isCurrentMonth: boolean;
+	events: CalendarDayEvent[];
 };
 
 export type CalendarRecipeData = {
@@ -25,7 +38,14 @@ export type CalendarRecipeData = {
 	timeZone: string;
 	updatedAt: string;
 	note?: string;
-	events: CalendarEvent[];
+	eventLayout: CalendarLayout;
+	includeDescription: boolean;
+	includeEventTime: boolean;
+	firstDay: 0 | 1;
+	defaultDays: CalendarDay[];
+	weekDays: CalendarDay[];
+	monthWeeks: CalendarDay[][];
+	monthLabel: string;
 };
 
 type CalendarParams = {
@@ -33,7 +53,13 @@ type CalendarParams = {
 	calendarName?: string;
 	headers?: string;
 	timezone?: string;
-	maxEvents?: string | number;
+	eventLayout?: string;
+	timeFormat?: string;
+	includeDescription?: string | boolean;
+	includeEventTime?: string | boolean;
+	firstDay?: string;
+	ignoredPhrases?: string;
+	maxEventsPerDay?: string | number;
 };
 
 type ParsedProperty = {
@@ -55,60 +81,228 @@ type RawCalendarEvent = {
 	exdates: Date[];
 };
 
+type BuildDayOptions = {
+	timeZone: string;
+	timeFormat: "12h" | "24h";
+	includeEventTime: boolean;
+	maxEventsPerDay: number;
+	currentMonth?: number;
+};
+
 const DEFAULT_TIME_ZONE = "America/New_York";
-const DEFAULT_MAX_EVENTS = 6;
 const DAY_NAMES = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 
-function buildFallbackEvents(timeZone: string): CalendarEvent[] {
+function parseBoolean(value: string | boolean | undefined, fallback = true) {
+	if (typeof value === "boolean") return value;
+	if (typeof value !== "string") return fallback;
+	const normalized = value.trim().toLowerCase();
+	if (["false", "no", "off", "0"].includes(normalized)) return false;
+	if (["true", "yes", "on", "1"].includes(normalized)) return true;
+	return fallback;
+}
+
+function normalizeLayout(value?: string): CalendarLayout {
+	switch ((value || "").trim().toLowerCase()) {
+		case "week":
+			return "week";
+		case "month":
+		case "rolling_month":
+			return "month";
+		default:
+			return "default";
+	}
+}
+
+function normalizeFirstDay(value?: string): 0 | 1 {
+	return (value || "").trim().toLowerCase() === "monday" ? 1 : 0;
+}
+
+function normalizeTimeFormat(value?: string): "12h" | "24h" {
+	return (value || "").trim().toLowerCase() === "24h" ? "24h" : "12h";
+}
+
+function dayKey(date: Date, timeZone: string) {
+	return formatDateTime(
+		date,
+		{
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		},
+		timeZone,
+	);
+}
+
+function weekdayShort(date: Date, timeZone: string) {
+	return formatDateTime(
+		date,
+		{
+			weekday: "short",
+		},
+		timeZone,
+	);
+}
+
+function shortDateLabel(date: Date, timeZone: string) {
+	return formatDateTime(
+		date,
+		{
+			month: "short",
+			day: "numeric",
+		},
+		timeZone,
+	);
+}
+
+function monthLabel(date: Date, timeZone: string) {
+	return formatDateTime(
+		date,
+		{
+			month: "long",
+			year: "numeric",
+		},
+		timeZone,
+	);
+}
+
+function dayNumber(date: Date, timeZone: string) {
+	return formatDateTime(
+		date,
+		{
+			day: "numeric",
+		},
+		timeZone,
+	);
+}
+
+function formatClock(
+	date: Date,
+	timeZone: string,
+	timeFormat: "12h" | "24h",
+) {
+	return formatDateTime(
+		date,
+		{
+			hour: "numeric",
+			minute: "2-digit",
+			hour12: timeFormat === "12h",
+		},
+		timeZone,
+	);
+}
+
+function startOfDay(date: Date) {
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+}
+
+function addDays(date: Date, days: number) {
+	const next = new Date(date);
+	next.setDate(next.getDate() + days);
+	return next;
+}
+
+function addMonths(date: Date, months: number) {
+	const next = new Date(date);
+	next.setMonth(next.getMonth() + months);
+	return next;
+}
+
+function startOfWeek(date: Date, firstDay: 0 | 1) {
+	const next = startOfDay(date);
+	while (next.getDay() !== firstDay) {
+		next.setDate(next.getDate() - 1);
+	}
+	return next;
+}
+
+function endOfWeek(date: Date, firstDay: 0 | 1) {
+	return addDays(startOfWeek(date, firstDay), 6);
+}
+
+function parseList(value?: string) {
+	return (value || "")
+		.split(/\r?\n/)
+		.map((entry) => entry.trim())
+		.filter(Boolean);
+}
+
+function buildFallbackRawEvents() {
 	const now = new Date();
-	const base = [
+	return [
 		{
 			id: "sample-1",
-			summary: "Project standup",
-			description: "Quick sync with the BYOS crew.",
-			location: "Studio",
-			allDay: false,
-			start: new Date(now.getTime() + 60 * 60 * 1000),
-			end: new Date(now.getTime() + 2 * 60 * 60 * 1000),
+			summary: "Michael OOO",
+			description: "Quarterly strategy meeting",
+			location: "",
+			status: "confirmed",
+			allDay: true,
+			start: addDays(startOfDay(now), 1),
+			end: addDays(startOfDay(now), 3),
+			exdates: [],
 		},
 		{
 			id: "sample-2",
-			summary: "Ship new recipes",
-			description: "Calendar, Parcel, DSN, FlightBoard, Pokemon.",
+			summary: "Code Review",
+			description: "Hackathon planning and BYOS handoff",
 			location: "GitHub",
+			status: "confirmed",
 			allDay: false,
-			start: new Date(now.getTime() + 26 * 60 * 60 * 1000),
-			end: new Date(now.getTime() + 28 * 60 * 60 * 1000),
+			start: new Date(addDays(now, 2).setHours(10, 0, 0, 0)),
+			end: new Date(addDays(now, 2).setHours(11, 0, 0, 0)),
+			exdates: [],
 		},
 		{
 			id: "sample-3",
-			summary: "Recharge day",
-			description: "All-day block reserved for deep work.",
-			location: "",
-			allDay: true,
-			start: new Date(now.getTime() + 48 * 60 * 60 * 1000),
-			end: new Date(now.getTime() + 72 * 60 * 60 * 1000),
+			summary: "Sprint Planning",
+			description: "One-on-one with John",
+			location: "Studio",
+			status: "confirmed",
+			allDay: false,
+			start: new Date(addDays(now, 4).setHours(13, 0, 0, 0)),
+			end: new Date(addDays(now, 4).setHours(15, 0, 0, 0)),
+			exdates: [],
 		},
-	];
-
-	return base.map((event) => formatCalendarEvent(event, timeZone));
+		{
+			id: "sample-4",
+			summary: "Weekly Review",
+			description: "Team building",
+			location: "",
+			status: "confirmed",
+			allDay: false,
+			start: new Date(addDays(now, 5).setHours(9, 30, 0, 0)),
+			end: new Date(addDays(now, 5).setHours(10, 30, 0, 0)),
+			exdates: [],
+		},
+	] satisfies RawCalendarEvent[];
 }
 
 function buildFallbackData(
 	providerLabel: string,
 	timeZone: string,
+	layout: CalendarLayout,
+	firstDay: 0 | 1,
+	includeDescription: boolean,
+	includeEventTime: boolean,
 	note: string,
-	title?: string,
-): CalendarRecipeData {
-	return {
+	calendarName?: string,
+) {
+	const subtitle =
+		calendarName?.trim() ||
+		(providerLabel === "Apple" ? "Personal Calendar" : "Connected Calendar");
+	return buildCalendarData({
 		providerLabel,
-		title: title || `${providerLabel} Calendar`,
-		subtitle: "Next 3 events",
+		title: `${providerLabel} Calendar`,
+		subtitle,
 		timeZone,
-		updatedAt: formatUpdatedAt(new Date(), timeZone),
+		layout,
+		includeDescription,
+		includeEventTime,
+		firstDay,
+		timeFormat: "12h",
+		maxEventsPerDay: 4,
+		rawEvents: buildFallbackRawEvents(),
 		note,
-		events: buildFallbackEvents(timeZone),
-	};
+	});
 }
 
 function unfoldIcs(input: string) {
@@ -177,7 +371,8 @@ function parseIcsDate(
 	if (params.VALUE === "DATE" || /^\d{8}$/.test(value)) {
 		const { year, month, day } = parseDateBits(value);
 		return {
-			date: new Date(Date.UTC(year, month, day)),
+			// Midday avoids timezone shifts when the date is later formatted
+			date: new Date(Date.UTC(year, month, day, 12, 0, 0)),
 			allDay: true,
 		};
 	}
@@ -195,25 +390,6 @@ function parseIcsDate(
 		date: new Date(year, month, day, hour, minute, second),
 		allDay: false,
 	};
-}
-
-function addDays(date: Date, days: number) {
-	const next = new Date(date);
-	next.setDate(next.getDate() + days);
-	return next;
-}
-
-function addMonths(date: Date, months: number) {
-	const next = new Date(date);
-	next.setMonth(next.getMonth() + months);
-	return next;
-}
-
-function startOfWeek(date: Date) {
-	const next = new Date(date);
-	next.setHours(0, 0, 0, 0);
-	next.setDate(next.getDate() - next.getDay());
-	return next;
 }
 
 function dayCodeToIndex(code: string) {
@@ -323,13 +499,13 @@ function expandRecurringEvent(
 		event.start.getSeconds(),
 		0,
 	);
-	const baseWeek = startOfWeek(event.start).getTime();
+	const baseWeek = startOfWeek(event.start, 0).getTime();
 
 	for (let index = 0; index < 120; index += 1) {
 		if (cursor > windowEnd) break;
 
 		const weekOffset =
-			(startOfWeek(cursor).getTime() - baseWeek) / (7 * 24 * 60 * 60 * 1000);
+			(startOfWeek(cursor, 0).getTime() - baseWeek) / (7 * 24 * 60 * 60 * 1000);
 		const matchesWeek = weekOffset >= 0 && weekOffset % interval === 0;
 		if (
 			matchesWeek &&
@@ -354,66 +530,6 @@ function expandRecurringEvent(
 	return results;
 }
 
-function formatCalendarEvent(
-	event: Pick<
-		RawCalendarEvent,
-		"id" | "summary" | "description" | "location" | "allDay" | "start" | "end"
-	>,
-	timeZone: string,
-): CalendarEvent {
-	const nowDay = formatDateTime(
-		new Date(),
-		{
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-		},
-		timeZone,
-	);
-	const eventDay = formatDateTime(
-		event.start,
-		{
-			weekday: "short",
-			month: "short",
-			day: "numeric",
-		},
-		timeZone,
-	);
-	const dayKey = formatDateTime(
-		event.start,
-		{
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-		},
-		timeZone,
-	);
-	const timeLabel = event.allDay
-		? "All day"
-		: `${formatDateTime(event.start, {
-				hour: "numeric",
-				minute: "2-digit",
-				hour12: true,
-			}, timeZone)} - ${formatDateTime(event.end, {
-				hour: "numeric",
-				minute: "2-digit",
-				hour12: true,
-			}, timeZone)}`;
-
-	return {
-		id: event.id,
-		summary: event.summary,
-		description: event.description,
-		location: event.location,
-		dayLabel: eventDay,
-		timeLabel,
-		startIso: event.start.toISOString(),
-		endIso: event.end.toISOString(),
-		allDay: event.allDay,
-		isToday: dayKey === nowDay,
-	};
-}
-
 function parseEventsFromIcs(source: string) {
 	const lines = unfoldIcs(source).split(/\r?\n/);
 	const events: RawCalendarEvent[] = [];
@@ -435,7 +551,9 @@ function parseEventsFromIcs(source: string) {
 			const startParsed = dtStartProp
 				? parseIcsDate(dtStartProp.value, dtStartProp.params)
 				: null;
-			const endParsed = dtEndProp ? parseIcsDate(dtEndProp.value, dtEndProp.params) : null;
+			const endParsed = dtEndProp
+				? parseIcsDate(dtEndProp.value, dtEndProp.params)
+				: null;
 
 			if (!startParsed) {
 				continue;
@@ -491,71 +609,333 @@ function parseEventsFromIcs(source: string) {
 	return events;
 }
 
+function filterIgnoredEvents(events: RawCalendarEvent[], ignoredPhrases: string[]) {
+	if (ignoredPhrases.length === 0) {
+		return events;
+	}
+
+	return events.filter((event) => {
+		const summary = event.summary.toLowerCase();
+		const description = event.description.toLowerCase();
+		return !ignoredPhrases.some((phrase) => {
+			const normalized = phrase.toLowerCase();
+			return summary.includes(normalized) || description.includes(normalized);
+		});
+	});
+}
+
+function eventEndInclusive(event: RawCalendarEvent) {
+	if (event.allDay) {
+		return new Date(event.end.getTime() - 1);
+	}
+	return event.end;
+}
+
+function buildEventForDay(
+	event: RawCalendarEvent,
+	dayDate: Date,
+	options: BuildDayOptions,
+): CalendarDayEvent {
+	const dayStart = startOfDay(dayDate);
+	const inclusiveEnd = eventEndInclusive(event);
+	const startsToday =
+		startOfDay(event.start).getTime() === dayStart.getTime();
+	const endsToday =
+		startOfDay(inclusiveEnd).getTime() === dayStart.getTime();
+	const multiDay =
+		startOfDay(event.start).getTime() !== startOfDay(inclusiveEnd).getTime();
+	const continuesBefore = !startsToday;
+	const continuesAfter = !endsToday;
+
+	let timeLabel = "";
+	if (options.includeEventTime) {
+		if (event.allDay) {
+			timeLabel = "All-day";
+		} else if (!multiDay) {
+			timeLabel = `${formatClock(event.start, options.timeZone, options.timeFormat)} - ${formatClock(event.end, options.timeZone, options.timeFormat)}`;
+		} else if (startsToday) {
+			timeLabel = `Starts ${formatClock(event.start, options.timeZone, options.timeFormat)}`;
+		} else if (endsToday) {
+			timeLabel = `Until ${formatClock(event.end, options.timeZone, options.timeFormat)}`;
+		} else {
+			timeLabel = "Continues";
+		}
+	}
+
+	return {
+		id: event.id,
+		summary: event.summary,
+		description: event.description,
+		location: event.location,
+		allDay: event.allDay,
+		multiDay,
+		startsToday,
+		endsToday,
+		continuesBefore,
+		continuesAfter,
+		timeLabel,
+	};
+}
+
+function buildDay(
+	dayDate: Date,
+	events: RawCalendarEvent[],
+	options: BuildDayOptions,
+): CalendarDay {
+	const dayStart = startOfDay(dayDate);
+	const dayEnd = new Date(dayStart);
+	dayEnd.setHours(23, 59, 59, 999);
+	const now = new Date();
+
+	const dayEvents = events
+		.filter((event) => {
+			const inclusiveEnd = eventEndInclusive(event);
+			return inclusiveEnd >= dayStart && event.start <= dayEnd;
+		})
+		.sort((a, b) => a.start.getTime() - b.start.getTime())
+		.slice(0, options.maxEventsPerDay)
+		.map((event) => buildEventForDay(event, dayDate, options));
+
+	return {
+		key: dayKey(dayDate, options.timeZone),
+		label: `${weekdayShort(dayDate, options.timeZone)} ${shortDateLabel(dayDate, options.timeZone)}`,
+		shortLabel: weekdayShort(dayDate, options.timeZone),
+		dayNumber: dayNumber(dayDate, options.timeZone),
+		isToday: dayKey(dayDate, options.timeZone) === dayKey(now, options.timeZone),
+		isCurrentMonth:
+			options.currentMonth === undefined ||
+			dayDate.getMonth() === options.currentMonth,
+		events: dayEvents,
+	};
+}
+
+function buildCalendarData({
+	providerLabel,
+	title,
+	subtitle,
+	timeZone,
+	layout,
+	includeDescription,
+	includeEventTime,
+	firstDay,
+	timeFormat,
+	maxEventsPerDay,
+	rawEvents,
+	note,
+}: {
+	providerLabel: string;
+	title: string;
+	subtitle: string;
+	timeZone: string;
+	layout: CalendarLayout;
+	includeDescription: boolean;
+	includeEventTime: boolean;
+	firstDay: 0 | 1;
+	timeFormat: "12h" | "24h";
+	maxEventsPerDay: number;
+	rawEvents: RawCalendarEvent[];
+	note?: string;
+}): CalendarRecipeData {
+	const today = new Date();
+	const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+	const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+	const monthGridStart = startOfWeek(currentMonthStart, firstDay);
+	const monthGridEnd = endOfWeek(currentMonthEnd, firstDay);
+
+	const defaultDays = Array.from({ length: 3 }, (_, index) =>
+		buildDay(addDays(startOfDay(today), index), rawEvents, {
+			timeZone,
+			timeFormat,
+			includeEventTime,
+			maxEventsPerDay,
+		}),
+	);
+
+	const weekDays = Array.from({ length: 7 }, (_, index) =>
+		buildDay(addDays(startOfDay(today), index), rawEvents, {
+			timeZone,
+			timeFormat,
+			includeEventTime,
+			maxEventsPerDay,
+		}),
+	);
+
+	const flatMonthDays: CalendarDay[] = [];
+	for (
+		let cursor = new Date(monthGridStart);
+		cursor <= monthGridEnd;
+		cursor = addDays(cursor, 1)
+	) {
+		flatMonthDays.push(
+			buildDay(cursor, rawEvents, {
+				timeZone,
+				timeFormat,
+				includeEventTime,
+				maxEventsPerDay,
+				currentMonth: today.getMonth(),
+			}),
+		);
+	}
+
+	const monthWeeks: CalendarDay[][] = [];
+	for (let index = 0; index < flatMonthDays.length; index += 7) {
+		monthWeeks.push(flatMonthDays.slice(index, index + 7));
+	}
+
+	return {
+		providerLabel,
+		title,
+		subtitle,
+		timeZone,
+		updatedAt: formatUpdatedAt(new Date(), timeZone),
+		note,
+		eventLayout: layout,
+		includeDescription,
+		includeEventTime,
+		firstDay,
+		defaultDays,
+		weekDays,
+		monthWeeks,
+		monthLabel: monthLabel(today, timeZone),
+	};
+}
+
+async function loadIcsSources(
+	icsUrlInput: string,
+	headers?: string,
+): Promise<string[]> {
+	const urls = parseList(icsUrlInput).map((url) =>
+		url.replace(/^webcal:/i, "https:"),
+	);
+
+	if (urls.length === 0) {
+		return [];
+	}
+
+	const results = await Promise.allSettled(
+		urls.map((url) =>
+			fetchTextWithTimeout(
+				url,
+				{
+					headers: parseLooseHeaderString(headers),
+				},
+				10000,
+			),
+		),
+	);
+
+	return results
+		.filter(
+			(result): result is PromiseFulfilledResult<string> =>
+				result.status === "fulfilled",
+		)
+		.map((result) => result.value);
+}
+
 export async function loadCalendarRecipeData(
 	providerLabel: string,
 	params?: CalendarParams,
 ): Promise<CalendarRecipeData> {
 	const timeZone = String(params?.timezone || DEFAULT_TIME_ZONE).trim();
-	const title = String(params?.calendarName || `${providerLabel} Calendar`).trim();
-	const icsUrl = String(params?.icsUrl || "").trim();
-	const maxEvents = Math.max(
+	const eventLayout = normalizeLayout(params?.eventLayout);
+	const includeDescription = parseBoolean(params?.includeDescription, true);
+	const includeEventTime = parseBoolean(params?.includeEventTime, true);
+	const firstDay = normalizeFirstDay(params?.firstDay);
+	const timeFormat = normalizeTimeFormat(params?.timeFormat);
+	const maxEventsPerDay = Math.max(
 		1,
-		Math.min(12, Number(params?.maxEvents || DEFAULT_MAX_EVENTS)),
+		Math.min(8, Number(params?.maxEventsPerDay || (eventLayout === "month" ? 4 : 6))),
 	);
+	const calendarName = String(params?.calendarName || "").trim();
+	const title = `${providerLabel} Calendar`;
+	const subtitle =
+		calendarName ||
+		(providerLabel === "Apple" ? "Personal Calendar" : "Connected Calendar");
+	const ignoredPhrases = parseList(params?.ignoredPhrases);
+	const icsUrlInput = String(params?.icsUrl || "").trim();
 
-	if (!icsUrl) {
+	if (!icsUrlInput) {
 		return buildFallbackData(
 			providerLabel,
 			timeZone,
-			"Add a public ICS feed to load live events.",
-			title,
+			eventLayout,
+			firstDay,
+			includeDescription,
+			includeEventTime,
+			"Preview - your device will show actual data once an ICS feed is configured.",
+			calendarName,
 		);
 	}
 
 	try {
-		const ics = await fetchTextWithTimeout(
-			icsUrl,
-			{
-				headers: parseLooseHeaderString(params?.headers),
-			},
-			10000,
-		);
-
-		const now = new Date();
-		const windowStart = addDays(now, -1);
-		const windowEnd = addDays(now, 30);
-
-		const expandedEvents = parseEventsFromIcs(ics)
-			.flatMap((event) => expandRecurringEvent(event, windowStart, windowEnd))
-			.filter((event) => event.end >= now && event.status.toUpperCase() !== "CANCELLED")
-			.sort((a, b) => a.start.getTime() - b.start.getTime())
-			.slice(0, maxEvents)
-			.map((event) => formatCalendarEvent(event, timeZone));
-
-		if (expandedEvents.length === 0) {
+		const sources = await loadIcsSources(icsUrlInput, params?.headers);
+		if (sources.length === 0) {
 			return buildFallbackData(
 				providerLabel,
 				timeZone,
-				"No upcoming events were found in this feed.",
-				title,
+				eventLayout,
+				firstDay,
+				includeDescription,
+				includeEventTime,
+				"No valid ICS feeds were fetched, so this preview is showing sample events.",
+				calendarName,
 			);
 		}
 
-		return {
+		const now = new Date();
+		const windowStart = addDays(startOfDay(now), -35);
+		const windowEnd = addDays(startOfDay(now), 45);
+		const rawEvents = filterIgnoredEvents(
+			sources
+				.flatMap((source) => parseEventsFromIcs(source))
+				.flatMap((event) => expandRecurringEvent(event, windowStart, windowEnd))
+				.filter(
+					(event) =>
+						event.status.toUpperCase() !== "CANCELLED" &&
+						eventEndInclusive(event) >= windowStart &&
+						event.start <= windowEnd,
+				),
+			ignoredPhrases,
+		).sort((a, b) => a.start.getTime() - b.start.getTime());
+
+		if (rawEvents.length === 0) {
+			return buildFallbackData(
+				providerLabel,
+				timeZone,
+				eventLayout,
+				firstDay,
+				includeDescription,
+				includeEventTime,
+				"No matching events were found for the selected layout window.",
+				calendarName,
+			);
+		}
+
+		return buildCalendarData({
 			providerLabel,
 			title,
-			subtitle: `Next ${expandedEvents.length} events`,
+			subtitle,
 			timeZone,
-			updatedAt: formatUpdatedAt(new Date(), timeZone),
-			events: expandedEvents,
-		};
+			layout: eventLayout,
+			includeDescription,
+			includeEventTime,
+			firstDay,
+			timeFormat,
+			maxEventsPerDay,
+			rawEvents,
+			note: "Preview - your device will show actual data",
+		});
 	} catch (error) {
 		console.error(`Error loading ${providerLabel} calendar data:`, error);
 		return buildFallbackData(
 			providerLabel,
 			timeZone,
+			eventLayout,
+			firstDay,
+			includeDescription,
+			includeEventTime,
 			"Live calendar fetch failed, so this preview is showing sample events.",
-			title,
+			calendarName,
 		);
 	}
 }

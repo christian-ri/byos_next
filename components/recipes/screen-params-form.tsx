@@ -6,6 +6,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type {
 	RecipeParamDefinition,
 	RecipeParamDefinitions,
@@ -71,6 +72,8 @@ const renderField = (
 	switch (definition.type) {
 		case "number":
 			return <Input type="number" {...commonProps} />;
+		case "multiline":
+			return <Textarea {...commonProps} rows={6} />;
 		default:
 			return <Input type="text" {...commonProps} />;
 	}

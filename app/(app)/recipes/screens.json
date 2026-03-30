@@ -173,62 +173,44 @@
 		"title": "Calendar (Apple)",
 		"published": true,
 		"createdAt": "2026-03-29T00:00:00Z",
-		"updatedAt": "2026-03-29T00:00:00Z",
-		"description": "Apple Calendar style import powered by public ICS feeds.",
+		"updatedAt": "2026-03-30T00:00:00Z",
+		"description": "Apple Calendar recipe styled after the official TRMNL plugin with default, week, and month layouts.",
 		"componentPath": "./screens/calendar-apple",
 		"hasDataFetch": true,
 		"props": {
 			"providerLabel": "Apple",
 			"title": "Apple Calendar",
-			"subtitle": "Next 3 events",
+			"subtitle": "Personal Calendar",
 			"timeZone": "America/New_York",
 			"updatedAt": "Mar 29, 11:40 PM",
-			"note": "Add a public ICS feed to load live events.",
-			"events": [
-				{
-					"id": "sample-1",
-					"summary": "Project standup",
-					"description": "Quick sync with the BYOS crew.",
-					"location": "Studio",
-					"dayLabel": "Sun, Mar 29",
-					"timeLabel": "09:00 AM - 10:00 AM",
-					"startIso": "2026-03-29T13:00:00.000Z",
-					"endIso": "2026-03-29T14:00:00.000Z",
-					"allDay": false,
-					"isToday": true
-				},
-				{
-					"id": "sample-2",
-					"summary": "Ship new recipes",
-					"description": "Calendar, Parcel, DSN, FlightBoard, Pokemon.",
-					"location": "GitHub",
-					"dayLabel": "Mon, Mar 30",
-					"timeLabel": "10:00 AM - 12:00 PM",
-					"startIso": "2026-03-30T14:00:00.000Z",
-					"endIso": "2026-03-30T16:00:00.000Z",
-					"allDay": false,
-					"isToday": false
-				}
-			]
+			"note": "Preview - your device will show actual data once an ICS feed is configured.",
+			"eventLayout": "month",
+			"includeDescription": true,
+			"includeEventTime": true,
+			"firstDay": 1,
+			"defaultDays": [],
+			"weekDays": [],
+			"monthWeeks": [],
+			"monthLabel": "March 2026"
 		},
 		"params": {
 			"icsUrl": {
-				"type": "string",
-				"label": "ICS URL",
-				"description": "Public Apple/iCloud ICS feed URL.",
+				"type": "multiline",
+				"label": "ICS URL(s)",
+				"description": "Apple/iCloud published ICS URL. Multiple feeds may be entered on separate lines. Replace webcal:// with https://.",
 				"default": "",
 				"placeholder": "https://example.com/calendar.ics"
 			},
 			"calendarName": {
 				"type": "string",
 				"label": "Calendar Name",
-				"description": "Optional title override.",
-				"default": "Apple Calendar"
+				"description": "Subtitle shown below the plugin title.",
+				"default": "Personal Calendar"
 			},
 			"headers": {
-				"type": "string",
+				"type": "multiline",
 				"label": "Headers",
-				"description": "Optional headers in key=value or Header: Value format, separated by new lines.",
+				"description": "Optional request headers in key=value or Header: Value format, one per line.",
 				"default": ""
 			},
 			"timezone": {
@@ -236,9 +218,51 @@
 				"label": "Time Zone",
 				"description": "IANA time zone used for display.",
 				"default": "America/New_York"
+			},
+			"eventLayout": {
+				"type": "string",
+				"label": "Layout",
+				"description": "Use default, week, or month.",
+				"default": "month"
+			},
+			"timeFormat": {
+				"type": "string",
+				"label": "Time Format",
+				"description": "Use 12h or 24h.",
+				"default": "12h"
+			},
+			"includeDescription": {
+				"type": "string",
+				"label": "Include Description",
+				"description": "Use yes or no. Most visible in the default layout.",
+				"default": "yes"
+			},
+			"includeEventTime": {
+				"type": "string",
+				"label": "Include Event Time",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"firstDay": {
+				"type": "string",
+				"label": "First Day of Week",
+				"description": "Applies to the month layout. Use sunday or monday.",
+				"default": "sunday"
+			},
+			"ignoredPhrases": {
+				"type": "multiline",
+				"label": "Ignored Phrases",
+				"description": "Events whose title or description includes these phrases will be ignored. One phrase per line.",
+				"default": ""
+			},
+			"maxEventsPerDay": {
+				"type": "number",
+				"label": "Max Events Per Day",
+				"description": "Caps visible events inside each day cell.",
+				"default": 4
 			}
 		},
-		"tags": ["calendar", "ics", "apple", "import"],
+		"tags": ["calendar", "ics", "apple", "month-view", "week-view"],
 		"author": {
 			"name": "TRMNL",
 			"github": "usetrmnl"
@@ -251,62 +275,44 @@
 		"title": "Calendar (Google)",
 		"published": true,
 		"createdAt": "2026-03-29T00:00:00Z",
-		"updatedAt": "2026-03-29T00:00:00Z",
-		"description": "Google Calendar style import using public ICS feeds for BYOS compatibility.",
+		"updatedAt": "2026-03-30T00:00:00Z",
+		"description": "Google Calendar recipe styled after the official TRMNL plugin with default, week, and month layouts.",
 		"componentPath": "./screens/calendar-google",
 		"hasDataFetch": true,
 		"props": {
 			"providerLabel": "Google",
 			"title": "Google Calendar",
-			"subtitle": "Next 3 events",
+			"subtitle": "Connected Calendar",
 			"timeZone": "America/New_York",
 			"updatedAt": "Mar 29, 11:40 PM",
-			"note": "Use a public Google Calendar ICS feed for live events.",
-			"events": [
-				{
-					"id": "sample-1",
-					"summary": "Design review",
-					"description": "Check recipe layout and bitmap output.",
-					"location": "Meet",
-					"dayLabel": "Sun, Mar 29",
-					"timeLabel": "02:00 PM - 03:00 PM",
-					"startIso": "2026-03-29T18:00:00.000Z",
-					"endIso": "2026-03-29T19:00:00.000Z",
-					"allDay": false,
-					"isToday": true
-				},
-				{
-					"id": "sample-2",
-					"summary": "Hardware check-in",
-					"description": "Validate the screen on device.",
-					"location": "Workshop",
-					"dayLabel": "Tue, Mar 31",
-					"timeLabel": "11:30 AM - 12:00 PM",
-					"startIso": "2026-03-31T15:30:00.000Z",
-					"endIso": "2026-03-31T16:00:00.000Z",
-					"allDay": false,
-					"isToday": false
-				}
-			]
+			"note": "Preview - your device will show actual data once an ICS feed is configured.",
+			"eventLayout": "month",
+			"includeDescription": true,
+			"includeEventTime": true,
+			"firstDay": 0,
+			"defaultDays": [],
+			"weekDays": [],
+			"monthWeeks": [],
+			"monthLabel": "March 2026"
 		},
 		"params": {
 			"icsUrl": {
-				"type": "string",
-				"label": "ICS URL",
-				"description": "Public Google Calendar ICS feed URL.",
+				"type": "multiline",
+				"label": "ICS URL(s)",
+				"description": "Public Google Calendar ICS feed URL(s), one per line. BYOS uses ICS feeds here instead of Google OAuth.",
 				"default": "",
 				"placeholder": "https://calendar.google.com/calendar/ical/..."
 			},
 			"calendarName": {
 				"type": "string",
 				"label": "Calendar Name",
-				"description": "Optional title override.",
-				"default": "Google Calendar"
+				"description": "Subtitle shown below the plugin title.",
+				"default": "Connected Calendar"
 			},
 			"headers": {
-				"type": "string",
+				"type": "multiline",
 				"label": "Headers",
-				"description": "Optional headers in key=value or Header: Value format, separated by new lines.",
+				"description": "Optional request headers in key=value or Header: Value format, one per line.",
 				"default": ""
 			},
 			"timezone": {
@@ -314,9 +320,51 @@
 				"label": "Time Zone",
 				"description": "IANA time zone used for display.",
 				"default": "America/New_York"
+			},
+			"eventLayout": {
+				"type": "string",
+				"label": "Layout",
+				"description": "Use default, week, or month.",
+				"default": "month"
+			},
+			"timeFormat": {
+				"type": "string",
+				"label": "Time Format",
+				"description": "Use 12h or 24h.",
+				"default": "12h"
+			},
+			"includeDescription": {
+				"type": "string",
+				"label": "Include Description",
+				"description": "Use yes or no. Most visible in the default layout.",
+				"default": "yes"
+			},
+			"includeEventTime": {
+				"type": "string",
+				"label": "Include Event Time",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"firstDay": {
+				"type": "string",
+				"label": "First Day of Week",
+				"description": "Applies to the month layout. Use sunday or monday.",
+				"default": "sunday"
+			},
+			"ignoredPhrases": {
+				"type": "multiline",
+				"label": "Ignored Phrases",
+				"description": "Events whose title or description includes these phrases will be ignored. One phrase per line.",
+				"default": ""
+			},
+			"maxEventsPerDay": {
+				"type": "number",
+				"label": "Max Events Per Day",
+				"description": "Caps visible events inside each day cell.",
+				"default": 4
 			}
 		},
-		"tags": ["calendar", "ics", "google", "import"],
+		"tags": ["calendar", "ics", "google", "month-view", "week-view"],
 		"author": {
 			"name": "TRMNL",
 			"github": "usetrmnl"

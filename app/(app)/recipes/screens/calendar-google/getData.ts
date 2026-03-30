@@ -10,7 +10,13 @@ type CalendarParams = {
 	calendarName?: string;
 	headers?: string;
 	timezone?: string;
-	maxEvents?: string | number;
+	eventLayout?: string;
+	timeFormat?: string;
+	includeDescription?: string | boolean;
+	includeEventTime?: string | boolean;
+	firstDay?: string;
+	ignoredPhrases?: string;
+	maxEventsPerDay?: string | number;
 };
 
 export default async function getData(
