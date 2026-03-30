@@ -26,7 +26,7 @@ export type PokemonRecipeData = {
 	name: string;
 	types: string;
 	species: string;
-	height: string;
+	pokemonHeight: string;
 	weight: string;
 	abilities: string;
 	artwork: string;
@@ -41,7 +41,7 @@ const FALLBACK_DATA: PokemonRecipeData = {
 	name: "Fennekin",
 	types: "Fire",
 	species: "Fox Pokemon",
-	height: "0.4 m",
+	pokemonHeight: "0.4 m",
 	weight: "9.4 kg",
 	abilities: "Blaze, Magician",
 	artwork:
@@ -75,7 +75,7 @@ export default async function getData(
 			name: pokemon.name,
 			types: pokemon.types || "Unknown",
 			species: pokemon.species || "Unknown species",
-			height: pokemon.height || "-",
+			pokemonHeight: pokemon.height || "-",
 			weight: pokemon.weight || "-",
 			abilities: pokemon.abilities || "-",
 			artwork: pokemon.artwork || FALLBACK_DATA.artwork,

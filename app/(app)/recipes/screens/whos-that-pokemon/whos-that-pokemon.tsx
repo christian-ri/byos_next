@@ -5,7 +5,7 @@ export default function WhosThatPokemon({
 	name,
 	types,
 	species,
-	height,
+	pokemonHeight,
 	weight,
 	abilities,
 	artwork,
@@ -53,7 +53,7 @@ export default function WhosThatPokemon({
 					<div className="grid grid-cols-2 gap-3 py-4">
 						<div className="border border-black rounded-xl p-3 flex flex-col">
 							<span className="text-base uppercase tracking-[0.2em]">Height</span>
-							<span className="text-3xl mt-1">{height}</span>
+							<span className="text-3xl mt-1">{pokemonHeight}</span>
 						</div>
 						<div className="border border-black rounded-xl p-3 flex flex-col">
 							<span className="text-base uppercase tracking-[0.2em]">Weight</span>
