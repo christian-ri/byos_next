@@ -5,12 +5,89 @@ import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
 import { generateApiKey, generateFriendlyId } from "@/utils/helpers";
 
+const DEFAULT_SCREEN = "album";
+
+const maskApiKey = (apiKey: string | null) => {
+	if (!apiKey) return null;
+	if (apiKey.length <= 8) return "********";
+	return `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}`;
+};
+
+const parsePositiveInteger = (value: string | null, fallback: number) => {
+	if (!value) return fallback;
+	const parsed = Number.parseInt(value, 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const firstHeaderOrQuery = (
+	request: Request,
+	url: URL,
+	headerName: string,
+	queryNames: string[],
+) => {
+	const headerValue = request.headers.get(headerName);
+	if (headerValue) {
+		return { value: headerValue, source: `header:${headerName}` };
+	}
+
+	for (const queryName of queryNames) {
+		const queryValue = url.searchParams.get(queryName);
+		if (queryValue) {
+			return { value: queryValue, source: `query:${queryName}` };
+		}
+	}
+
+	return { value: null, source: null };
+};
+
 export async function GET(request: Request) {
 	try {
-		const macAddress = request.headers.get("ID")?.toUpperCase();
-		const apiKey = request.headers.get("Access-Token");
-		const model = request.headers.get("Model");
+		const url = new URL(request.url);
+		const macIdentifier = firstHeaderOrQuery(request, url, "ID", [
+			"id",
+			"ID",
+			"mac",
+			"mac_address",
+			"macAddress",
+		]);
+		const apiKeyIdentifier = firstHeaderOrQuery(request, url, "Access-Token", [
+			"access_token",
+			"access-token",
+			"api_key",
+			"apiKey",
+		]);
+		const modelIdentifier = firstHeaderOrQuery(request, url, "Model", [
+			"model",
+			"device_model",
+			"deviceModel",
+		]);
+		const refreshRate = request.headers.get("Refresh-Rate");
+		const batteryVoltage = request.headers.get("Battery-Voltage");
+		const fwVersion = request.headers.get("FW-Version");
+		const rssi = request.headers.get("RSSI");
+		const macAddress = macIdentifier.value?.toUpperCase();
+		const apiKey = apiKeyIdentifier.value;
+		const model = modelIdentifier.value;
+		const refreshRateSeconds = parsePositiveInteger(refreshRate, 60);
 		const { ready } = await checkDbConnection();
+
+		logInfo("Setup API request received", {
+			source: "api/setup",
+			metadata: {
+				path: url.pathname,
+				search: url.search,
+				macAddress: macAddress || null,
+				macAddressSource: macIdentifier.source,
+				apiKey: maskApiKey(apiKey),
+				apiKeySource: apiKeyIdentifier.source,
+				model: model || null,
+				modelSource: modelIdentifier.source,
+				refreshRate: refreshRate || null,
+				batteryVoltage: batteryVoltage || null,
+				fwVersion: fwVersion || null,
+				rssi: rssi || null,
+			},
+		});
 
 		if (!ready) {
 			console.warn(
@@ -20,7 +97,11 @@ export async function GET(request: Request) {
 				"Database client not initialized, using noDB mode, skipping device setup",
 				{
 					source: "api/setup",
-					metadata: { macAddress: macAddress || null, apiKey: apiKey || null },
+					metadata: {
+						macAddress: macAddress || null,
+						apiKey: maskApiKey(apiKey),
+						reason: "database_not_ready",
+					},
 				},
 			);
 			return NextResponse.json(
@@ -38,8 +119,9 @@ export async function GET(request: Request) {
 				source: "api/setup",
 				metadata: {
 					macAddress: macAddress || null,
-					apiKey: apiKey || null,
+					apiKey: maskApiKey(apiKey),
 					model: model || null,
+					reason: "missing_device_id",
 				},
 			});
 			return NextResponse.json(
@@ -54,18 +136,15 @@ export async function GET(request: Request) {
 			); // Status 200 for device compatibility
 		}
 
-		// TRMNL API requires Model header
 		if (!model) {
-			return NextResponse.json(
-				{
-					status: 400,
-					api_key: null,
-					friendly_id: null,
-					image_url: null,
-					message: "Model header is required",
+			logInfo("Setup request did not include Model; continuing", {
+				source: "api/setup",
+				metadata: {
+					macAddress,
+					apiKey: maskApiKey(apiKey),
+					reason: "model_missing_but_optional_for_byos",
 				},
-				{ status: 200 },
-			); // Status 200 for device compatibility
+			});
 		}
 
 		// First check if the device exists by MAC address
@@ -75,6 +154,15 @@ export async function GET(request: Request) {
 			.where("mac_address", "=", macAddress)
 			.executeTakeFirst();
 
+		logInfo("Setup device lookup by MAC completed", {
+			source: "api/setup",
+			metadata: {
+				macAddress,
+				deviceFound: Boolean(device),
+				friendly_id: device?.friendly_id || null,
+			},
+		});
+
 		// If API key is provided and device not found by MAC, check if the API key exists
 		if (!device && apiKey) {
 			const deviceByApiKey = await db
@@ -82,6 +170,15 @@ export async function GET(request: Request) {
 				.selectAll()
 				.where("api_key", "=", apiKey)
 				.executeTakeFirst();
+
+			logInfo("Setup device lookup by API key completed", {
+				source: "api/setup",
+				metadata: {
+					apiKey: maskApiKey(apiKey),
+					deviceFound: Boolean(deviceByApiKey),
+					friendly_id: deviceByApiKey?.friendly_id || null,
+				},
+			});
 
 			if (deviceByApiKey) {
 				// Device found by API key, update its MAC address
@@ -100,7 +197,7 @@ export async function GET(request: Request) {
 						metadata: {
 							device_id: deviceByApiKey.friendly_id,
 							mac_address: macAddress,
-							api_key: apiKey,
+							api_key: maskApiKey(apiKey),
 						},
 					});
 
@@ -122,7 +219,7 @@ export async function GET(request: Request) {
 						metadata: {
 							device_id: deviceByApiKey.friendly_id,
 							mac_address: macAddress,
-							api_key: apiKey,
+							api_key: maskApiKey(apiKey),
 							error: updateError,
 						},
 					});
@@ -132,6 +229,15 @@ export async function GET(request: Request) {
 
 		// If device not found by MAC address or API key, create a new one
 		if (!device) {
+			logInfo("Setup will create new device", {
+				source: "api/setup",
+				metadata: {
+					macAddress,
+					apiKeyProvided: Boolean(apiKey),
+					model: model || null,
+				},
+			});
+
 			const friendly_id = generateFriendlyId(
 				macAddress,
 				new Date().toISOString().replace(/[-:Z]/g, ""),
@@ -152,8 +258,9 @@ export async function GET(request: Request) {
 						name: `TRMNL Device ${friendly_id}`,
 						friendly_id: friendly_id,
 						api_key: api_key,
+						screen: DEFAULT_SCREEN,
 						refresh_schedule: JSON.stringify({
-							default_refresh_rate: 60, // Default refresh rate in seconds
+							default_refresh_rate: refreshRateSeconds,
 							time_ranges: [
 								{
 									start_time: "00:00", // Start of the time range
@@ -164,9 +271,14 @@ export async function GET(request: Request) {
 						}),
 						last_update_time: new Date().toISOString(), // Current time as last update
 						next_expected_update: new Date(
-							Date.now() + 3600 * 1000,
-						).toISOString(), // 1 hour from now
-						timezone: "Europe/London", // Default timezone
+							Date.now() + refreshRateSeconds * 1000,
+						).toISOString(),
+						timezone: "UTC", // Default timezone
+						battery_voltage: batteryVoltage
+							? Number.parseFloat(batteryVoltage)
+							: null,
+						firmware_version: fwVersion || model || null,
+						rssi: rssi ? Number.parseInt(rssi, 10) : null,
 					})
 					.returningAll()
 					.executeTakeFirst();
@@ -180,7 +292,8 @@ export async function GET(request: Request) {
 					metadata: {
 						friendly_id: newDevice.friendly_id,
 						mac_address: macAddress,
-						api_key: api_key,
+						api_key: maskApiKey(api_key),
+						model: model || null,
 					},
 				});
 				return NextResponse.json(
@@ -202,7 +315,12 @@ export async function GET(request: Request) {
 
 				logError(deviceError, {
 					source: "api/setup",
-					metadata: { macAddress, friendly_id, api_key },
+					metadata: {
+						macAddress,
+						friendly_id,
+						api_key: maskApiKey(api_key),
+						reason: "create_failed",
+					},
 				});
 
 				return NextResponse.json(
@@ -256,7 +374,9 @@ export async function GET(request: Request) {
 			metadata: {
 				friendly_id: device.friendly_id,
 				mac_address: macAddress,
-				api_key: currentApiKey,
+				api_key: maskApiKey(currentApiKey),
+				deviceFound: true,
+				deviceCreated: false,
 			},
 		});
 		return NextResponse.json(
