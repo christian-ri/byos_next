@@ -589,11 +589,18 @@ export const buildErrorResponse = (
 	return NextResponse.json(
 		{
 			status: 500,
-			reset_firmware: true,
+			reset_firmware: false,
+			update_firmware: false,
+			firmware_url: null,
 			message,
 			image_url: notFoundImageUrl,
 			filename: `not-found_${uniqueId}.bmp`,
 		},
-		{ status: 200 },
+		{
+			status: 200,
+			headers: {
+				"Cache-Control": "no-store, max-age=0",
+			},
+		},
 	);
 };

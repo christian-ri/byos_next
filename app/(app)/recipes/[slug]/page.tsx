@@ -14,6 +14,7 @@ import { RecipePreviewLayout } from "@/components/recipes/recipe-preview-layout"
 import RecipeProps from "@/components/recipes/recipe-props";
 import { ScreenParamsForm } from "@/components/recipes/screen-params-form";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { getCurrentUserId } from "@/lib/auth/get-user";
 import {
 	addDimensionsToProps,
 	ComponentProps,
@@ -234,6 +235,7 @@ export default async function RecipePage({
 	const isPortrait = format === "portrait";
 	const imageWidth = isPortrait ? DEFAULT_IMAGE_HEIGHT : DEFAULT_IMAGE_WIDTH;
 	const imageHeight = isPortrait ? DEFAULT_IMAGE_WIDTH : DEFAULT_IMAGE_HEIGHT;
+	const userId = await getCurrentUserId();
 
 	if (!config) {
 		notFound();
@@ -242,6 +244,14 @@ export default async function RecipePage({
 	const screenParams = config.params
 		? await getScreenParams(slug, config.params)
 		: {};
+	const bitmapParams = new URLSearchParams({
+		width: String(imageWidth),
+		height: String(imageHeight),
+	});
+	if (userId) {
+		bitmapParams.set("_owner", userId);
+	}
+	const bitmapHref = `/api/bitmap/${slug}.bmp?${bitmapParams.toString()}`;
 
 	return (
 		<div className="@container">
@@ -355,10 +365,10 @@ export default async function RecipePage({
 							JSX → utils/pre-satori.tsx → {getRendererType()} PNG →
 							utils/render-bmp.ts →
 							<Link
-								href={`/api/bitmap/${slug}.bmp`}
+								href={bitmapHref}
 								className="hover:underline text-blue-600 dark:text-blue-400"
 							>
-								/api/bitmap/{slug}.bmp
+								/api/bitmap/{slug}.bmp?{bitmapParams.toString()}
 							</Link>
 						</p>
 					}
@@ -369,11 +379,8 @@ export default async function RecipePage({
 								{getRendererType()} PNG
 							</span>{" "}
 							→ utils/render-bmp.ts →
-							<Link
-								href={`/api/bitmap/${slug}.bmp`}
-								className="hover:underline"
-							>
-								/api/bitmap/{slug}.bmp
+							<Link href={bitmapHref} className="hover:underline">
+								/api/bitmap/{slug}.bmp?{bitmapParams.toString()}
 							</Link>
 						</p>
 					}

@@ -10,155 +10,438 @@ type Props = CalendarRecipeData & {
 	height?: number;
 };
 
-function EventChip({
+type BoxStyle = {
+	position: "absolute";
+	left: number;
+	top: number;
+	width: number;
+	height?: number;
+};
+
+const innerPadding = 32;
+const panelTop = 98;
+const panelRadius = 18;
+
+function eventLabel(event: CalendarDayEvent, includeEventTime: boolean) {
+	if (!includeEventTime || !event.timeLabel) return event.summary;
+	return `${event.summary} (${event.timeLabel})`;
+}
+
+function fitText(value: string, maxChars: number) {
+	if (value.length <= maxChars) return value;
+	return `${value.slice(0, Math.max(0, maxChars - 1))}…`;
+}
+
+function EventLine({
 	event,
-	includeDescription,
 	includeEventTime,
-	compact = false,
+	left,
+	top,
+	width,
+	fontSize,
+	maxChars,
 }: {
 	event: CalendarDayEvent;
-	includeDescription: boolean;
 	includeEventTime: boolean;
-	compact?: boolean;
+	left: number;
+	top: number;
+	width: number;
+	fontSize: number;
+	maxChars: number;
 }) {
-	const emphasize = event.allDay || event.multiDay;
+	const label = fitText(eventLabel(event, includeEventTime), maxChars);
+	const style: BoxStyle = {
+		position: "absolute",
+		left,
+		top,
+		width,
+	};
+
 	return (
 		<div
-			className={`flex flex-col rounded-sm px-1.5 py-0.5 ${emphasize ? "bg-black text-white" : "bg-transparent text-black"} ${compact ? "min-h-[18px]" : ""}`}
+			style={style}
+			className={`${event.allDay || event.multiDay ? "bg-black text-white rounded-sm px-1" : "text-black"} leading-none`}
 		>
-			<span
-				className={`${compact ? "text-[10px]" : "text-[11px]"} leading-none font-medium truncate`}
-			>
-				{event.summary}
-			</span>
-			{includeEventTime && event.timeLabel && !compact && (
-				<span className="text-[9px] leading-none mt-0.5 opacity-80">
-					{event.timeLabel}
-				</span>
-			)}
-			{includeDescription && event.description && !compact && (
-				<span className="text-[9px] leading-tight mt-0.5 line-clamp-2">
-					{event.description}
-				</span>
-			)}
+			<span style={{ fontSize }}>{label}</span>
 		</div>
 	);
 }
 
-function MonthCell({
-	day,
-	includeEventTime,
+function Header({
+	title,
+	subtitle,
+	timeZone,
+	updatedAt,
+	width,
 }: {
-	day: CalendarDay;
-	includeEventTime: boolean;
+	title: string;
+	subtitle: string;
+	timeZone: string;
+	updatedAt: string;
+	width: number;
 }) {
-	const visibleEvents = day.events.slice(0, 4);
-	const remaining = Math.max(0, day.events.length - visibleEvents.length);
-
 	return (
-		<div
-			className={`flex flex-col border-r border-b border-dashed border-black px-1.5 py-1 ${day.isCurrentMonth ? "text-black" : "text-gray-400"}`}
-		>
-			<div className="flex justify-end">
-				<span
-					className={`text-[11px] leading-none ${day.isToday ? "bg-black text-white rounded-full px-1.5 py-0.5" : ""}`}
+		<>
+			<div
+				style={{
+					position: "absolute",
+					left: innerPadding + 14,
+					top: 18,
+					width: width - 330,
+				}}
+			>
+				<div className="font-blockkie leading-none" style={{ fontSize: 34 }}>
+					{title}
+				</div>
+				<div
+					className="text-gray-500 leading-none mt-2"
+					style={{ fontSize: 17 }}
 				>
-					{day.dayNumber}
-				</span>
+					{subtitle}
+				</div>
 			</div>
-
-			<div className="mt-1 flex flex-col gap-1">
-				{visibleEvents.map((event) => (
-					<EventChip
-						key={`${day.key}-${event.id}`}
-						event={event}
-						includeDescription={false}
-						includeEventTime={includeEventTime}
-						compact
-					/>
-				))}
-				{remaining > 0 && (
-					<span className="text-[10px] leading-none px-1.5">
-						+{remaining} more
-					</span>
-				)}
+			<div
+				style={{
+					position: "absolute",
+					right: innerPadding + 14,
+					top: 20,
+					width: 210,
+				}}
+				className="text-right text-gray-500 leading-tight"
+			>
+				<div style={{ fontSize: 12 }}>{timeZone}</div>
+				<div style={{ fontSize: 12 }}>{updatedAt}</div>
 			</div>
-		</div>
+		</>
 	);
 }
 
-function DefaultColumn({
-	day,
+function PanelHeader({
+	label,
+	note,
+	width,
+}: {
+	label: string;
+	note?: string;
+	width: number;
+}) {
+	return (
+		<>
+			<div
+				style={{
+					position: "absolute",
+					left: innerPadding + 20,
+					top: panelTop + 18,
+					width: 260,
+				}}
+				className="font-medium leading-none"
+			>
+				<span style={{ fontSize: 20 }}>{label}</span>
+			</div>
+			<div
+				style={{
+					position: "absolute",
+					right: innerPadding + 20,
+					top: panelTop + 14,
+					width: Math.min(340, width - 420),
+					backgroundColor: "#dbe8ff",
+					borderRadius: 16,
+					padding: "6px 12px",
+				}}
+				className="text-[#4f79d8] leading-none text-center"
+			>
+				<span style={{ fontSize: 11 }}>
+					{fitText(note || "Preview - your device will show actual data", 54)}
+				</span>
+			</div>
+		</>
+	);
+}
+
+function MonthView({
+	monthWeeks,
+	monthLabel,
+	note,
+	includeEventTime,
+	width,
+	height,
+}: {
+	monthWeeks: CalendarDay[][];
+	monthLabel: string;
+	note?: string;
+	includeEventTime: boolean;
+	width: number;
+	height: number;
+}) {
+	const panelLeft = innerPadding;
+	const panelWidth = width - innerPadding * 2;
+	const panelHeight = height - panelTop - innerPadding;
+	const contentTop = panelTop + 58;
+	const dayHeaderHeight = 26;
+	const gridTop = contentTop + dayHeaderHeight;
+	const gridHeight = panelTop + panelHeight - gridTop;
+	const colWidth = panelWidth / 7;
+	const rowHeight = gridHeight / Math.max(1, monthWeeks.length);
+	const weekdayHeader = monthWeeks[0]?.map((day) => day.shortLabel) || [
+		"Sun",
+		"Mon",
+		"Tue",
+		"Wed",
+		"Thu",
+		"Fri",
+		"Sat",
+	];
+
+	return (
+		<>
+			<PanelHeader label={monthLabel} note={note} width={width} />
+			{weekdayHeader.map((label, index) => (
+				<div
+					key={label}
+					style={{
+						position: "absolute",
+						left: panelLeft + index * colWidth,
+						top: contentTop + 5,
+						width: colWidth,
+					}}
+					className="text-center font-medium leading-none"
+				>
+					<span style={{ fontSize: 12 }}>{label}</span>
+				</div>
+			))}
+			{monthWeeks.map((week, weekIndex) =>
+				week.map((day, dayIndex) => {
+					const left = panelLeft + dayIndex * colWidth;
+					const top = gridTop + weekIndex * rowHeight;
+					const textColor = day.isCurrentMonth ? "text-black" : "text-gray-400";
+					const visibleEvents = day.events.slice(0, 2);
+
+					return (
+						<div key={`${weekIndex}-${day.key}`}>
+							<div
+								style={{
+									position: "absolute",
+									left,
+									top,
+									width: colWidth,
+									height: rowHeight,
+									borderRight: "1px solid #000",
+									borderBottom: "1px dashed #000",
+								}}
+							/>
+							<div
+								style={{
+									position: "absolute",
+									left: left + colWidth - 26,
+									top: top + 8,
+									width: 20,
+								}}
+								className={`text-right leading-none ${textColor}`}
+							>
+								<span style={{ fontSize: 12 }}>{day.dayNumber}</span>
+							</div>
+							{visibleEvents.map((event, eventIndex) => (
+								<EventLine
+									key={`${day.key}-${event.id}`}
+									event={event}
+									includeEventTime={includeEventTime}
+									left={left + 7}
+									top={top + 28 + eventIndex * 16}
+									width={colWidth - 14}
+									fontSize={9}
+									maxChars={13}
+								/>
+							))}
+						</div>
+					);
+				}),
+			)}
+		</>
+	);
+}
+
+function WeekView({
+	weekDays,
+	note,
+	providerLabel,
+	includeEventTime,
+	width,
+	height,
+}: {
+	weekDays: CalendarDay[];
+	note?: string;
+	providerLabel: string;
+	includeEventTime: boolean;
+	width: number;
+	height: number;
+}) {
+	const panelLeft = innerPadding;
+	const panelWidth = width - innerPadding * 2;
+	const panelHeight = height - panelTop - innerPadding;
+	const contentTop = panelTop + 58;
+	const colWidth = panelWidth / 7;
+
+	return (
+		<>
+			<PanelHeader
+				label={`${providerLabel} Calendar`}
+				note={note}
+				width={width}
+			/>
+			{weekDays.map((day, dayIndex) => {
+				const left = panelLeft + dayIndex * colWidth;
+				const maxEvents = day.events.slice(0, 5);
+				return (
+					<div key={day.key}>
+						<div
+							style={{
+								position: "absolute",
+								left,
+								top: contentTop,
+								width: colWidth,
+								height: panelTop + panelHeight - contentTop,
+								borderRight: "1px solid #000",
+								borderTop: "1px dashed #000",
+							}}
+						/>
+						<div
+							style={{
+								position: "absolute",
+								left,
+								top: contentTop + 12,
+								width: colWidth,
+							}}
+							className="text-center leading-none"
+						>
+							<div style={{ fontSize: 12 }}>{day.shortLabel}</div>
+							<div className="mt-1" style={{ fontSize: 12 }}>
+								{day.dayNumber}
+							</div>
+						</div>
+						{maxEvents.length > 0 ? (
+							maxEvents.map((event, eventIndex) => (
+								<EventLine
+									key={`${day.key}-${event.id}`}
+									event={event}
+									includeEventTime={includeEventTime}
+									left={left + 8}
+									top={contentTop + 62 + eventIndex * 22}
+									width={colWidth - 16}
+									fontSize={10}
+									maxChars={12}
+								/>
+							))
+						) : (
+							<div
+								style={{
+									position: "absolute",
+									left: left + 10,
+									top: contentTop + 62,
+									width: colWidth - 20,
+								}}
+								className="text-gray-400 leading-none"
+							>
+								<span style={{ fontSize: 10 }}>-</span>
+							</div>
+						)}
+					</div>
+				);
+			})}
+		</>
+	);
+}
+
+function DefaultView({
+	defaultDays,
+	note,
+	providerLabel,
 	includeDescription,
 	includeEventTime,
-	columnWidth,
+	width,
+	height,
 }: {
-	day: CalendarDay;
+	defaultDays: CalendarDay[];
+	note?: string;
+	providerLabel: string;
 	includeDescription: boolean;
 	includeEventTime: boolean;
-	columnWidth: number;
+	width: number;
+	height: number;
 }) {
-	return (
-		<div
-			className="border-r border-black last:border-r-0 px-3 py-3"
-			style={{ width: `${columnWidth}px` }}
-		>
-			<div className="border-b border-dashed border-black pb-2">
-				<div className="text-lg font-medium">{day.shortLabel}</div>
-				<div className="text-sm">{day.label}</div>
-			</div>
-			<div className="flex flex-col gap-2 pt-2">
-				{day.events.length > 0 ? (
-					day.events.map((event) => (
-						<EventChip
-							key={`${day.key}-${event.id}`}
-							event={event}
-							includeDescription={includeDescription}
-							includeEventTime={includeEventTime}
-						/>
-					))
-				) : (
-					<span className="text-xs text-gray-500">No events</span>
-				)}
-			</div>
-		</div>
-	);
-}
+	const panelLeft = innerPadding;
+	const panelWidth = width - innerPadding * 2;
+	const panelHeight = height - panelTop - innerPadding;
+	const contentTop = panelTop + 58;
+	const colWidth = panelWidth / 3;
 
-function WeekColumn({
-	day,
-	includeEventTime,
-	columnWidth,
-}: {
-	day: CalendarDay;
-	includeEventTime: boolean;
-	columnWidth: number;
-}) {
 	return (
-		<div
-			className="border-r border-black last:border-r-0 flex flex-col"
-			style={{ width: `${columnWidth}px` }}
-		>
-			<div className="border-b border-dashed border-black px-2 py-2 text-center">
-				<div className="text-[12px] font-medium">{day.shortLabel}</div>
-				<div className="text-[11px]">{day.dayNumber}</div>
-			</div>
-			<div className="flex-1 px-1.5 py-2 flex flex-col gap-1">
-				{day.events.length > 0 ? (
-					day.events.map((event) => (
-						<EventChip
-							key={`${day.key}-${event.id}`}
-							event={event}
-							includeDescription={false}
-							includeEventTime={includeEventTime}
-							compact
+		<>
+			<PanelHeader
+				label={`${providerLabel} Calendar`}
+				note={note}
+				width={width}
+			/>
+			{defaultDays.map((day, dayIndex) => {
+				const left = panelLeft + dayIndex * colWidth;
+				return (
+					<div key={day.key}>
+						<div
+							style={{
+								position: "absolute",
+								left,
+								top: contentTop,
+								width: colWidth,
+								height: panelTop + panelHeight - contentTop,
+								borderRight: "1px solid #000",
+								borderTop: "1px dashed #000",
+							}}
 						/>
-					))
-				) : (
-					<span className="text-[10px] text-gray-400">-</span>
-				)}
-			</div>
-		</div>
+						<div
+							style={{
+								position: "absolute",
+								left: left + 14,
+								top: contentTop + 16,
+								width: colWidth - 28,
+							}}
+							className="leading-tight"
+						>
+							<div className="font-medium" style={{ fontSize: 16 }}>
+								{day.shortLabel}
+							</div>
+							<div style={{ fontSize: 13 }}>{day.label}</div>
+						</div>
+						{day.events.slice(0, 6).map((event, eventIndex) => (
+							<div key={`${day.key}-${event.id}`}>
+								<EventLine
+									event={event}
+									includeEventTime={includeEventTime}
+									left={left + 14}
+									top={contentTop + 68 + eventIndex * 34}
+									width={colWidth - 28}
+									fontSize={12}
+									maxChars={28}
+								/>
+								{includeDescription && event.description && (
+									<div
+										style={{
+											position: "absolute",
+											left: left + 14,
+											top: contentTop + 84 + eventIndex * 34,
+											width: colWidth - 28,
+										}}
+										className="text-gray-500 leading-none"
+									>
+										<span style={{ fontSize: 9 }}>
+											{fitText(event.description, 36)}
+										</span>
+									</div>
+								)}
+							</div>
+						))}
+					</div>
+				);
+			})}
+		</>
 	);
 }
 
@@ -181,100 +464,60 @@ export default function CalendarScreen({
 }: Props) {
 	const isMonth = eventLayout === "month";
 	const isWeek = eventLayout === "week";
-	const contentWidth = width - 32;
-	const defaultColumnWidth = Math.floor(contentWidth / 3);
-	const weekColumnWidth = Math.floor(contentWidth / 7);
-	const weekdayHeader = monthWeeks[0]?.map((day) => day.shortLabel) || [
-		"Sun",
-		"Mon",
-		"Tue",
-		"Wed",
-		"Thu",
-		"Fri",
-		"Sat",
-	];
+	const panelWidth = width - innerPadding * 2;
+	const panelHeight = height - panelTop - innerPadding;
 
 	return (
 		<PreSatori width={width} height={height}>
-			<div className="w-full h-full bg-[#efefed] text-black p-4 flex flex-col">
-				<div className="flex items-start justify-between px-2">
-					<div className="flex flex-col">
-						<div className="text-[34px] font-blockkie leading-none">
-							{title}
-						</div>
-						<div className="text-[18px] text-gray-500 mt-1">{subtitle}</div>
-					</div>
-					<div className="flex flex-col items-end text-[11px] text-gray-500">
-						<span>{timeZone}</span>
-						<span>{updatedAt}</span>
-					</div>
-				</div>
-
-				<div className="mt-3 flex-1 bg-white rounded-2xl border border-gray-300 overflow-hidden flex flex-col">
-					<div className="flex items-center justify-between px-4 py-2">
-						<div className="text-[18px] font-medium">
-							{isMonth ? monthLabel : `${providerLabel} Calendar`}
-						</div>
-						<div className="rounded-full bg-[#dbe8ff] text-[#4f79d8] text-[11px] px-3 py-1">
-							{note || "Preview - your device will show actual data"}
-						</div>
-					</div>
-
-					{isMonth && (
-						<>
-							<div className="grid grid-cols-7 px-2 text-[12px] font-medium">
-								{weekdayHeader.map((label) => (
-									<div key={label} className="px-1 pb-2 text-center">
-										{label}
-									</div>
-								))}
-							</div>
-							<div className="flex-1 flex flex-col border-t border-dashed border-black/40">
-								{monthWeeks.map((week, weekIndex) => (
-									<div
-										key={`week-${weekIndex}`}
-										className="grid grid-cols-7 min-h-0 flex-1"
-									>
-										{week.map((day) => (
-											<MonthCell
-												key={day.key}
-												day={day}
-												includeEventTime={includeEventTime}
-											/>
-										))}
-									</div>
-								))}
-							</div>
-						</>
-					)}
-
-					{isWeek && (
-						<div className="flex-1 border-t border-dashed border-black/40 flex">
-							{weekDays.map((day) => (
-								<WeekColumn
-									key={day.key}
-									day={day}
-									includeEventTime={includeEventTime}
-									columnWidth={weekColumnWidth}
-								/>
-							))}
-						</div>
-					)}
-
-					{!isMonth && !isWeek && (
-						<div className="flex-1 border-t border-dashed border-black/40 flex">
-							{defaultDays.map((day) => (
-								<DefaultColumn
-									key={day.key}
-									day={day}
-									includeDescription={includeDescription}
-									includeEventTime={includeEventTime}
-									columnWidth={defaultColumnWidth}
-								/>
-							))}
-						</div>
-					)}
-				</div>
+			<div className="w-full h-full bg-[#efefed] text-black relative overflow-hidden">
+				<Header
+					title={title}
+					subtitle={subtitle}
+					timeZone={timeZone}
+					updatedAt={updatedAt}
+					width={width}
+				/>
+				<div
+					style={{
+						position: "absolute",
+						left: innerPadding,
+						top: panelTop,
+						width: panelWidth,
+						height: panelHeight,
+						backgroundColor: "#fff",
+						border: "1px solid #d1d5db",
+						borderRadius: panelRadius,
+					}}
+				/>
+				{isMonth ? (
+					<MonthView
+						monthWeeks={monthWeeks}
+						monthLabel={monthLabel}
+						note={note}
+						includeEventTime={includeEventTime}
+						width={width}
+						height={height}
+					/>
+				) : isWeek ? (
+					<WeekView
+						weekDays={weekDays}
+						note={note}
+						providerLabel={providerLabel}
+						includeEventTime={includeEventTime}
+						width={width}
+						height={height}
+					/>
+				) : (
+					<DefaultView
+						defaultDays={defaultDays}
+						note={note}
+						providerLabel={providerLabel}
+						includeDescription={includeDescription}
+						includeEventTime={includeEventTime}
+						width={width}
+						height={height}
+					/>
+				)}
 			</div>
 		</PreSatori>
 	);
