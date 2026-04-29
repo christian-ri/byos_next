@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
 import {
@@ -18,14 +17,13 @@ export const DEFAULT_REFRESH_RATE = 180;
 export async function GET(request: Request) {
 	const headers = parseRequestHeaders(request);
 
-	// TRMNL API requires Access-Token header
-	if (!headers.apiKey) {
-		return NextResponse.json(
-			{
-				status: 401,
-				error: "Access-Token header is required",
-			},
-			{ status: 401 },
+	if (!headers.apiKey && !headers.macAddress) {
+		const hostUrl = new URL(request.url).origin || "http://localhost:3000";
+		const baseUrl = `${hostUrl}/api/bitmap`;
+		return buildErrorResponse(
+			"Device identity header is required",
+			baseUrl,
+			"missing-id",
 		);
 	}
 

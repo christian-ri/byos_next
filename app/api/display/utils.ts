@@ -588,13 +588,15 @@ export const buildErrorResponse = (
 	const notFoundImageUrl = `${baseUrl}/not-found.bmp`;
 	return NextResponse.json(
 		{
-			status: 500,
+			status: 0,
+			image_url: notFoundImageUrl,
+			filename: `not-found_${uniqueId}.bmp`,
+			refresh_rate: 60,
 			reset_firmware: false,
 			update_firmware: false,
 			firmware_url: null,
+			special_function: "restart_playlist",
 			message,
-			image_url: notFoundImageUrl,
-			filename: `not-found_${uniqueId}.bmp`,
 		},
 		{
 			status: 200,
