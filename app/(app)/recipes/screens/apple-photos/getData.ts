@@ -53,6 +53,16 @@ export type ApplePhotosRecipeData = {
 
 const SAMPLE_IMAGE_URL = "https://byos-nextjs.vercel.app/album/london.png";
 const DEFAULT_TIME_ZONE = "America/New_York";
+const ICLOUD_ROOT_DOMAIN = "icloud.com";
+const ICLOUD_SHARED_STREAMS_HOST = `sharedstreams.${ICLOUD_ROOT_DOMAIN}`;
+const BASE_62_CHAR_SET =
+	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+type ParsedSharedAlbum = {
+	token: string;
+	initialHost: string;
+	streamGuid?: string;
+};
 
 function parseBoolean(value: string | boolean | undefined, fallback = true) {
 	if (typeof value === "boolean") return value;
@@ -63,16 +73,58 @@ function parseBoolean(value: string | boolean | undefined, fallback = true) {
 	return fallback;
 }
 
-function parseSharedAlbumToken(value?: string) {
-	const trimmed = value?.trim();
-	if (!trimmed) return "";
+function base62ToInt(value: string) {
+	return [...value].reduce(
+		(total, char) => total * 62 + BASE_62_CHAR_SET.indexOf(char),
+		0,
+	);
+}
 
-	if (!trimmed.includes("/") && !trimmed.includes("#")) {
-		return trimmed;
+function formatPartitionHost(serverPartition: number) {
+	return `p${String(serverPartition).padStart(2, "0")}-sharedstreams.${ICLOUD_ROOT_DOMAIN}`;
+}
+
+function parseSharedAlbum(value?: string): ParsedSharedAlbum | null {
+	const trimmed = value?.trim();
+	if (!trimmed) return null;
+
+	const token =
+		trimmed.includes("/") || trimmed.includes("#")
+			? trimmed.split("#").pop()?.trim() || ""
+			: trimmed;
+
+	if (!token) return null;
+
+	if (token.startsWith("v2;")) {
+		const [, partition, streamGuid, dsid] = token.split(";");
+		const serverPartition = Number.parseInt(partition || "", 10);
+		if (Number.isFinite(serverPartition) && streamGuid && dsid) {
+			return {
+				token: dsid,
+				initialHost: formatPartitionHost(serverPartition),
+				streamGuid,
+			};
+		}
 	}
 
-	const hash = trimmed.split("#").pop()?.trim();
-	return hash || "";
+	if (/^[AB]/.test(token)) {
+		const serverPartition =
+			token[0] === "A"
+				? base62ToInt(token[1] || "")
+				: base62ToInt(token.slice(1, 3));
+
+		if (serverPartition >= 0) {
+			return {
+				token: token.split(";")[0],
+				initialHost: formatPartitionHost(serverPartition),
+			};
+		}
+	}
+
+	return {
+		token,
+		initialHost: ICLOUD_SHARED_STREAMS_HOST,
+	};
 }
 
 function normalizeFitMode(value?: string): "cover" | "contain" {
@@ -94,6 +146,7 @@ async function postIcloudJson<T>(
 	token: string,
 	path: "webstream" | "webasseturls",
 	body: Record<string, unknown>,
+	redirectsRemaining = 3,
 ): Promise<T> {
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -104,7 +157,9 @@ async function postIcloudJson<T>(
 			{
 				method: "POST",
 				headers: {
+					Accept: "application/json",
 					"Content-Type": "application/json",
+					"User-Agent": "BYOS Apple Photos/1.0",
 				},
 				body: JSON.stringify(body),
 				signal: controller.signal,
@@ -113,30 +168,60 @@ async function postIcloudJson<T>(
 		);
 
 		const text = await response.text();
-		if (!text) {
-			throw new Error(`Apple Photos returned empty ${path} response`);
+		const parsed = text ? (JSON.parse(text) as T) : null;
+		const parsedRedirectHost =
+			parsed &&
+			typeof parsed === "object" &&
+			"X-Apple-MMe-Host" in parsed &&
+			typeof parsed["X-Apple-MMe-Host"] === "string"
+				? parsed["X-Apple-MMe-Host"]
+				: "";
+		const redirectHost =
+			response.headers.get("X-Apple-MMe-Host") || parsedRedirectHost;
+
+		if (response.status === 330 && redirectHost && redirectsRemaining > 0) {
+			return postIcloudJson(
+				redirectHost,
+				token,
+				path,
+				body,
+				redirectsRemaining - 1,
+			);
 		}
 
-		return JSON.parse(text) as T;
+		if (!response.ok) {
+			throw new Error(
+				`Apple Photos ${path} returned HTTP ${response.status} from ${host}`,
+			);
+		}
+
+		if (!parsed) {
+			throw new Error(
+				`Apple Photos returned an empty ${path} response from ${host}`,
+			);
+		}
+
+		return {
+			...parsed,
+			...(redirectHost ? { "X-Apple-MMe-Host": redirectHost } : {}),
+		};
 	} finally {
 		clearTimeout(timeoutId);
 	}
 }
 
-async function loadWebstream(token: string) {
-	const initial = await postIcloudJson<IcloudWebstreamResponse>(
-		"sharedstreams.icloud.com",
-		token,
-		"webstream",
-		{ streamCtag: null },
-	);
+async function loadWebstream(album: ParsedSharedAlbum) {
+	const body = {
+		...(album.streamGuid ? { streamGuid: album.streamGuid } : {}),
+		streamCtag: null,
+	};
 
-	const host = initial["X-Apple-MMe-Host"];
-	if (host && (!initial.photos || initial.photos.length === 0)) {
-		return postIcloudJson<IcloudWebstreamResponse>(host, token, "webstream", {
-			streamCtag: null,
-		});
-	}
+	const initial = await postIcloudJson<IcloudWebstreamResponse>(
+		album.initialHost,
+		album.token,
+		"webstream",
+		body,
+	);
 
 	return initial;
 }
@@ -187,10 +272,10 @@ function buildFallbackData(
 export default async function getData(
 	params?: ApplePhotosParams,
 ): Promise<ApplePhotosRecipeData> {
-	const token = parseSharedAlbumToken(params?.sharedAlbumUrl);
+	const album = parseSharedAlbum(params?.sharedAlbumUrl);
 	const timeZone = String(params?.timezone || DEFAULT_TIME_ZONE).trim();
 
-	if (!token) {
+	if (!album) {
 		return buildFallbackData(
 			params,
 			"Preview - add an iCloud Shared Album URL to show your photos.",
@@ -198,7 +283,7 @@ export default async function getData(
 	}
 
 	try {
-		const stream = await loadWebstream(token);
+		const stream = await loadWebstream(album);
 		const photos = stream.photos || [];
 		if (photos.length === 0) {
 			return buildFallbackData(
@@ -210,10 +295,13 @@ export default async function getData(
 		const photo = choosePhoto(photos);
 		const derivative = chooseLargestDerivative(photo);
 		const assets = await postIcloudJson<IcloudAssetResponse>(
-			stream["X-Apple-MMe-Host"] || "sharedstreams.icloud.com",
-			token,
+			stream["X-Apple-MMe-Host"] || album.initialHost,
+			album.token,
 			"webasseturls",
-			{ photoGuids: [photo.photoGuid] },
+			{
+				...(album.streamGuid ? { streamGuid: album.streamGuid } : {}),
+				photoGuids: [photo.photoGuid],
+			},
 		);
 		const imageUrl = resolveAssetUrl(assets, derivative);
 
@@ -237,9 +325,10 @@ export default async function getData(
 		};
 	} catch (error) {
 		console.error("Error loading Apple Photos data:", error);
+		const detail = error instanceof Error ? ` ${error.message}` : "";
 		return buildFallbackData(
 			params,
-			"Live Apple Photos fetch failed, so this preview is showing sample art.",
+			`Live Apple Photos fetch failed.${detail}`,
 		);
 	}
 }

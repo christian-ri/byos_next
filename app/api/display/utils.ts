@@ -366,7 +366,51 @@ export const findOrCreateDevice = async (
 ): Promise<Device | null> => {
 	const { apiKey, macAddress } = headers;
 
-	// 1. Try finding by API Key
+	// Prefer the physical MAC address. API keys can be stale after setup/reset,
+	// while the MAC keeps the real device anchored to one row.
+	if (macAddress) {
+		const deviceByMac = await db
+			.selectFrom("devices")
+			.selectAll()
+			.where("mac_address", "=", macAddress)
+			.executeTakeFirst();
+
+		if (deviceByMac) {
+			const device = deviceByMac as unknown as Device;
+			if (apiKey && apiKey !== device.api_key) {
+				const apiKeyOwner = await db
+					.selectFrom("devices")
+					.selectAll()
+					.where("api_key", "=", apiKey)
+					.executeTakeFirst();
+
+				if (!apiKeyOwner) {
+					await db
+						.updateTable("devices")
+						.set({ api_key: apiKey, updated_at: new Date().toISOString() })
+						.where("id", "=", device.id.toString())
+						.execute();
+					logInfo("Updated API key for device", {
+						source: "api/display",
+						metadata: { deviceId: device.friendly_id },
+					});
+				} else {
+					logInfo(
+						"API key already belongs to another device; keeping MAC row",
+						{
+							source: "api/display",
+							metadata: {
+								deviceId: device.friendly_id,
+								apiKeyOwner: apiKeyOwner.friendly_id,
+							},
+						},
+					);
+				}
+			}
+			return device;
+		}
+	}
+
 	if (apiKey) {
 		const deviceByApiKey = await db
 			.selectFrom("devices")
@@ -376,8 +420,17 @@ export const findOrCreateDevice = async (
 
 		if (deviceByApiKey) {
 			const device = deviceByApiKey as unknown as Device;
-			// Update MAC if needed
 			if (macAddress && macAddress !== device.mac_address) {
+				const macOwner = await db
+					.selectFrom("devices")
+					.selectAll()
+					.where("mac_address", "=", macAddress)
+					.executeTakeFirst();
+
+				if (macOwner) {
+					return macOwner as unknown as Device;
+				}
+
 				await db
 					.updateTable("devices")
 					.set({
@@ -395,31 +448,7 @@ export const findOrCreateDevice = async (
 		}
 	}
 
-	// 2. Try finding by MAC Address
 	if (macAddress) {
-		const deviceByMac = await db
-			.selectFrom("devices")
-			.selectAll()
-			.where("mac_address", "=", macAddress)
-			.executeTakeFirst();
-
-		if (deviceByMac) {
-			const device = deviceByMac as unknown as Device;
-			// Update API Key if needed
-			if (apiKey && apiKey !== device.api_key) {
-				await db
-					.updateTable("devices")
-					.set({ api_key: apiKey, updated_at: new Date().toISOString() })
-					.where("id", "=", device.id.toString())
-					.execute();
-				logInfo("Updated API key for device", {
-					source: "api/display",
-					metadata: { deviceId: device.friendly_id },
-				});
-			}
-			return device;
-		}
-
 		const friendly_id = generateFriendlyId(
 			macAddress,
 			new Date().toISOString().replace(/[-:Z]/g, ""),
@@ -469,7 +498,12 @@ export const findOrCreateDevice = async (
 			const existingDevice = await db
 				.selectFrom("devices")
 				.selectAll()
-				.where("mac_address", "=", macAddress)
+				.where((eb) =>
+					eb.or([
+						eb("mac_address", "=", macAddress),
+						...(apiKey ? [eb("api_key", "=", apiKey)] : []),
+					]),
+				)
 				.executeTakeFirst();
 
 			if (existingDevice) {
@@ -478,54 +512,7 @@ export const findOrCreateDevice = async (
 		}
 	}
 
-	// 3. Create new device or use mock
 	if (apiKey) {
-		// New device by explicit MAC
-		if (macAddress) {
-			const friendly_id = generateFriendlyId(
-				macAddress,
-				new Date().toISOString().replace(/[-:Z]/g, ""),
-			);
-			try {
-				const newDevice = await db
-					.insertInto("devices")
-					.values({
-						mac_address: macAddress,
-						name: `TRMNL Device ${friendly_id}`,
-						friendly_id: friendly_id,
-						api_key: apiKey,
-						refresh_schedule: JSON.stringify({
-							default_refresh_rate: headers.refreshRate
-								? Number.parseInt(headers.refreshRate, 10)
-								: 60,
-							time_ranges: [],
-						}),
-						last_update_time: new Date().toISOString(),
-						next_expected_update: new Date(
-							Date.now() + 3600 * 1000,
-						).toISOString(),
-						timezone: "UTC",
-						screen: DEFAULT_SCREEN,
-					})
-					.returningAll()
-					.executeTakeFirst();
-
-				if (newDevice) {
-					logInfo("Created new device with provided MAC address", {
-						source: "api/display",
-						metadata: { friendly_id },
-					});
-					return newDevice as unknown as Device;
-				}
-			} catch (e) {
-				logError("Error creating device with provided MAC", {
-					source: "api/display",
-					metadata: { error: e },
-				});
-			}
-		}
-
-		// Mock Device logic
 		const mockMacAddress = generateMockMacAddress(apiKey);
 		const existingMock = await db
 			.selectFrom("devices")
@@ -535,13 +522,6 @@ export const findOrCreateDevice = async (
 
 		if (existingMock) {
 			const device = existingMock as unknown as Device;
-			if (macAddress) {
-				await db
-					.updateTable("devices")
-					.set({ mac_address: macAddress })
-					.where("id", "=", device.id.toString())
-					.execute();
-			}
 			logInfo("Using existing mock device", {
 				source: "api/display",
 				metadata: { friendly_id: device.friendly_id },
@@ -589,6 +569,20 @@ export const findOrCreateDevice = async (
 			}
 		} catch (e) {
 			logger.error("Error creating mock device", { error: e });
+			const existingDevice = await db
+				.selectFrom("devices")
+				.selectAll()
+				.where((eb) =>
+					eb.or([
+						eb("mac_address", "=", mockMacAddress),
+						eb("api_key", "=", new_api_key),
+					]),
+				)
+				.executeTakeFirst();
+
+			if (existingDevice) {
+				return existingDevice as unknown as Device;
+			}
 		}
 	}
 
