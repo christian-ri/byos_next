@@ -223,6 +223,9 @@ const RecipePreviewLayout = ({
 			if (imageComponent) {
 				componentsToRender.push(
 					<div key="image" className="flex flex-col gap-0 mb-2">
+						<p className="mb-1 text-xs font-medium text-muted-foreground">
+							{renderType === "bmp" ? "Device bitmap preview" : "Renderer PNG"}
+						</p>
 						{imageComponent}
 						{linkComponent && <div className="mt-1">{linkComponent}</div>}
 					</div>,
@@ -232,6 +235,9 @@ const RecipePreviewLayout = ({
 			if (reactComponent) {
 				componentsToRender.push(
 					<div key="react" className="flex flex-col gap-0">
+						<p className="mb-1 text-xs font-medium text-muted-foreground">
+							Direct browser preview
+						</p>
 						{reactComponent}
 						{reactLinkComponent && (
 							<div className="mt-1">{reactLinkComponent}</div>

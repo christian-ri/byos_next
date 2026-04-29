@@ -2,12 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/database/db";
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
-import {
-	DEFAULT_IMAGE_HEIGHT,
-	DEFAULT_IMAGE_WIDTH,
-} from "@/lib/recipes/recipe-renderer";
 import type { Device } from "@/lib/types";
-import { parseRequestHeaders } from "../utils";
+import { parseRequestHeaders, resolveDeviceDisplayTarget } from "../utils";
 
 /**
  * GET /api/display/current
@@ -64,32 +60,11 @@ export async function GET(request: Request) {
 
 		const deviceData = device as unknown as Device;
 		const baseUrl = `${headers.hostUrl}/api/bitmap`;
-		const screenToDisplay = deviceData.screen || "not-found";
-		const orientation = deviceData.screen_orientation || "landscape";
-		const deviceWidth =
-			orientation === "landscape"
-				? deviceData.screen_width || DEFAULT_IMAGE_WIDTH
-				: deviceData.screen_height || DEFAULT_IMAGE_HEIGHT;
-		const deviceHeight =
-			orientation === "landscape"
-				? deviceData.screen_height || DEFAULT_IMAGE_HEIGHT
-				: deviceData.screen_width || DEFAULT_IMAGE_WIDTH;
-
-		// Get grayscale levels (default to 2 if not set)
-		const grayscaleLevels =
-			deviceData.grayscale === 2 ||
-			deviceData.grayscale === 4 ||
-			deviceData.grayscale === 16
-				? deviceData.grayscale
-				: 2;
-
-		const imageUrl = `${baseUrl}/${screenToDisplay}.bmp?width=${deviceWidth}&height=${deviceHeight}&grayscale=${grayscaleLevels}`;
-
-		// Calculate refresh rate from schedule or use default
-		const refreshSchedule = deviceData.refresh_schedule as {
-			default_refresh_rate: number;
-		} | null;
-		const refreshRate = refreshSchedule?.default_refresh_rate || 180;
+		const { imageUrl, screenToDisplay, refreshRate } =
+			await resolveDeviceDisplayTarget({
+				device: deviceData,
+				baseUrl,
+			});
 
 		logInfo("Current display request successful", {
 			source: "api/display/current",

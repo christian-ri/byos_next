@@ -55,7 +55,7 @@ export default function DevicePageClient({
 		Device & { status?: string; type?: string }
 	>(JSON.parse(JSON.stringify(initialDevice)));
 	const [playlistScreens, setPlaylistScreens] = useState<
-		{ screen: string; duration: number }[]
+		{ screen: string; duration: number; orderIndex: number }[]
 	>([]);
 	const [isSaving, setIsSaving] = useState(false);
 
@@ -379,9 +379,11 @@ export default function DevicePageClient({
 		if (editedDevice.playlist_id) {
 			const playlistScreens = playlistItems
 				.filter((item) => item.playlist_id === editedDevice.playlist_id)
+				.sort((a, b) => a.order_index - b.order_index)
 				.map((item) => ({
 					screen: item.screen_id,
 					duration: item.duration,
+					orderIndex: item.order_index,
 				}));
 			setPlaylistScreens(playlistScreens);
 		}

@@ -77,7 +77,7 @@ const getGrayscaleLevels = (grayscale: number | null | undefined): number => {
 
 interface DeviceViewProps {
 	device: Device & { status?: string; type?: string };
-	playlistScreens: { screen: string; duration: number }[];
+	playlistScreens: { screen: string; duration: number; orderIndex: number }[];
 }
 
 export default function DeviceView({
@@ -95,6 +95,10 @@ export default function DeviceView({
 			: device.screen_width || DEFAULT_IMAGE_WIDTH;
 
 	const deviceGrayscaleLevels = getGrayscaleLevels(device.grayscale);
+	const activePlaylistScreen =
+		playlistScreens.find(
+			(screen) => screen.orderIndex === device.current_playlist_index,
+		) ?? playlistScreens[0];
 
 	return (
 		<Card>
@@ -269,30 +273,41 @@ export default function DeviceView({
 					device.playlist_id ? (
 						<>
 							<p className="text-sm text-muted-foreground">
-								Playlist preview shows current screens in rotation.
+								Playlist preview shows the current device target first.
 							</p>
-							<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-								{playlistScreens.map((screen) => (
-									<div
-										className="max-w-[300px]"
-										style={{
-											maxHeight: `${(300 * deviceHeight) / deviceWidth}px`,
-										}}
-										key={screen.screen}
-									>
-										<AspectRatio ratio={deviceWidth / deviceHeight}>
-											<Image
-												src={`/api/bitmap/${screen.screen || "simple-text"}.bmp?width=${deviceWidth}&height=${deviceHeight}`}
-												alt="Device Screen"
-												fill
-												className="object-cover rounded-xs ring-2 ring-gray-200"
-												style={{ imageRendering: "pixelated" }}
-												unoptimized
-											/>
-										</AspectRatio>
-									</div>
-								))}
+							<div
+								className="max-w-[320px]"
+								style={{
+									maxHeight: `${(320 * deviceHeight) / deviceWidth}px`,
+								}}
+							>
+								<AspectRatio ratio={deviceWidth / deviceHeight}>
+									<Image
+										src={`/api/bitmap/${activePlaylistScreen?.screen || device.screen || "simple-text"}.bmp?width=${deviceWidth}&height=${deviceHeight}&grayscale=${deviceGrayscaleLevels}`}
+										alt="Current playlist screen"
+										fill
+										className="object-cover rounded-xs ring-2 ring-gray-200"
+										style={{ imageRendering: "pixelated" }}
+										unoptimized
+									/>
+								</AspectRatio>
 							</div>
+							{playlistScreens.length > 1 && (
+								<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+									{playlistScreens.map((screen) => (
+										<span
+											key={`${screen.screen}-${screen.orderIndex}`}
+											className={
+												screen.orderIndex === activePlaylistScreen?.orderIndex
+													? "font-medium text-foreground"
+													: undefined
+											}
+										>
+											{screen.screen}
+										</span>
+									))}
+								</div>
+							)}
 						</>
 					) : (
 						<div

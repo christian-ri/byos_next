@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/database/db";
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
+import { DeviceDisplayMode } from "@/lib/mixup/constants";
+import {
+	DEFAULT_IMAGE_HEIGHT,
+	DEFAULT_IMAGE_WIDTH,
+} from "@/lib/recipes/constants";
 import { logger } from "@/lib/recipes/recipe-renderer";
 import type {
 	Device,
@@ -195,6 +200,118 @@ export const getActivePlaylistItem = async (
 	}
 
 	return null;
+};
+
+const getGrayscaleLevels = (grayscale: number | null | undefined): number => {
+	if (grayscale === 2 || grayscale === 4 || grayscale === 16) {
+		return grayscale;
+	}
+	return 2;
+};
+
+export const getDeviceRenderSettings = (device: Device) => {
+	const orientation = device.screen_orientation || "landscape";
+	const width =
+		orientation === "landscape"
+			? device.screen_width || DEFAULT_IMAGE_WIDTH
+			: device.screen_height || DEFAULT_IMAGE_HEIGHT;
+	const height =
+		orientation === "landscape"
+			? device.screen_height || DEFAULT_IMAGE_HEIGHT
+			: device.screen_width || DEFAULT_IMAGE_WIDTH;
+
+	return {
+		orientation,
+		width,
+		height,
+		grayscaleLevels: getGrayscaleLevels(device.grayscale),
+	};
+};
+
+export const resolveDeviceDisplayTarget = async ({
+	device,
+	baseUrl,
+	updatePlaylistIndex = false,
+}: {
+	device: Device;
+	baseUrl: string;
+	updatePlaylistIndex?: boolean;
+}) => {
+	let screenToDisplay = device.screen;
+	let dynamicRefreshRate = 180;
+	let imageUrl: string;
+	const { width, height, grayscaleLevels } = getDeviceRenderSettings(device);
+
+	switch (device.display_mode) {
+		case DeviceDisplayMode.PLAYLIST:
+			if (device.playlist_id) {
+				const activeItem = await getActivePlaylistItem(
+					device.playlist_id,
+					device.current_playlist_index || 0,
+					device.timezone || "UTC",
+				);
+
+				if (activeItem) {
+					screenToDisplay = activeItem.screen_id;
+					dynamicRefreshRate = activeItem.duration;
+
+					if (updatePlaylistIndex) {
+						await db
+							.updateTable("devices")
+							.set({ current_playlist_index: activeItem.order_index })
+							.where("id", "=", device.id.toString())
+							.execute();
+					}
+				} else {
+					logInfo("No active playlist item found, using fallback", {
+						source: "api/display",
+						metadata: { deviceId: device.friendly_id },
+					});
+					screenToDisplay = device.screen || "not-found";
+					dynamicRefreshRate = 60;
+				}
+			}
+			imageUrl = `${baseUrl}/${screenToDisplay || "not-found"}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
+			break;
+
+		case DeviceDisplayMode.MIXUP:
+			if (device.mixup_id) {
+				imageUrl = `${baseUrl}/mixup/${device.mixup_id}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
+				logInfo("Using mixup display mode", {
+					source: "api/display",
+					metadata: {
+						deviceId: device.friendly_id,
+						mixupId: device.mixup_id,
+					},
+				});
+			} else {
+				imageUrl = `${baseUrl}/${screenToDisplay || "not-found"}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
+			}
+			dynamicRefreshRate = calculateRefreshRate(
+				device.refresh_schedule as unknown as RefreshSchedule,
+				180,
+				device.timezone || "UTC",
+			);
+			break;
+
+		default:
+			dynamicRefreshRate = calculateRefreshRate(
+				device.refresh_schedule as unknown as RefreshSchedule,
+				180,
+				device.timezone || "UTC",
+			);
+			imageUrl = `${baseUrl}/${screenToDisplay || "not-found"}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
+			break;
+	}
+
+	return {
+		imageUrl,
+		screenToDisplay: screenToDisplay || "not-found",
+		refreshRate: dynamicRefreshRate,
+		width,
+		height,
+		grayscaleLevels,
+	};
 };
 
 // --- Device Management ---
