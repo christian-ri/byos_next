@@ -47,6 +47,73 @@
 		"version": "0.2.0",
 		"category": "display-components"
 	},
+	"apple-photos": {
+		"title": "Apple Photos",
+		"published": true,
+		"createdAt": "2026-04-29T00:00:00Z",
+		"updatedAt": "2026-04-29T00:00:00Z",
+		"description": "Random photo from an iCloud shared album, inspired by the official TRMNL Apple Photos plugin.",
+		"componentPath": "./screens/apple-photos",
+		"hasDataFetch": true,
+		"props": {
+			"title": "Apple Photos",
+			"albumName": "Shared Album",
+			"imageUrl": "https://byos-nextjs.vercel.app/album/london.png",
+			"caption": "Shared album preview",
+			"updatedAt": "Apr 29, 01:44 PM",
+			"note": "Preview - add an iCloud Shared Album URL to show your photos.",
+			"showCaption": true,
+			"showTimestamp": true,
+			"fitMode": "cover"
+		},
+		"params": {
+			"sharedAlbumUrl": {
+				"type": "string",
+				"label": "Shared Album URL",
+				"description": "Public iCloud Shared Album URL from Apple Photos, for example https://www.icloud.com/sharedalbum/#B1...",
+				"default": "",
+				"placeholder": "https://www.icloud.com/sharedalbum/#..."
+			},
+			"albumName": {
+				"type": "string",
+				"label": "Album Name",
+				"description": "Label shown in the top-left overlay.",
+				"default": "Shared Album"
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Time Zone",
+				"description": "IANA time zone used for the updated timestamp.",
+				"default": "America/New_York"
+			},
+			"showCaption": {
+				"type": "string",
+				"label": "Show Caption",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"showTimestamp": {
+				"type": "string",
+				"label": "Show Timestamp",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"fitMode": {
+				"type": "string",
+				"label": "Fit Mode",
+				"description": "Use cover to fill the screen or contain to show the full photo.",
+				"default": "cover"
+			}
+		},
+		"tags": ["photos", "apple", "icloud", "shared-album", "image"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
 	"bitmap-patterns": {
 		"title": "Bitmap Patterns",
 		"published": true,
@@ -365,6 +432,108 @@
 			}
 		},
 		"tags": ["calendar", "ics", "google", "month-view", "week-view"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"calendar-outlook": {
+		"title": "Calendar (Outlook)",
+		"published": true,
+		"createdAt": "2026-04-29T00:00:00Z",
+		"updatedAt": "2026-04-29T00:00:00Z",
+		"description": "Outlook Calendar recipe styled after the official TRMNL plugin. Uses published Outlook .ics calendar endpoints.",
+		"componentPath": "./screens/calendar-outlook",
+		"hasDataFetch": true,
+		"props": {
+			"providerLabel": "Outlook",
+			"title": "Outlook Calendar",
+			"subtitle": "Connected Calendar",
+			"timeZone": "America/New_York",
+			"updatedAt": "Apr 29, 01:44 PM",
+			"note": "Preview - your device will show actual data once an Outlook ICS feed is configured.",
+			"eventLayout": "month",
+			"includeDescription": true,
+			"includeEventTime": true,
+			"firstDay": 0,
+			"defaultDays": [],
+			"weekDays": [],
+			"monthWeeks": [],
+			"monthLabel": "April 2026"
+		},
+		"params": {
+			"icsUrl": {
+				"type": "multiline",
+				"label": "ICS URL(s)",
+				"description": "Published Outlook .ics calendar URL(s), one per line. Example: https://outlook.live.com/owa/calendar/.../calendar.ics",
+				"default": "",
+				"placeholder": "https://outlook.live.com/owa/calendar/.../calendar.ics"
+			},
+			"calendarName": {
+				"type": "string",
+				"label": "Calendar Name",
+				"description": "Subtitle shown below the plugin title.",
+				"default": "Connected Calendar"
+			},
+			"headers": {
+				"type": "multiline",
+				"label": "Headers",
+				"description": "Optional request headers in key=value or Header: Value format, one per line.",
+				"default": ""
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Time Zone",
+				"description": "IANA time zone used for display.",
+				"default": "America/New_York"
+			},
+			"eventLayout": {
+				"type": "string",
+				"label": "Layout",
+				"description": "Use default, week, or month.",
+				"default": "month"
+			},
+			"timeFormat": {
+				"type": "string",
+				"label": "Time Format",
+				"description": "Use 12h or 24h.",
+				"default": "12h"
+			},
+			"includeDescription": {
+				"type": "string",
+				"label": "Include Description",
+				"description": "Use yes or no. Most visible in the default layout.",
+				"default": "yes"
+			},
+			"includeEventTime": {
+				"type": "string",
+				"label": "Include Event Time",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"firstDay": {
+				"type": "string",
+				"label": "First Day of Week",
+				"description": "Applies to the month layout. Use sunday or monday.",
+				"default": "sunday"
+			},
+			"ignoredPhrases": {
+				"type": "multiline",
+				"label": "Ignored Phrases",
+				"description": "Events whose title or description includes these phrases will be ignored. One phrase per line.",
+				"default": ""
+			},
+			"maxEventsPerDay": {
+				"type": "number",
+				"label": "Max Events Per Day",
+				"description": "Caps visible events inside each day cell.",
+				"default": 4
+			}
+		},
+		"tags": ["calendar", "ics", "outlook", "month-view", "week-view"],
 		"author": {
 			"name": "TRMNL",
 			"github": "usetrmnl"
