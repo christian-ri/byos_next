@@ -9,8 +9,6 @@ import {
 	resolveDeviceDisplayTarget,
 } from "../utils";
 
-export const dynamic = "force-dynamic";
-
 /**
  * GET /api/display/current
  * Fetch the current screen for a device

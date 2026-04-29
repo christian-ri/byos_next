@@ -14,7 +14,6 @@ import {
 
 export const DEFAULT_SCREEN = "album";
 export const DEFAULT_REFRESH_RATE = 180;
-export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
 	const headers = parseRequestHeaders(request);
