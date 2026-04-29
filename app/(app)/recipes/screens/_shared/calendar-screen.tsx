@@ -1,9 +1,9 @@
-import { PreSatori } from "@/utils/pre-satori";
 import type {
 	CalendarDay,
 	CalendarDayEvent,
 	CalendarRecipeData,
 } from "@/app/(app)/recipes/screens/_shared/calendar-data";
+import { PreSatori } from "@/utils/pre-satori";
 
 type Props = CalendarRecipeData & {
 	width?: number;
@@ -78,7 +78,9 @@ function MonthCell({
 					/>
 				))}
 				{remaining > 0 && (
-					<span className="text-[10px] leading-none px-1.5">+{remaining} more</span>
+					<span className="text-[10px] leading-none px-1.5">
+						+{remaining} more
+					</span>
 				)}
 			</div>
 		</div>
@@ -89,13 +91,18 @@ function DefaultColumn({
 	day,
 	includeDescription,
 	includeEventTime,
+	columnWidth,
 }: {
 	day: CalendarDay;
 	includeDescription: boolean;
 	includeEventTime: boolean;
+	columnWidth: number;
 }) {
 	return (
-		<div className="flex-1 border-r border-black last:border-r-0 px-3 py-3">
+		<div
+			className="border-r border-black last:border-r-0 px-3 py-3"
+			style={{ width: `${columnWidth}px` }}
+		>
 			<div className="border-b border-dashed border-black pb-2">
 				<div className="text-lg font-medium">{day.shortLabel}</div>
 				<div className="text-sm">{day.label}</div>
@@ -121,12 +128,17 @@ function DefaultColumn({
 function WeekColumn({
 	day,
 	includeEventTime,
+	columnWidth,
 }: {
 	day: CalendarDay;
 	includeEventTime: boolean;
+	columnWidth: number;
 }) {
 	return (
-		<div className="flex-1 border-r border-black last:border-r-0 flex flex-col">
+		<div
+			className="border-r border-black last:border-r-0 flex flex-col"
+			style={{ width: `${columnWidth}px` }}
+		>
 			<div className="border-b border-dashed border-black px-2 py-2 text-center">
 				<div className="text-[12px] font-medium">{day.shortLabel}</div>
 				<div className="text-[11px]">{day.dayNumber}</div>
@@ -169,15 +181,27 @@ export default function CalendarScreen({
 }: Props) {
 	const isMonth = eventLayout === "month";
 	const isWeek = eventLayout === "week";
-	const weekdayHeader =
-		monthWeeks[0]?.map((day) => day.shortLabel) || ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+	const contentWidth = width - 32;
+	const defaultColumnWidth = Math.floor(contentWidth / 3);
+	const weekColumnWidth = Math.floor(contentWidth / 7);
+	const weekdayHeader = monthWeeks[0]?.map((day) => day.shortLabel) || [
+		"Sun",
+		"Mon",
+		"Tue",
+		"Wed",
+		"Thu",
+		"Fri",
+		"Sat",
+	];
 
 	return (
 		<PreSatori width={width} height={height}>
 			<div className="w-full h-full bg-[#efefed] text-black p-4 flex flex-col">
 				<div className="flex items-start justify-between px-2">
 					<div className="flex flex-col">
-						<div className="text-[34px] font-blockkie leading-none">{title}</div>
+						<div className="text-[34px] font-blockkie leading-none">
+							{title}
+						</div>
 						<div className="text-[18px] text-gray-500 mt-1">{subtitle}</div>
 					</div>
 					<div className="flex flex-col items-end text-[11px] text-gray-500">
@@ -231,6 +255,7 @@ export default function CalendarScreen({
 									key={day.key}
 									day={day}
 									includeEventTime={includeEventTime}
+									columnWidth={weekColumnWidth}
 								/>
 							))}
 						</div>
@@ -244,6 +269,7 @@ export default function CalendarScreen({
 									day={day}
 									includeDescription={includeDescription}
 									includeEventTime={includeEventTime}
+									columnWidth={defaultColumnWidth}
 								/>
 							))}
 						</div>

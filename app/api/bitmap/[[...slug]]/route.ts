@@ -26,6 +26,7 @@ export async function GET(
 		const widthParam = searchParams.get("width");
 		const heightParam = searchParams.get("height");
 		const grayscaleParam = searchParams.get("grayscale");
+		const ownerParam = searchParams.get("_owner");
 
 		const width = widthParam ? parseInt(widthParam, 10) : DEFAULT_IMAGE_WIDTH;
 		const height = heightParam
@@ -50,6 +51,7 @@ export async function GET(
 			validWidth,
 			validHeight,
 			grayscaleLevels,
+			ownerParam,
 		);
 
 		if (
@@ -85,9 +87,11 @@ const renderRecipeBitmap = cache(
 		width: number,
 		height: number,
 		grayscaleLevels: number = 2,
+		userId: string | null = null,
 	) => {
 		const { config, Component, props, element } = await buildRecipeElement({
 			slug: recipeId,
+			userId,
 		});
 
 		const ComponentToRender =

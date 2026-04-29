@@ -64,7 +64,7 @@ export async function GET(request: Request) {
 
 		const deviceData = device as unknown as Device;
 		const baseUrl = `${headers.hostUrl}/api/bitmap`;
-		const { imageUrl, screenToDisplay, refreshRate } =
+		const { imageUrl, screenToDisplay, refreshRate, userId } =
 			await resolveDeviceDisplayTarget({
 				device: deviceData,
 				baseUrl,
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
 			{
 				status: 200,
 				refresh_rate: refreshRate,
-				image_url: appendImageCacheBust(imageUrl, uniqueId),
+				image_url: appendImageCacheBust(imageUrl, uniqueId, userId),
 				filename: `${screenToDisplay}_${uniqueId}.bmp`,
 				rendered_at: deviceData.last_update_time || new Date().toISOString(),
 			},

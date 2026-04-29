@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth/get-user";
 import type { JsonObject } from "@/lib/database/db.d";
-import { withUserScope } from "@/lib/database/scoped-db";
+import { withUserScope, withUserScopeForUser } from "@/lib/database/scoped-db";
 import { checkDbConnection } from "@/lib/database/utils";
 import type { RecipeParamDefinitions } from "@/lib/recipes/recipe-renderer";
 
@@ -80,6 +80,7 @@ export async function updateScreenParams(
 export async function getScreenParams(
 	slug: string,
 	definitions?: RecipeParamDefinitions,
+	userIdOverride?: string | null,
 ): Promise<Record<string, unknown>> {
 	const { ready } = await checkDbConnection();
 	if (!ready) {
@@ -94,13 +95,22 @@ export async function getScreenParams(
 		return params;
 	}
 
-	const row = await withUserScope((scopedDb) =>
-		scopedDb
-			.selectFrom("screen_configs")
-			.select(["params"])
-			.where("screen_id", "=", slug)
-			.executeTakeFirst(),
-	);
+	const row =
+		userIdOverride !== undefined
+			? await withUserScopeForUser(userIdOverride, (scopedDb) =>
+					scopedDb
+						.selectFrom("screen_configs")
+						.select(["params"])
+						.where("screen_id", "=", slug)
+						.executeTakeFirst(),
+				)
+			: await withUserScope((scopedDb) =>
+					scopedDb
+						.selectFrom("screen_configs")
+						.select(["params"])
+						.where("screen_id", "=", slug)
+						.executeTakeFirst(),
+				);
 
 	const rawParams = row?.params ?? {};
 	const parsedParams =

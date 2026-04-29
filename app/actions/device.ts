@@ -1,5 +1,6 @@
 "use server";
 
+import { getCurrentUserId } from "@/lib/auth/get-user";
 import { db } from "@/lib/database/db";
 import { withUserScope } from "@/lib/database/scoped-db";
 import { checkDbConnection } from "@/lib/database/utils";
@@ -200,6 +201,10 @@ export async function updateDevice(
 	if (device.grayscale !== undefined) updateData.grayscale = device.grayscale;
 
 	updateData.updated_at = new Date().toISOString();
+	const userId = await getCurrentUserId();
+	if (userId) {
+		updateData.user_id = userId;
+	}
 
 	try {
 		await withUserScope((scopedDb) =>

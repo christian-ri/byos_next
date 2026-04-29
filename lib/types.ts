@@ -44,6 +44,7 @@ export type Device = {
 	screen_height: number | null;
 	screen_orientation: string | null;
 	grayscale: number | null;
+	user_id: string | null;
 };
 
 export type Playlist = {

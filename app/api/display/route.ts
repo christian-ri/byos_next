@@ -70,14 +70,18 @@ export async function GET(request: Request) {
 			return buildErrorResponse("Device not found", baseUrl, uniqueId);
 		}
 
-		const { imageUrl, screenToDisplay, refreshRate } =
+		const { imageUrl, screenToDisplay, refreshRate, userId } =
 			await resolveDeviceDisplayTarget({
 				device,
 				baseUrl,
 				updatePlaylistIndex: true,
 			});
 
-		const cacheBustedImageUrl = appendImageCacheBust(imageUrl, uniqueId);
+		const cacheBustedImageUrl = appendImageCacheBust(
+			imageUrl,
+			uniqueId,
+			userId,
+		);
 
 		precacheImageInBackground(cacheBustedImageUrl, device.friendly_id);
 

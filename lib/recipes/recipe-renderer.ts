@@ -159,6 +159,7 @@ export const fetchRecipeComponent = cache(async (slug: string) => {
 
 type FetchPropsOptions = {
 	validateFetchedData?: (slug: string, data: unknown) => boolean;
+	userId?: string | null;
 };
 
 export const fetchRecipeProps = cache(
@@ -168,7 +169,7 @@ export const fetchRecipeProps = cache(
 		options?: FetchPropsOptions,
 	): Promise<ComponentProps> => {
 		const params = config.params
-			? await getScreenParams(slug, config.params)
+			? await getScreenParams(slug, config.params, options?.userId)
 			: {};
 
 		let props: ComponentProps = {
@@ -352,9 +353,11 @@ export const renderRecipeOutputs = cache(
 export const buildRecipeElement = async ({
 	slug,
 	validateProps,
+	userId,
 }: {
 	slug: string;
 	validateProps?: (slug: string, props: ComponentProps) => boolean;
+	userId?: string | null;
 }) => {
 	const config = fetchRecipeConfig(slug);
 	const Component = config ? await fetchRecipeComponent(slug) : null;
@@ -369,6 +372,7 @@ export const buildRecipeElement = async ({
 	}
 
 	const props = await fetchRecipeProps(slug, config, {
+		userId,
 		validateFetchedData: validateProps
 			? (slug: string, data: unknown) => {
 					return (

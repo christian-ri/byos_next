@@ -31,7 +31,13 @@ export async function withUserScope<T>(
 	callback: (scopedDb: typeof db) => Promise<T>,
 ): Promise<T> {
 	const userId = await getCurrentUserId();
+	return withUserScopeForUser(userId, callback);
+}
 
+export async function withUserScopeForUser<T>(
+	userId: string | null,
+	callback: (scopedDb: typeof db) => Promise<T>,
+): Promise<T> {
 	// Use a dedicated connection to ensure role and session variable persist
 	return db.connection().execute(async (conn) => {
 		// Switch to non-superuser role so RLS policies are enforced

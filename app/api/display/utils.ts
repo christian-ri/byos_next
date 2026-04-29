@@ -308,6 +308,7 @@ export const resolveDeviceDisplayTarget = async ({
 		imageUrl,
 		screenToDisplay: screenToDisplay || "not-found",
 		refreshRate: dynamicRefreshRate,
+		userId: device.user_id,
 		width,
 		height,
 		grayscaleLevels,
@@ -566,9 +567,17 @@ export const buildDisplayResponse = (
 	);
 };
 
-export const appendImageCacheBust = (imageUrl: string, uniqueId: string) => {
+export const appendImageCacheBust = (
+	imageUrl: string,
+	uniqueId: string,
+	userId?: string | null,
+) => {
+	const params = new URLSearchParams({ _cb: uniqueId });
+	if (userId) {
+		params.set("_owner", userId);
+	}
 	const separator = imageUrl.includes("?") ? "&" : "?";
-	return `${imageUrl}${separator}_cb=${encodeURIComponent(uniqueId)}`;
+	return `${imageUrl}${separator}${params.toString()}`;
 };
 
 export const buildErrorResponse = (
