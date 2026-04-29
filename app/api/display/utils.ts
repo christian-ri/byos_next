@@ -419,6 +419,63 @@ export const findOrCreateDevice = async (
 			}
 			return device;
 		}
+
+		const friendly_id = generateFriendlyId(
+			macAddress,
+			new Date().toISOString().replace(/[-:Z]/g, ""),
+		);
+		const generatedApiKey = generateApiKey(
+			macAddress,
+			new Date().toISOString().replace(/[-:Z]/g, ""),
+		);
+
+		try {
+			const newDevice = await db
+				.insertInto("devices")
+				.values({
+					mac_address: macAddress,
+					name: `TRMNL Device ${friendly_id}`,
+					friendly_id,
+					api_key: apiKey || generatedApiKey,
+					refresh_schedule: JSON.stringify({
+						default_refresh_rate: headers.refreshRate
+							? Number.parseInt(headers.refreshRate, 10)
+							: 60,
+						time_ranges: [],
+					}),
+					last_update_time: new Date().toISOString(),
+					next_expected_update: new Date(
+						Date.now() + 3600 * 1000,
+					).toISOString(),
+					timezone: "UTC",
+					screen: DEFAULT_SCREEN,
+				})
+				.returningAll()
+				.executeTakeFirst();
+
+			if (newDevice) {
+				logInfo("Created new device from MAC address", {
+					source: "api/display",
+					metadata: { friendly_id },
+				});
+				return newDevice as unknown as Device;
+			}
+		} catch (e) {
+			logError("Error creating device from MAC address", {
+				source: "api/display",
+				metadata: { error: e, macAddress },
+			});
+
+			const existingDevice = await db
+				.selectFrom("devices")
+				.selectAll()
+				.where("mac_address", "=", macAddress)
+				.executeTakeFirst();
+
+			if (existingDevice) {
+				return existingDevice as unknown as Device;
+			}
+		}
 	}
 
 	// 3. Create new device or use mock

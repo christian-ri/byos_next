@@ -308,6 +308,40 @@ export async function GET(request: Request) {
 					{ status: 200 },
 				);
 			} catch (createError) {
+				const existingDevice = await db
+					.selectFrom("devices")
+					.selectAll()
+					.where((eb) =>
+						eb.or([
+							eb("mac_address", "=", macAddress),
+							eb("api_key", "=", api_key),
+						]),
+					)
+					.executeTakeFirst();
+
+				if (existingDevice) {
+					logInfo("Setup create failed but existing device was found", {
+						source: "api/setup",
+						metadata: {
+							friendly_id: existingDevice.friendly_id,
+							macAddress,
+							api_key: maskApiKey(api_key),
+						},
+					});
+
+					return NextResponse.json(
+						{
+							status: 200,
+							api_key: existingDevice.api_key,
+							friendly_id: existingDevice.friendly_id,
+							image_url: null,
+							filename: null,
+							message: `Device ${existingDevice.friendly_id} already exists in BYOS!`,
+						},
+						{ status: 200 },
+					);
+				}
+
 				// Create an error object with the error details
 				const deviceError: CustomError = new Error("Error creating device");
 				// Attach the original error information
