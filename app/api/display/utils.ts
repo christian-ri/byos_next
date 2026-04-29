@@ -557,8 +557,18 @@ export const buildDisplayResponse = (
 			special_function: "restart_playlist",
 			...extra,
 		},
-		{ status: 200 },
+		{
+			status: 200,
+			headers: {
+				"Cache-Control": "no-store, max-age=0",
+			},
+		},
 	);
+};
+
+export const appendImageCacheBust = (imageUrl: string, uniqueId: string) => {
+	const separator = imageUrl.includes("?") ? "&" : "?";
+	return `${imageUrl}${separator}_cb=${encodeURIComponent(uniqueId)}`;
 };
 
 export const buildErrorResponse = (

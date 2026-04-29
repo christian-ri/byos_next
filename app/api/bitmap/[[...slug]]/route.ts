@@ -11,6 +11,8 @@ import {
 	renderRecipeOutputs,
 } from "@/lib/recipes/recipe-renderer";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
 	req: NextRequest,
 	{ params }: { params: Promise<{ slug?: string[] }> },
@@ -68,6 +70,7 @@ export async function GET(
 			headers: {
 				"Content-Type": "image/bmp",
 				"Content-Length": recipeBuffer.length.toString(),
+				"Cache-Control": "no-store, max-age=0",
 			},
 		});
 	} catch (error) {
@@ -133,6 +136,7 @@ const renderFallbackBitmap = cache(async (slug: string = "not-found") => {
 			headers: {
 				"Content-Type": "image/bmp",
 				"Content-Length": renders.bitmap.length.toString(),
+				"Cache-Control": "no-store, max-age=0",
 			},
 		});
 	} catch (fallbackError) {

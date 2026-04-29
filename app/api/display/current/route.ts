@@ -3,7 +3,13 @@ import { db } from "@/lib/database/db";
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
 import type { Device } from "@/lib/types";
-import { parseRequestHeaders, resolveDeviceDisplayTarget } from "../utils";
+import {
+	appendImageCacheBust,
+	parseRequestHeaders,
+	resolveDeviceDisplayTarget,
+} from "../utils";
+
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/display/current
@@ -65,6 +71,7 @@ export async function GET(request: Request) {
 				device: deviceData,
 				baseUrl,
 			});
+		const uniqueId = Date.now().toString(36);
 
 		logInfo("Current display request successful", {
 			source: "api/display/current",
@@ -78,11 +85,16 @@ export async function GET(request: Request) {
 			{
 				status: 200,
 				refresh_rate: refreshRate,
-				image_url: imageUrl,
-				filename: `${screenToDisplay}.bmp`,
+				image_url: appendImageCacheBust(imageUrl, uniqueId),
+				filename: `${screenToDisplay}_${uniqueId}.bmp`,
 				rendered_at: deviceData.last_update_time || new Date().toISOString(),
 			},
-			{ status: 200 },
+			{
+				status: 200,
+				headers: {
+					"Cache-Control": "no-store, max-age=0",
+				},
+			},
 		);
 	} catch (error) {
 		logError(error as Error, {

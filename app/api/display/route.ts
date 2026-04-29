@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
 import {
+	appendImageCacheBust,
 	buildDisplayResponse,
 	buildErrorResponse,
 	findOrCreateDevice,
@@ -13,6 +14,7 @@ import {
 
 export const DEFAULT_SCREEN = "album";
 export const DEFAULT_REFRESH_RATE = 180;
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
 	const headers = parseRequestHeaders(request);
@@ -44,7 +46,10 @@ export async function GET(request: Request) {
 			metadata: { headers },
 		});
 		return buildDisplayResponse(
-			`${baseUrl}/${DEFAULT_SCREEN}.bmp?grayscale=2`,
+			appendImageCacheBust(
+				`${baseUrl}/${DEFAULT_SCREEN}.bmp?grayscale=2`,
+				uniqueId,
+			),
 			`${DEFAULT_SCREEN}_${uniqueId}.bmp`,
 			DEFAULT_REFRESH_RATE,
 		);
@@ -73,7 +78,9 @@ export async function GET(request: Request) {
 				updatePlaylistIndex: true,
 			});
 
-		precacheImageInBackground(imageUrl, device.friendly_id);
+		const cacheBustedImageUrl = appendImageCacheBust(imageUrl, uniqueId);
+
+		precacheImageInBackground(cacheBustedImageUrl, device.friendly_id);
 
 		// Update device status in background
 		updateDeviceStatus(device, headers, refreshRate);
@@ -86,7 +93,7 @@ export async function GET(request: Request) {
 		logInfo("Display request successful", { source: "api/display", metadata });
 
 		return buildDisplayResponse(
-			imageUrl,
+			cacheBustedImageUrl,
 			`${screenToDisplay || "not-found"}_${uniqueId}.bmp`,
 			refreshRate,
 		);
