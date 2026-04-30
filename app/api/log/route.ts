@@ -385,8 +385,37 @@ export async function POST(request: Request) {
 							},
 						});
 
-						// Fall back to API key lookup
-						deviceFound = false;
+						// Duplicate/race-safe fallback: resolve the device that may have
+						// been created in a parallel request.
+						const existingDevice = await db
+							.selectFrom("devices")
+							.selectAll()
+							.where((eb) =>
+								eb.or([
+									eb("mac_address", "=", macAddress),
+									eb("api_key", "=", apiKey),
+								]),
+							)
+							.executeTakeFirst();
+
+						if (existingDevice) {
+							deviceId = existingDevice.friendly_id;
+							deviceFound = true;
+							deviceStatus = "known";
+							logInfo(
+								"Recovered existing device after create conflict (MAC/API key)",
+								{
+									source: "api/log",
+									metadata: {
+										device_id: deviceId,
+										mac_address: macAddress,
+									},
+								},
+							);
+						} else {
+							// Keep previous behavior when no matching device exists.
+							deviceFound = false;
+						}
 					}
 				}
 			}
