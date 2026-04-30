@@ -509,10 +509,27 @@ export const findOrCreateDevice = async (
 			if (existingDevice) {
 				return existingDevice as unknown as Device;
 			}
+
+			// If the insert failed and we still cannot resolve by MAC/API key,
+			// do not fall through to mock provisioning for a real hardware device.
+			return null;
 		}
+
+		// A real device provided a MAC address but could not be resolved/created.
+		// Stop here to avoid creating conflicting mock rows.
+		return null;
 	}
 
 	if (apiKey) {
+		const existingByApiKey = await db
+			.selectFrom("devices")
+			.selectAll()
+			.where("api_key", "=", apiKey)
+			.executeTakeFirst();
+		if (existingByApiKey) {
+			return existingByApiKey as unknown as Device;
+		}
+
 		const mockMacAddress = generateMockMacAddress(apiKey);
 		const existingMock = await db
 			.selectFrom("devices")
