@@ -81,6 +81,12 @@ export const findDeviceByIdentity = async ({
 	const normalizedCompactMacAddress = compactMacAddress(macAddress);
 	const normalizedFriendlyId = normalizeFriendlyId(friendlyId);
 
+	console.log(
+		"findDeviceByIdentity input:",
+		JSON.stringify({ apiKey, macAddress, friendlyId }),
+	);
+	console.log("normalizedApiKey:", JSON.stringify(normalizedApiKey));
+
 	console.log("TRMNL findDeviceByIdentity normalized values", {
 		apiKeyPresent: Boolean(normalizedApiKey),
 		apiKeyValue: normalizedApiKey
@@ -112,6 +118,9 @@ export const findDeviceByIdentity = async ({
 				.where(sql<string>`trim(coalesce(api_key, ''))`, "=", normalizedApiKey)
 				.executeTakeFirst()
 		: null;
+
+	console.log("deviceByApiKey result:", deviceByApiKey ? "FOUND" : "NULL");
+
 	const deviceByMac = normalizedCompactMacAddress
 		? await db
 				.selectFrom("devices")
