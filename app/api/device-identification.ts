@@ -93,6 +93,18 @@ export const findDeviceByIdentity = async ({
 		normalizedFriendlyId,
 	});
 
+	if (normalizedApiKey) {
+		console.log("Looking up api_key:", JSON.stringify(normalizedApiKey));
+		const allDevices = await db
+			.selectFrom("devices")
+			.select(["api_key", "friendly_id"])
+			.execute();
+		console.log(
+			"All device api_keys:",
+			allDevices.map((device) => JSON.stringify(device.api_key)),
+		);
+	}
+
 	const deviceByApiKey = normalizedApiKey
 		? await db
 				.selectFrom("devices")
@@ -130,6 +142,42 @@ export const findDeviceByIdentity = async ({
 		: null;
 
 	const matchedDevice = deviceByApiKey || deviceByMac || deviceByFriendlyId;
+
+	if (!matchedDevice) {
+		const totalDevicesResult = await db
+			.selectFrom("devices")
+			.select((eb) => eb.fn.countAll().as("count"))
+			.executeTakeFirst();
+		const sampleDevices = await db
+			.selectFrom("devices")
+			.select(["friendly_id", "mac_address", "api_key"])
+			.limit(3)
+			.execute();
+		const dbUrl = process.env.DATABASE_URL;
+		let dbHost: string | null = null;
+		let dbName: string | null = null;
+		try {
+			if (dbUrl) {
+				const parsed = new URL(dbUrl);
+				dbHost = parsed.hostname || null;
+				dbName = parsed.pathname?.replace(/^\//, "") || null;
+			}
+		} catch {
+			dbHost = "unparseable";
+			dbName = null;
+		}
+
+		console.log("TRMNL findDeviceByIdentity no-match diagnostics", {
+			dbHost,
+			dbName,
+			totalDevices: Number(totalDevicesResult?.count || 0),
+			sampleDevices: sampleDevices.map((device) => ({
+				friendlyId: device.friendly_id,
+				macAddress: device.mac_address,
+				apiKey: maskApiKey(device.api_key),
+			})),
+		});
+	}
 
 	console.log("TRMNL findDeviceByIdentity lookup result", {
 		foundByApiKey: Boolean(deviceByApiKey),

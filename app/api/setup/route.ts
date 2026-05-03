@@ -27,9 +27,12 @@ const firstHeaderOrQuery = (
 	headerName: string,
 	queryNames: string[],
 ) => {
-	const headerValue = request.headers.get(headerName);
-	if (headerValue) {
-		return { value: headerValue, source: `header:${headerName}` };
+	const headerNames = [headerName, ...queryNames];
+	for (const candidate of headerNames) {
+		const headerValue = request.headers.get(candidate);
+		if (headerValue) {
+			return { value: headerValue, source: `header:${candidate}` };
+		}
 	}
 
 	for (const queryName of queryNames) {
@@ -48,6 +51,8 @@ export async function GET(request: Request) {
 		const macIdentifier = firstHeaderOrQuery(request, url, "ID", [
 			"id",
 			"ID",
+			"x-device-id",
+			"device_id",
 			"mac",
 			"mac_address",
 			"macAddress",
@@ -67,7 +72,13 @@ export async function GET(request: Request) {
 			request,
 			url,
 			"Friendly-Id",
-			["friendly_id", "friendly-id", "device_friendly_id", "deviceFriendlyId"],
+			[
+				"friendly_id",
+				"friendly-id",
+				"x-friendly-id",
+				"device_friendly_id",
+				"deviceFriendlyId",
+			],
 		);
 		const refreshRate = request.headers.get("Refresh-Rate");
 		const batteryVoltage = request.headers.get("Battery-Voltage");

@@ -75,8 +75,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
 	const url = new URL(request.url);
 	const firstIdentifier = (headerName: string, queryNames: string[]) => {
-		const headerValue = request.headers.get(headerName);
-		if (headerValue) return headerValue;
+		for (const candidate of [headerName, ...queryNames]) {
+			const headerValue = request.headers.get(candidate);
+			if (headerValue) return headerValue;
+		}
 		for (const queryName of queryNames) {
 			const queryValue = url.searchParams.get(queryName);
 			if (queryValue) return queryValue;
@@ -98,7 +100,15 @@ export async function POST(request: Request) {
 
 	try {
 		const macAddress = normalizeMacAddress(
-			firstIdentifier("ID", ["id", "ID", "mac", "mac_address", "macAddress"]),
+			firstIdentifier("ID", [
+				"id",
+				"ID",
+				"x-device-id",
+				"device_id",
+				"mac",
+				"mac_address",
+				"macAddress",
+			]),
 		);
 		const apiKey = normalizeIdentifier(
 			firstIdentifier("Access-Token", [
@@ -112,6 +122,7 @@ export async function POST(request: Request) {
 			firstIdentifier("Friendly-Id", [
 				"friendly_id",
 				"friendly-id",
+				"x-friendly-id",
 				"device_friendly_id",
 				"deviceFriendlyId",
 			]),

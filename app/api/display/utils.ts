@@ -93,12 +93,22 @@ export const parseRequestHeaders = (request: Request): RequestHeaders => {
 			]),
 		),
 		macAddress: normalizeMacAddress(
-			firstIdentifier(["ID", "id", "mac", "mac_address", "macAddress"]),
+			firstIdentifier([
+				"ID",
+				"id",
+				"X-Device-Id",
+				"x-device-id",
+				"mac",
+				"mac_address",
+				"macAddress",
+			]),
 		),
 		friendlyId: normalizeFriendlyId(
 			firstIdentifier([
 				"Friendly-Id",
 				"friendly-id",
+				"X-Friendly-Id",
+				"x-friendly-id",
 				"friendly_id",
 				"device_friendly_id",
 				"deviceFriendlyId",
