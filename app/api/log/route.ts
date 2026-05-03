@@ -142,7 +142,7 @@ export async function POST(request: Request) {
 					source: "api/log",
 					metadata: {
 						macAddress: macAddress || null,
-						apiKey: apiKey || null,
+						apiKey: maskApiKey(apiKey),
 						refreshRate: refreshRate || null,
 						batteryVoltage: batteryVoltage || null,
 						fwVersion: fwVersion || null,
@@ -246,6 +246,18 @@ export async function POST(request: Request) {
 					matchedBy: matchedDevice.matchedBy,
 				},
 			});
+		} else {
+			logInfo("Log request skipped for unknown device identity", {
+				source: "api/log",
+				metadata: {
+					apiKey: maskApiKey(apiKey),
+					macAddress,
+					friendlyId,
+					matchedBy: matchedDevice.matchedBy,
+					reason: "device_must_be_registered_by_setup_first",
+				},
+			});
+			return new NextResponse(null, { status: 204 });
 		}
 
 		// First, try to find the device by MAC address if provided

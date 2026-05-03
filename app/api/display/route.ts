@@ -5,10 +5,10 @@ import {
 	appendImageCacheBust,
 	buildDisplayResponse,
 	buildErrorResponse,
-	findOrCreateDevice,
 	parseRequestHeaders,
 	precacheImageInBackground,
 	resolveDeviceDisplayTarget,
+	resolveDeviceForDisplay,
 	updateDeviceStatus,
 } from "./utils";
 
@@ -43,7 +43,10 @@ export async function GET(request: Request) {
 		console.warn("Database client not initialized, using noDB mode");
 		logInfo("Database client not initialized, using noDB mode", {
 			source: "api/display",
-			metadata: { headers },
+			metadata: {
+				...headers,
+				apiKey: maskApiKey(headers.apiKey),
+			},
 		});
 		return buildDisplayResponse(
 			appendImageCacheBust(
@@ -69,11 +72,11 @@ export async function GET(request: Request) {
 	});
 
 	try {
-		const deviceResolution = await findOrCreateDevice(headers);
+		const deviceResolution = await resolveDeviceForDisplay(headers);
 		const device = deviceResolution.device;
 
 		if (!device) {
-			logError("Error fetching/creating device", {
+			logError("Display device identity not found", {
 				source: "api/display",
 				metadata: {
 					apiKey: maskApiKey(headers.apiKey),
@@ -117,7 +120,6 @@ export async function GET(request: Request) {
 			refreshRate,
 			displayMode: device.display_mode,
 			matchedBy: deviceResolution.matchedBy,
-			deviceCreated: deviceResolution.created,
 			debug: {
 				accessTokenPresent: Boolean(headers.apiKey),
 				macPresent: Boolean(headers.macAddress),

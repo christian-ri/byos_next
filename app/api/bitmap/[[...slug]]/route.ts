@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { cache } from "react";
 import NotFoundScreen from "@/app/(app)/recipes/screens/not-found/not-found";
-import screens from "@/app/(app)/recipes/screens.json";
+import { resolveScreenSlug } from "@/app/api/screen-resolution";
 import {
 	addDimensionsToProps,
 	buildRecipeElement,
@@ -42,9 +42,14 @@ export async function GET(
 			`Bitmap request for: ${bitmapPath} in ${validWidth}x${validHeight} with ${grayscaleLevels} gray levels`,
 		);
 
-		const recipeId = screens[recipeSlug as keyof typeof screens]
-			? recipeSlug
-			: "simple-text";
+		const screenResolution = resolveScreenSlug(recipeSlug, "simple-text");
+		const recipeId = screenResolution.screen;
+
+		if (screenResolution.fallbackUsed) {
+			logger.warn(
+				`Bitmap screen normalized from ${screenResolution.originalScreen || "empty"} to ${recipeId} (${screenResolution.fallbackReason})`,
+			);
+		}
 
 		const recipeBuffer = await renderRecipeBitmap(
 			recipeId,

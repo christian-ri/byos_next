@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 import {
 	findDeviceByIdentity,
@@ -6,6 +5,7 @@ import {
 	normalizeIdentifier,
 	normalizeMacAddress,
 } from "@/app/api/device-identification";
+import { resolveScreenSlug } from "@/app/api/screen-resolution";
 import { db } from "@/lib/database/db";
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
@@ -14,14 +14,13 @@ import {
 	DEFAULT_IMAGE_HEIGHT,
 	DEFAULT_IMAGE_WIDTH,
 } from "@/lib/recipes/constants";
-import { logger } from "@/lib/recipes/recipe-renderer";
 import type {
 	Device,
 	PlaylistItem,
 	RefreshSchedule,
 	TimeRange,
 } from "@/lib/types";
-import { generateApiKey, generateFriendlyId, timezones } from "@/utils/helpers";
+import { timezones } from "@/utils/helpers";
 import { DEFAULT_SCREEN } from "./route";
 
 // --- Types ---
@@ -98,12 +97,6 @@ export const parseRequestHeaders = (request: Request): RequestHeaders => {
 };
 
 // --- Helper Functions ---
-
-export const generateMockMacAddress = (apiKey: string): string => {
-	const hash = crypto.createHash("sha256").update(apiKey).digest("hex");
-	const macPart = hash.substring(hash.length - 6).toUpperCase();
-	return `A1:B2:C3:${macPart.substring(0, 2)}:${macPart.substring(2, 4)}:${macPart.substring(4, 6)}`;
-};
 
 export const precacheImageInBackground = (
 	imageUrl: string,
@@ -286,13 +279,17 @@ export const resolveDeviceDisplayTarget = async ({
 	baseUrl: string;
 	updatePlaylistIndex?: boolean;
 }) => {
-	let screenToDisplay = device.screen;
+	const initialScreenResolution = resolveScreenSlug(
+		device.screen,
+		DEFAULT_SCREEN,
+	);
+	let screenToDisplay = initialScreenResolution.screen;
 	let dynamicRefreshRate = 180;
 	let imageUrl: string;
 	const { width, height, grayscaleLevels } = getDeviceRenderSettings(device);
-	let fallbackUsed = false;
-	let fallbackReason: string | null = null;
-	const fallbackScreen = device.screen || DEFAULT_SCREEN;
+	let fallbackUsed = initialScreenResolution.fallbackUsed;
+	let fallbackReason = initialScreenResolution.fallbackReason;
+	const fallbackScreen = initialScreenResolution.screen;
 
 	switch (device.display_mode) {
 		case DeviceDisplayMode.PLAYLIST:
@@ -304,8 +301,16 @@ export const resolveDeviceDisplayTarget = async ({
 				);
 
 				if (activeItem) {
-					screenToDisplay = activeItem.screen_id;
+					const playlistScreen = resolveScreenSlug(
+						activeItem.screen_id,
+						fallbackScreen,
+					);
+					screenToDisplay = playlistScreen.screen;
 					dynamicRefreshRate = activeItem.duration;
+					if (playlistScreen.fallbackUsed) {
+						fallbackUsed = true;
+						fallbackReason = playlistScreen.fallbackReason;
+					}
 
 					if (updatePlaylistIndex) {
 						await db
@@ -429,21 +434,14 @@ export const updateDeviceStatus = async (
 	}
 };
 
-export const findOrCreateDevice = async (
+export const resolveDeviceForDisplay = async (
 	headers: RequestHeaders,
 ): Promise<{
 	device: Device | null;
-	matchedBy:
-		| "api_key"
-		| "mac_address"
-		| "friendly_id"
-		| "created"
-		| "mock"
-		| null;
+	matchedBy: "api_key" | "mac_address" | "friendly_id" | null;
 	foundByApiKey: boolean;
 	foundByMac: boolean;
 	foundByFriendlyId: boolean;
-	created: boolean;
 }> => {
 	const { apiKey, macAddress, friendlyId } = headers;
 	const match = await findDeviceByIdentity({ apiKey, macAddress, friendlyId });
@@ -497,222 +495,7 @@ export const findOrCreateDevice = async (
 			foundByApiKey: match.foundByApiKey,
 			foundByMac: match.foundByMac,
 			foundByFriendlyId: match.foundByFriendlyId,
-			created: false,
 		};
-	}
-
-	if (macAddress) {
-		const friendly_id = generateFriendlyId(
-			macAddress,
-			new Date().toISOString().replace(/[-:Z]/g, ""),
-		);
-		const generatedApiKey = generateApiKey(
-			macAddress,
-			new Date().toISOString().replace(/[-:Z]/g, ""),
-		);
-
-		try {
-			const newDevice = await db
-				.insertInto("devices")
-				.values({
-					mac_address: macAddress,
-					name: `TRMNL Device ${friendly_id}`,
-					friendly_id,
-					api_key: apiKey || generatedApiKey,
-					refresh_schedule: JSON.stringify({
-						default_refresh_rate: headers.refreshRate
-							? Number.parseInt(headers.refreshRate, 10)
-							: 60,
-						time_ranges: [],
-					}),
-					last_update_time: new Date().toISOString(),
-					next_expected_update: new Date(
-						Date.now() + 3600 * 1000,
-					).toISOString(),
-					timezone: "UTC",
-					screen: DEFAULT_SCREEN,
-				})
-				.returningAll()
-				.executeTakeFirst();
-
-			if (newDevice) {
-				logInfo("Created new device from MAC address", {
-					source: "api/display",
-					metadata: { friendly_id },
-				});
-				return {
-					device: newDevice as unknown as Device,
-					matchedBy: "created",
-					foundByApiKey: false,
-					foundByMac: false,
-					foundByFriendlyId: false,
-					created: true,
-				};
-			}
-		} catch (e) {
-			logError("Error creating device from MAC address", {
-				source: "api/display",
-				metadata: { error: e, macAddress },
-			});
-
-			const existingDevice = await db
-				.selectFrom("devices")
-				.selectAll()
-				.where((eb) =>
-					eb.or([
-						eb("mac_address", "=", macAddress),
-						...(apiKey ? [eb("api_key", "=", apiKey)] : []),
-					]),
-				)
-				.executeTakeFirst();
-
-			if (existingDevice) {
-				return {
-					device: existingDevice as unknown as Device,
-					matchedBy:
-						apiKey && existingDevice.api_key === apiKey
-							? "api_key"
-							: "mac_address",
-					foundByApiKey: Boolean(apiKey && existingDevice.api_key === apiKey),
-					foundByMac: Boolean(existingDevice.mac_address === macAddress),
-					foundByFriendlyId: false,
-					created: false,
-				};
-			}
-
-			// If the insert failed and we still cannot resolve by MAC/API key,
-			// do not fall through to mock provisioning for a real hardware device.
-			return {
-				device: null,
-				matchedBy: null,
-				foundByApiKey: false,
-				foundByMac: false,
-				foundByFriendlyId: false,
-				created: false,
-			};
-		}
-
-		// A real device provided a MAC address but could not be resolved/created.
-		// Stop here to avoid creating conflicting mock rows.
-		return {
-			device: null,
-			matchedBy: null,
-			foundByApiKey: false,
-			foundByMac: false,
-			foundByFriendlyId: false,
-			created: false,
-		};
-	}
-
-	if (apiKey) {
-		const existingByApiKey = await db
-			.selectFrom("devices")
-			.selectAll()
-			.where("api_key", "=", apiKey)
-			.executeTakeFirst();
-		if (existingByApiKey) {
-			return {
-				device: existingByApiKey as unknown as Device,
-				matchedBy: "api_key",
-				foundByApiKey: true,
-				foundByMac: false,
-				foundByFriendlyId: false,
-				created: false,
-			};
-		}
-
-		const mockMacAddress = generateMockMacAddress(apiKey);
-		const existingMock = await db
-			.selectFrom("devices")
-			.selectAll()
-			.where("mac_address", "=", mockMacAddress)
-			.executeTakeFirst();
-
-		if (existingMock) {
-			const device = existingMock as unknown as Device;
-			logInfo("Using existing mock device", {
-				source: "api/display",
-				metadata: { friendly_id: device.friendly_id },
-			});
-			return {
-				device,
-				matchedBy: "mock",
-				foundByApiKey: false,
-				foundByMac: false,
-				foundByFriendlyId: false,
-				created: false,
-			};
-		}
-
-		// Create Mock Device
-		const friendly_id = generateFriendlyId(
-			mockMacAddress,
-			new Date().toISOString().replace(/[-:Z]/g, ""),
-		);
-		const new_api_key = macAddress
-			? apiKey
-			: generateApiKey(
-					mockMacAddress,
-					new Date().toISOString().replace(/[-:Z]/g, ""),
-				);
-
-		try {
-			const newDevice = await db
-				.insertInto("devices")
-				.values({
-					mac_address: macAddress || mockMacAddress,
-					name: `Unknown device with API ${apiKey.substring(0, 4)}...`,
-					friendly_id: friendly_id,
-					api_key: new_api_key,
-					refresh_schedule: JSON.stringify({
-						default_refresh_rate: 60,
-						time_ranges: [],
-					}),
-					last_update_time: new Date().toISOString(),
-					next_expected_update: new Date(
-						Date.now() + 3600 * 1000,
-					).toISOString(),
-					timezone: "UTC",
-					screen: DEFAULT_SCREEN,
-				})
-				.returningAll()
-				.executeTakeFirst();
-
-			if (newDevice) {
-				logger.info(`Created new mock device: ${friendly_id}`);
-				return {
-					device: newDevice as unknown as Device,
-					matchedBy: "mock",
-					foundByApiKey: false,
-					foundByMac: false,
-					foundByFriendlyId: false,
-					created: true,
-				};
-			}
-		} catch (e) {
-			logger.error("Error creating mock device", { error: e });
-			const existingDevice = await db
-				.selectFrom("devices")
-				.selectAll()
-				.where((eb) =>
-					eb.or([
-						eb("mac_address", "=", mockMacAddress),
-						eb("api_key", "=", new_api_key),
-					]),
-				)
-				.executeTakeFirst();
-
-			if (existingDevice) {
-				return {
-					device: existingDevice as unknown as Device,
-					matchedBy: "mock",
-					foundByApiKey: false,
-					foundByMac: false,
-					foundByFriendlyId: false,
-					created: false,
-				};
-			}
-		}
 	}
 
 	return {
@@ -721,7 +504,6 @@ export const findOrCreateDevice = async (
 		foundByApiKey: false,
 		foundByMac: false,
 		foundByFriendlyId: false,
-		created: false,
 	};
 };
 
