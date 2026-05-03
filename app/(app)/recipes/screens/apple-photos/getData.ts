@@ -22,7 +22,7 @@ type IcloudPhoto = {
 	photoGuid: string;
 	caption?: string;
 	photoDate?: string;
-	derivatives?: IcloudDerivative[];
+	derivatives?: IcloudDerivative[] | Record<string, IcloudDerivative>;
 };
 
 type IcloudWebstreamResponse = {
@@ -131,8 +131,19 @@ function normalizeFitMode(value?: string): "cover" | "contain" {
 	return value?.trim().toLowerCase() === "contain" ? "contain" : "cover";
 }
 
+function getDerivatives(photo: IcloudPhoto) {
+	const { derivatives } = photo;
+	if (Array.isArray(derivatives)) {
+		return derivatives;
+	}
+	if (derivatives && typeof derivatives === "object") {
+		return Object.values(derivatives);
+	}
+	return [];
+}
+
 function chooseLargestDerivative(photo: IcloudPhoto) {
-	return [...(photo.derivatives || [])].sort(
+	return [...getDerivatives(photo)].sort(
 		(a, b) => Number(b.fileSize || 0) - Number(a.fileSize || 0),
 	)[0];
 }
