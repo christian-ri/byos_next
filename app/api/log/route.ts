@@ -1,5 +1,12 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
+import {
+	findDeviceByIdentity,
+	maskApiKey,
+	normalizeFriendlyId,
+	normalizeIdentifier,
+	normalizeMacAddress,
+} from "@/app/api/device-identification";
 import type { CustomError } from "@/lib/api/types";
 import { db } from "@/lib/database/db";
 import { checkDbConnection } from "@/lib/database/utils";
@@ -65,6 +72,17 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+	const url = new URL(request.url);
+	const firstIdentifier = (headerName: string, queryNames: string[]) => {
+		const headerValue = request.headers.get(headerName);
+		if (headerValue) return headerValue;
+		for (const queryName of queryNames) {
+			const queryValue = url.searchParams.get(queryName);
+			if (queryValue) return queryValue;
+		}
+		return null;
+	};
+
 	// Log request details
 	logInfo("Log API Request", {
 		source: "api/log",
@@ -78,8 +96,25 @@ export async function POST(request: Request) {
 	});
 
 	try {
-		const macAddress = request.headers.get("ID")?.toUpperCase();
-		const apiKey = request.headers.get("Access-Token");
+		const macAddress = normalizeMacAddress(
+			firstIdentifier("ID", ["id", "ID", "mac", "mac_address", "macAddress"]),
+		);
+		const apiKey = normalizeIdentifier(
+			firstIdentifier("Access-Token", [
+				"access_token",
+				"access-token",
+				"api_key",
+				"apiKey",
+			]),
+		);
+		const friendlyId = normalizeFriendlyId(
+			firstIdentifier("Friendly-Id", [
+				"friendly_id",
+				"friendly-id",
+				"device_friendly_id",
+				"deviceFriendlyId",
+			]),
+		);
 
 		// TRMNL API requires Access-Token header
 		if (!apiKey) {
@@ -128,9 +163,93 @@ export async function POST(request: Request) {
 		let deviceId = "";
 		let deviceFound = false;
 		let deviceStatus: "known" | "existing_mock" | "new_mock" = "known";
+		const matchedDevice = await findDeviceByIdentity({
+			apiKey,
+			macAddress,
+			friendlyId,
+		});
+
+		logInfo("Log device identity lookup", {
+			source: "api/log",
+			metadata: {
+				apiKey: maskApiKey(apiKey),
+				macAddress,
+				friendlyId,
+				matchedBy: matchedDevice.matchedBy,
+				foundByApiKey: matchedDevice.foundByApiKey,
+				foundByMac: matchedDevice.foundByMac,
+				foundByFriendlyId: matchedDevice.foundByFriendlyId,
+			},
+		});
+
+		if (matchedDevice.device) {
+			const device = matchedDevice.device;
+			deviceId = device.friendly_id;
+			deviceFound = true;
+			deviceStatus = "known";
+
+			const updateData: Record<string, string | number | null> = {
+				last_update_time: new Date().toISOString(),
+				next_expected_update: new Date(
+					Date.now() +
+						(refreshRate
+							? Number.parseInt(refreshRate, 10) * 1000
+							: 3600 * 1000),
+				).toISOString(),
+				updated_at: new Date().toISOString(),
+				battery_voltage: batteryVoltage
+					? Number.parseFloat(batteryVoltage)
+					: device.battery_voltage,
+				firmware_version: fwVersion || device.firmware_version,
+				rssi: rssi ? Number.parseInt(rssi, 10) : device.rssi,
+			};
+
+			if (apiKey && apiKey !== device.api_key && !matchedDevice.foundByApiKey) {
+				const apiKeyOwner = await db
+					.selectFrom("devices")
+					.select("id")
+					.where("api_key", "=", apiKey)
+					.executeTakeFirst();
+				if (!apiKeyOwner) {
+					updateData.api_key = apiKey;
+				}
+			}
+
+			if (
+				macAddress &&
+				macAddress !== device.mac_address &&
+				!matchedDevice.foundByMac
+			) {
+				const macOwner = await db
+					.selectFrom("devices")
+					.select("id")
+					.where("mac_address", "=", macAddress)
+					.executeTakeFirst();
+				if (!macOwner) {
+					updateData.mac_address = macAddress;
+				}
+			}
+
+			await db
+				.updateTable("devices")
+				.set(updateData)
+				.where("friendly_id", "=", deviceId)
+				.execute();
+
+			logInfo("Log request matched known device", {
+				source: "api/log",
+				metadata: {
+					device_id: deviceId,
+					apiKey: maskApiKey(apiKey),
+					macAddress,
+					friendlyId,
+					matchedBy: matchedDevice.matchedBy,
+				},
+			});
+		}
 
 		// First, try to find the device by MAC address if provided
-		if (macAddress) {
+		if (!deviceFound && macAddress) {
 			const deviceByMac = await db
 				.selectFrom("devices")
 				.selectAll()

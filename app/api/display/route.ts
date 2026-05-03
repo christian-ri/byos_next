@@ -1,5 +1,6 @@
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
+import { maskApiKey } from "../device-identification";
 import {
 	appendImageCacheBust,
 	buildDisplayResponse,
@@ -17,7 +18,7 @@ export const DEFAULT_REFRESH_RATE = 180;
 export async function GET(request: Request) {
 	const headers = parseRequestHeaders(request);
 
-	if (!headers.apiKey && !headers.macAddress) {
+	if (!headers.apiKey && !headers.macAddress && !headers.friendlyId) {
 		const hostUrl = new URL(request.url).origin || "http://localhost:3000";
 		const baseUrl = `${hostUrl}/api/bitmap`;
 		return buildErrorResponse(
@@ -27,8 +28,10 @@ export async function GET(request: Request) {
 		);
 	}
 
-	// log all headers in console for debugging
-	console.table(headers);
+	console.table({
+		...headers,
+		apiKey: maskApiKey(headers.apiKey),
+	});
 
 	const { ready } = await checkDbConnection();
 	const baseUrl = `${headers.hostUrl}/api/bitmap`;
@@ -54,26 +57,49 @@ export async function GET(request: Request) {
 
 	logInfo("Display API Request", {
 		source: "api/display",
-		metadata: { headers },
+		metadata: {
+			...headers,
+			apiKey: maskApiKey(headers.apiKey),
+			debug: {
+				accessTokenPresent: Boolean(headers.apiKey),
+				macPresent: Boolean(headers.macAddress),
+				friendlyIdPresent: Boolean(headers.friendlyId),
+			},
+		},
 	});
 
 	try {
-		const device = await findOrCreateDevice(headers);
+		const deviceResolution = await findOrCreateDevice(headers);
+		const device = deviceResolution.device;
 
 		if (!device) {
 			logError("Error fetching/creating device", {
 				source: "api/display",
-				metadata: { headers },
+				metadata: {
+					apiKey: maskApiKey(headers.apiKey),
+					macAddress: headers.macAddress,
+					friendlyId: headers.friendlyId,
+					matchedBy: deviceResolution.matchedBy,
+					foundByApiKey: deviceResolution.foundByApiKey,
+					foundByMac: deviceResolution.foundByMac,
+					foundByFriendlyId: deviceResolution.foundByFriendlyId,
+				},
 			});
 			return buildErrorResponse("Device not found", baseUrl, uniqueId);
 		}
 
-		const { imageUrl, screenToDisplay, refreshRate, userId } =
-			await resolveDeviceDisplayTarget({
-				device,
-				baseUrl,
-				updatePlaylistIndex: true,
-			});
+		const {
+			imageUrl,
+			screenToDisplay,
+			refreshRate,
+			userId,
+			fallbackUsed,
+			fallbackReason,
+		} = await resolveDeviceDisplayTarget({
+			device,
+			baseUrl,
+			updatePlaylistIndex: true,
+		});
 
 		const cacheBustedImageUrl = appendImageCacheBust(
 			imageUrl,
@@ -90,7 +116,34 @@ export async function GET(request: Request) {
 			screen: screenToDisplay,
 			refreshRate,
 			displayMode: device.display_mode,
+			matchedBy: deviceResolution.matchedBy,
+			deviceCreated: deviceResolution.created,
+			debug: {
+				accessTokenPresent: Boolean(headers.apiKey),
+				macPresent: Boolean(headers.macAddress),
+				foundByApiKey: deviceResolution.foundByApiKey,
+				foundByMac: deviceResolution.foundByMac,
+				finalScreen: screenToDisplay,
+				fallbackUsed,
+				fallbackReason,
+			},
 		};
+		logInfo("Display request device resolution", {
+			source: "api/display",
+			metadata: {
+				apiKey: maskApiKey(headers.apiKey),
+				macAddress: headers.macAddress,
+				friendlyId: headers.friendlyId,
+				deviceId: device.friendly_id,
+				matchedBy: deviceResolution.matchedBy,
+				foundByApiKey: deviceResolution.foundByApiKey,
+				foundByMac: deviceResolution.foundByMac,
+				foundByFriendlyId: deviceResolution.foundByFriendlyId,
+				finalScreen: screenToDisplay,
+				fallbackUsed,
+				fallbackReason,
+			},
+		});
 		logInfo("Display request successful", { source: "api/display", metadata });
 
 		return buildDisplayResponse(
@@ -101,7 +154,10 @@ export async function GET(request: Request) {
 	} catch (_error) {
 		logError("Internal server error", {
 			source: "api/display",
-			metadata: { headers },
+			metadata: {
+				...headers,
+				apiKey: maskApiKey(headers.apiKey),
+			},
 		});
 		return buildErrorResponse("Internal server error", baseUrl, uniqueId);
 	}

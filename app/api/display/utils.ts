@@ -1,5 +1,11 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
+import {
+	findDeviceByIdentity,
+	normalizeFriendlyId,
+	normalizeIdentifier,
+	normalizeMacAddress,
+} from "@/app/api/device-identification";
 import { db } from "@/lib/database/db";
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
@@ -23,6 +29,7 @@ import { DEFAULT_SCREEN } from "./route";
 export interface RequestHeaders {
 	apiKey: string | null;
 	macAddress: string | null;
+	friendlyId: string | null;
 	refreshRate: string | null;
 	batteryVoltage: string | null;
 	fwVersion: string | null;
@@ -34,13 +41,55 @@ export interface RequestHeaders {
 
 export const parseRequestHeaders = (request: Request): RequestHeaders => {
 	const headers = request.headers;
+	const url = new URL(request.url);
+	const firstIdentifier = (names: string[]) => {
+		for (const name of names) {
+			const headerValue = headers.get(name);
+			if (headerValue) return headerValue;
+		}
+		for (const name of names) {
+			const queryValue = url.searchParams.get(name);
+			if (queryValue) return queryValue;
+		}
+		return null;
+	};
+
 	return {
-		apiKey: headers.get("Access-Token"),
-		macAddress: headers.get("ID")?.toUpperCase() || null,
-		refreshRate: headers.get("Refresh-Rate"),
-		batteryVoltage: headers.get("Battery-Voltage"),
-		fwVersion: headers.get("FW-Version"),
-		rssi: headers.get("RSSI"),
+		apiKey: normalizeIdentifier(
+			firstIdentifier([
+				"Access-Token",
+				"access-token",
+				"X-Access-Token",
+				"api_key",
+				"apiKey",
+			]),
+		),
+		macAddress: normalizeMacAddress(
+			firstIdentifier(["ID", "id", "mac", "mac_address", "macAddress"]),
+		),
+		friendlyId: normalizeFriendlyId(
+			firstIdentifier([
+				"Friendly-Id",
+				"friendly-id",
+				"friendly_id",
+				"device_friendly_id",
+				"deviceFriendlyId",
+			]),
+		),
+		refreshRate: normalizeIdentifier(
+			firstIdentifier(["Refresh-Rate", "refresh-rate", "refresh_rate"]),
+		),
+		batteryVoltage: normalizeIdentifier(
+			firstIdentifier([
+				"Battery-Voltage",
+				"battery-voltage",
+				"battery_voltage",
+			]),
+		),
+		fwVersion: normalizeIdentifier(
+			firstIdentifier(["FW-Version", "fw-version", "fw_version"]),
+		),
+		rssi: normalizeIdentifier(firstIdentifier(["RSSI", "rssi"])),
 		hostUrl:
 			(headers.get("x-forwarded-proto") || "http") +
 			"://" +
@@ -241,6 +290,9 @@ export const resolveDeviceDisplayTarget = async ({
 	let dynamicRefreshRate = 180;
 	let imageUrl: string;
 	const { width, height, grayscaleLevels } = getDeviceRenderSettings(device);
+	let fallbackUsed = false;
+	let fallbackReason: string | null = null;
+	const fallbackScreen = device.screen || DEFAULT_SCREEN;
 
 	switch (device.display_mode) {
 		case DeviceDisplayMode.PLAYLIST:
@@ -265,13 +317,24 @@ export const resolveDeviceDisplayTarget = async ({
 				} else {
 					logInfo("No active playlist item found, using fallback", {
 						source: "api/display",
-						metadata: { deviceId: device.friendly_id },
+						metadata: {
+							deviceId: device.friendly_id,
+							fallbackScreen,
+							reason: "playlist_no_active_item",
+						},
 					});
-					screenToDisplay = device.screen || "not-found";
+					screenToDisplay = fallbackScreen;
 					dynamicRefreshRate = 60;
+					fallbackUsed = true;
+					fallbackReason = "playlist_no_active_item";
 				}
+			} else {
+				screenToDisplay = fallbackScreen;
+				dynamicRefreshRate = 60;
+				fallbackUsed = true;
+				fallbackReason = "playlist_missing_playlist_id";
 			}
-			imageUrl = `${baseUrl}/${screenToDisplay || "not-found"}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
+			imageUrl = `${baseUrl}/${screenToDisplay || DEFAULT_SCREEN}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
 			break;
 
 		case DeviceDisplayMode.MIXUP:
@@ -285,7 +348,10 @@ export const resolveDeviceDisplayTarget = async ({
 					},
 				});
 			} else {
-				imageUrl = `${baseUrl}/${screenToDisplay || "not-found"}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
+				imageUrl = `${baseUrl}/${fallbackScreen}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
+				screenToDisplay = fallbackScreen;
+				fallbackUsed = true;
+				fallbackReason = "mixup_missing_mixup_id";
 			}
 			dynamicRefreshRate = calculateRefreshRate(
 				device.refresh_schedule as unknown as RefreshSchedule,
@@ -300,18 +366,20 @@ export const resolveDeviceDisplayTarget = async ({
 				180,
 				device.timezone || "UTC",
 			);
-			imageUrl = `${baseUrl}/${screenToDisplay || "not-found"}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
+			imageUrl = `${baseUrl}/${(screenToDisplay || DEFAULT_SCREEN).trim()}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
 			break;
 	}
 
 	return {
 		imageUrl,
-		screenToDisplay: screenToDisplay || "not-found",
+		screenToDisplay: screenToDisplay || DEFAULT_SCREEN,
 		refreshRate: dynamicRefreshRate,
 		userId: device.user_id,
 		width,
 		height,
 		grayscaleLevels,
+		fallbackUsed,
+		fallbackReason,
 	};
 };
 
@@ -363,89 +431,74 @@ export const updateDeviceStatus = async (
 
 export const findOrCreateDevice = async (
 	headers: RequestHeaders,
-): Promise<Device | null> => {
-	const { apiKey, macAddress } = headers;
+): Promise<{
+	device: Device | null;
+	matchedBy:
+		| "api_key"
+		| "mac_address"
+		| "friendly_id"
+		| "created"
+		| "mock"
+		| null;
+	foundByApiKey: boolean;
+	foundByMac: boolean;
+	foundByFriendlyId: boolean;
+	created: boolean;
+}> => {
+	const { apiKey, macAddress, friendlyId } = headers;
+	const match = await findDeviceByIdentity({ apiKey, macAddress, friendlyId });
 
-	// Prefer the physical MAC address. API keys can be stale after setup/reset,
-	// while the MAC keeps the real device anchored to one row.
-	if (macAddress) {
-		const deviceByMac = await db
-			.selectFrom("devices")
-			.selectAll()
-			.where("mac_address", "=", macAddress)
-			.executeTakeFirst();
+	if (match.device) {
+		const device = match.device;
+		const updateData: Partial<Device> = {
+			updated_at: new Date().toISOString(),
+		};
+		let shouldUpdate = false;
 
-		if (deviceByMac) {
-			const device = deviceByMac as unknown as Device;
-			if (apiKey && apiKey !== device.api_key) {
-				const apiKeyOwner = await db
-					.selectFrom("devices")
-					.selectAll()
-					.where("api_key", "=", apiKey)
-					.executeTakeFirst();
-
-				if (!apiKeyOwner) {
-					await db
-						.updateTable("devices")
-						.set({ api_key: apiKey, updated_at: new Date().toISOString() })
-						.where("id", "=", device.id.toString())
-						.execute();
-					logInfo("Updated API key for device", {
-						source: "api/display",
-						metadata: { deviceId: device.friendly_id },
-					});
-				} else {
-					logInfo(
-						"API key already belongs to another device; keeping MAC row",
-						{
-							source: "api/display",
-							metadata: {
-								deviceId: device.friendly_id,
-								apiKeyOwner: apiKeyOwner.friendly_id,
-							},
-						},
-					);
-				}
+		if (apiKey && apiKey !== device.api_key && !match.foundByApiKey) {
+			const apiKeyOwner = await db
+				.selectFrom("devices")
+				.select("id")
+				.where("api_key", "=", apiKey)
+				.executeTakeFirst();
+			if (!apiKeyOwner) {
+				updateData.api_key = apiKey;
+				shouldUpdate = true;
 			}
-			return device;
 		}
-	}
 
-	if (apiKey) {
-		const deviceByApiKey = await db
-			.selectFrom("devices")
-			.selectAll()
-			.where("api_key", "=", apiKey)
-			.executeTakeFirst();
-
-		if (deviceByApiKey) {
-			const device = deviceByApiKey as unknown as Device;
-			if (macAddress && macAddress !== device.mac_address) {
-				const macOwner = await db
-					.selectFrom("devices")
-					.selectAll()
-					.where("mac_address", "=", macAddress)
-					.executeTakeFirst();
-
-				if (macOwner) {
-					return macOwner as unknown as Device;
-				}
-
-				await db
-					.updateTable("devices")
-					.set({
-						mac_address: macAddress,
-						updated_at: new Date().toISOString(),
-					})
-					.where("id", "=", device.id.toString())
-					.execute();
-				logInfo("Updated MAC address for device", {
-					source: "api/display",
-					metadata: { deviceId: device.friendly_id },
-				});
+		if (macAddress && macAddress !== device.mac_address && !match.foundByMac) {
+			const macOwner = await db
+				.selectFrom("devices")
+				.select("id")
+				.where("mac_address", "=", macAddress)
+				.executeTakeFirst();
+			if (!macOwner) {
+				updateData.mac_address = macAddress;
+				shouldUpdate = true;
 			}
-			return device;
 		}
+
+		if (shouldUpdate) {
+			await db
+				.updateTable("devices")
+				.set(updateData)
+				.where("id", "=", device.id.toString())
+				.execute();
+		}
+
+		return {
+			device: {
+				...device,
+				api_key: updateData.api_key || device.api_key,
+				mac_address: updateData.mac_address || device.mac_address,
+			},
+			matchedBy: match.matchedBy,
+			foundByApiKey: match.foundByApiKey,
+			foundByMac: match.foundByMac,
+			foundByFriendlyId: match.foundByFriendlyId,
+			created: false,
+		};
 	}
 
 	if (macAddress) {
@@ -487,7 +540,14 @@ export const findOrCreateDevice = async (
 					source: "api/display",
 					metadata: { friendly_id },
 				});
-				return newDevice as unknown as Device;
+				return {
+					device: newDevice as unknown as Device,
+					matchedBy: "created",
+					foundByApiKey: false,
+					foundByMac: false,
+					foundByFriendlyId: false,
+					created: true,
+				};
 			}
 		} catch (e) {
 			logError("Error creating device from MAC address", {
@@ -507,17 +567,41 @@ export const findOrCreateDevice = async (
 				.executeTakeFirst();
 
 			if (existingDevice) {
-				return existingDevice as unknown as Device;
+				return {
+					device: existingDevice as unknown as Device,
+					matchedBy:
+						apiKey && existingDevice.api_key === apiKey
+							? "api_key"
+							: "mac_address",
+					foundByApiKey: Boolean(apiKey && existingDevice.api_key === apiKey),
+					foundByMac: Boolean(existingDevice.mac_address === macAddress),
+					foundByFriendlyId: false,
+					created: false,
+				};
 			}
 
 			// If the insert failed and we still cannot resolve by MAC/API key,
 			// do not fall through to mock provisioning for a real hardware device.
-			return null;
+			return {
+				device: null,
+				matchedBy: null,
+				foundByApiKey: false,
+				foundByMac: false,
+				foundByFriendlyId: false,
+				created: false,
+			};
 		}
 
 		// A real device provided a MAC address but could not be resolved/created.
 		// Stop here to avoid creating conflicting mock rows.
-		return null;
+		return {
+			device: null,
+			matchedBy: null,
+			foundByApiKey: false,
+			foundByMac: false,
+			foundByFriendlyId: false,
+			created: false,
+		};
 	}
 
 	if (apiKey) {
@@ -527,7 +611,14 @@ export const findOrCreateDevice = async (
 			.where("api_key", "=", apiKey)
 			.executeTakeFirst();
 		if (existingByApiKey) {
-			return existingByApiKey as unknown as Device;
+			return {
+				device: existingByApiKey as unknown as Device,
+				matchedBy: "api_key",
+				foundByApiKey: true,
+				foundByMac: false,
+				foundByFriendlyId: false,
+				created: false,
+			};
 		}
 
 		const mockMacAddress = generateMockMacAddress(apiKey);
@@ -543,7 +634,14 @@ export const findOrCreateDevice = async (
 				source: "api/display",
 				metadata: { friendly_id: device.friendly_id },
 			});
-			return device;
+			return {
+				device,
+				matchedBy: "mock",
+				foundByApiKey: false,
+				foundByMac: false,
+				foundByFriendlyId: false,
+				created: false,
+			};
 		}
 
 		// Create Mock Device
@@ -582,7 +680,14 @@ export const findOrCreateDevice = async (
 
 			if (newDevice) {
 				logger.info(`Created new mock device: ${friendly_id}`);
-				return newDevice as unknown as Device;
+				return {
+					device: newDevice as unknown as Device,
+					matchedBy: "mock",
+					foundByApiKey: false,
+					foundByMac: false,
+					foundByFriendlyId: false,
+					created: true,
+				};
 			}
 		} catch (e) {
 			logger.error("Error creating mock device", { error: e });
@@ -598,12 +703,26 @@ export const findOrCreateDevice = async (
 				.executeTakeFirst();
 
 			if (existingDevice) {
-				return existingDevice as unknown as Device;
+				return {
+					device: existingDevice as unknown as Device,
+					matchedBy: "mock",
+					foundByApiKey: false,
+					foundByMac: false,
+					foundByFriendlyId: false,
+					created: false,
+				};
 			}
 		}
 	}
 
-	return null;
+	return {
+		device: null,
+		matchedBy: null,
+		foundByApiKey: false,
+		foundByMac: false,
+		foundByFriendlyId: false,
+		created: false,
+	};
 };
 
 // --- Response Builder ---

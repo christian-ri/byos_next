@@ -1,4 +1,11 @@
 import { NextResponse } from "next/server";
+import {
+	findDeviceByIdentity,
+	maskApiKey,
+	normalizeFriendlyId,
+	normalizeIdentifier,
+	normalizeMacAddress,
+} from "@/app/api/device-identification";
 import type { CustomError } from "@/lib/api/types";
 import { db } from "@/lib/database/db";
 import { checkDbConnection } from "@/lib/database/utils";
@@ -6,12 +13,6 @@ import { logError, logInfo } from "@/lib/logger";
 import { generateApiKey, generateFriendlyId } from "@/utils/helpers";
 
 const DEFAULT_SCREEN = "album";
-
-const maskApiKey = (apiKey: string | null) => {
-	if (!apiKey) return null;
-	if (apiKey.length <= 8) return "********";
-	return `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}`;
-};
 
 const parsePositiveInteger = (value: string | null, fallback: number) => {
 	if (!value) return fallback;
@@ -61,13 +62,20 @@ export async function GET(request: Request) {
 			"device_model",
 			"deviceModel",
 		]);
+		const friendlyIdIdentifier = firstHeaderOrQuery(
+			request,
+			url,
+			"Friendly-Id",
+			["friendly_id", "friendly-id", "device_friendly_id", "deviceFriendlyId"],
+		);
 		const refreshRate = request.headers.get("Refresh-Rate");
 		const batteryVoltage = request.headers.get("Battery-Voltage");
 		const fwVersion = request.headers.get("FW-Version");
 		const rssi = request.headers.get("RSSI");
-		const macAddress = macIdentifier.value?.toUpperCase();
-		const apiKey = apiKeyIdentifier.value;
-		const model = modelIdentifier.value;
+		const macAddress = normalizeMacAddress(macIdentifier.value);
+		const apiKey = normalizeIdentifier(apiKeyIdentifier.value);
+		const model = normalizeIdentifier(modelIdentifier.value);
+		const friendlyId = normalizeFriendlyId(friendlyIdIdentifier.value);
 		const refreshRateSeconds = parsePositiveInteger(refreshRate, 60);
 		const { ready } = await checkDbConnection();
 
@@ -80,6 +88,8 @@ export async function GET(request: Request) {
 				macAddressSource: macIdentifier.source,
 				apiKey: maskApiKey(apiKey),
 				apiKeySource: apiKeyIdentifier.source,
+				friendlyId,
+				friendlyIdSource: friendlyIdIdentifier.source,
 				model: model || null,
 				modelSource: modelIdentifier.source,
 				refreshRate: refreshRate || null,
@@ -147,85 +157,27 @@ export async function GET(request: Request) {
 			});
 		}
 
-		// First check if the device exists by MAC address
-		const device = await db
-			.selectFrom("devices")
-			.selectAll()
-			.where("mac_address", "=", macAddress)
-			.executeTakeFirst();
+		const existingMatch = await findDeviceByIdentity({
+			apiKey,
+			macAddress,
+			friendlyId,
+		});
+		const device = existingMatch.device;
 
-		logInfo("Setup device lookup by MAC completed", {
+		logInfo("Setup device lookup completed", {
 			source: "api/setup",
 			metadata: {
 				macAddress,
+				apiKey: maskApiKey(apiKey),
+				friendlyId,
 				deviceFound: Boolean(device),
 				friendly_id: device?.friendly_id || null,
+				matchedBy: existingMatch.matchedBy,
+				foundByApiKey: existingMatch.foundByApiKey,
+				foundByMac: existingMatch.foundByMac,
+				foundByFriendlyId: existingMatch.foundByFriendlyId,
 			},
 		});
-
-		// If API key is provided and device not found by MAC, check if the API key exists
-		if (!device && apiKey) {
-			const deviceByApiKey = await db
-				.selectFrom("devices")
-				.selectAll()
-				.where("api_key", "=", apiKey)
-				.executeTakeFirst();
-
-			logInfo("Setup device lookup by API key completed", {
-				source: "api/setup",
-				metadata: {
-					apiKey: maskApiKey(apiKey),
-					deviceFound: Boolean(deviceByApiKey),
-					friendly_id: deviceByApiKey?.friendly_id || null,
-				},
-			});
-
-			if (deviceByApiKey) {
-				// Device found by API key, update its MAC address
-				try {
-					await db
-						.updateTable("devices")
-						.set({
-							mac_address: macAddress,
-							updated_at: new Date().toISOString(),
-						})
-						.where("friendly_id", "=", deviceByApiKey.friendly_id)
-						.execute();
-
-					logInfo("Updated device MAC address", {
-						source: "api/setup",
-						metadata: {
-							device_id: deviceByApiKey.friendly_id,
-							mac_address: macAddress,
-							api_key: maskApiKey(apiKey),
-						},
-					});
-
-					// Return the existing device info
-					return NextResponse.json(
-						{
-							status: 200,
-							api_key: deviceByApiKey.api_key,
-							friendly_id: deviceByApiKey.friendly_id,
-							image_url: null,
-							filename: null,
-							message: `Device ${deviceByApiKey.friendly_id} updated with new MAC address!`,
-						},
-						{ status: 200 },
-					);
-				} catch (updateError) {
-					logError(new Error("Error updating MAC address for device"), {
-						source: "api/setup",
-						metadata: {
-							device_id: deviceByApiKey.friendly_id,
-							mac_address: macAddress,
-							api_key: maskApiKey(apiKey),
-							error: updateError,
-						},
-					});
-				}
-			}
-		}
 
 		// If device not found by MAC address or API key, create a new one
 		if (!device) {
@@ -370,27 +322,23 @@ export async function GET(request: Request) {
 
 		// Device exists by MAC address - check if we need to update the API key
 		let currentApiKey = device.api_key;
+		const updateData: Record<string, string> = {
+			updated_at: new Date().toISOString(),
+		};
+		let shouldUpdate = false;
 
-		if (apiKey && apiKey !== device.api_key) {
+		if (apiKey && apiKey !== device.api_key && !existingMatch.foundByApiKey) {
 			try {
-				await db
-					.updateTable("devices")
-					.set({
-						api_key: apiKey,
-						updated_at: new Date().toISOString(),
-					})
-					.where("friendly_id", "=", device.friendly_id)
-					.execute();
-
-				logInfo("Updated API key for device", {
-					source: "api/setup",
-					metadata: {
-						device_id: device.friendly_id,
-						mac_address: macAddress,
-					},
-				});
-				// Update the device object with the new API key
-				currentApiKey = apiKey;
+				const apiKeyOwner = await db
+					.selectFrom("devices")
+					.select("id")
+					.where("api_key", "=", apiKey)
+					.executeTakeFirst();
+				if (!apiKeyOwner) {
+					updateData.api_key = apiKey;
+					currentApiKey = apiKey;
+					shouldUpdate = true;
+				}
 			} catch (updateError) {
 				logError(new Error("Error updating API key for device"), {
 					source: "api/setup",
@@ -403,6 +351,30 @@ export async function GET(request: Request) {
 			}
 		}
 
+		if (
+			macAddress &&
+			macAddress !== device.mac_address &&
+			!existingMatch.foundByMac
+		) {
+			const macOwner = await db
+				.selectFrom("devices")
+				.select("id")
+				.where("mac_address", "=", macAddress)
+				.executeTakeFirst();
+			if (!macOwner) {
+				updateData.mac_address = macAddress;
+				shouldUpdate = true;
+			}
+		}
+
+		if (shouldUpdate) {
+			await db
+				.updateTable("devices")
+				.set(updateData)
+				.where("friendly_id", "=", device.friendly_id)
+				.execute();
+		}
+
 		logInfo(`Device ${device.friendly_id} added to BYOS!`, {
 			source: "api/setup",
 			metadata: {
@@ -411,6 +383,7 @@ export async function GET(request: Request) {
 				api_key: maskApiKey(currentApiKey),
 				deviceFound: true,
 				deviceCreated: false,
+				matchedBy: existingMatch.matchedBy,
 			},
 		});
 		return NextResponse.json(
