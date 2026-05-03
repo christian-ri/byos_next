@@ -15,16 +15,67 @@ import {
 export const DEFAULT_SCREEN = "album";
 export const DEFAULT_REFRESH_RATE = 180;
 
+const summarizeIdentityState = ({
+	apiKey,
+	macAddress,
+	friendlyId,
+	matchedBy,
+	foundByApiKey,
+	foundByMac,
+	foundByFriendlyId,
+	headerKeys,
+}: {
+	apiKey: string | null;
+	macAddress: string | null;
+	friendlyId: string | null;
+	matchedBy: string | null;
+	foundByApiKey: boolean;
+	foundByMac: boolean;
+	foundByFriendlyId: boolean;
+	headerKeys: string[];
+}) => {
+	const headerPreview = headerKeys.slice(0, 8).join(",");
+	return [
+		`token=${apiKey ? "yes" : "no"}`,
+		`mac=${macAddress ? "yes" : "no"}`,
+		`friendly=${friendlyId ? "yes" : "no"}`,
+		`foundByToken=${foundByApiKey ? "yes" : "no"}`,
+		`foundByMac=${foundByMac ? "yes" : "no"}`,
+		`foundByFriendly=${foundByFriendlyId ? "yes" : "no"}`,
+		`matchedBy=${matchedBy || "none"}`,
+		headerPreview ? `headers=${headerPreview}` : null,
+	]
+		.filter(Boolean)
+		.join(" | ");
+};
+
 export async function GET(request: Request) {
 	const headers = parseRequestHeaders(request);
 
 	if (!headers.apiKey && !headers.macAddress && !headers.friendlyId) {
 		const hostUrl = new URL(request.url).origin || "http://localhost:3000";
 		const baseUrl = `${hostUrl}/api/bitmap`;
+		const detail = summarizeIdentityState({
+			apiKey: headers.apiKey,
+			macAddress: headers.macAddress,
+			friendlyId: headers.friendlyId,
+			matchedBy: null,
+			foundByApiKey: false,
+			foundByMac: false,
+			foundByFriendlyId: false,
+			headerKeys: headers.headerKeys,
+		});
 		return buildErrorResponse(
 			"Device identity header is required",
 			baseUrl,
 			"missing-id",
+			{
+				reason: "No device identity received",
+				detail,
+				width: headers.width,
+				height: headers.height,
+				grayscale: 2,
+			},
 		);
 	}
 
@@ -80,7 +131,17 @@ export async function GET(request: Request) {
 		const device = deviceResolution.device;
 
 		if (!device) {
-			logError("Display device identity not found", {
+			const detail = summarizeIdentityState({
+				apiKey: headers.apiKey,
+				macAddress: headers.macAddress,
+				friendlyId: headers.friendlyId,
+				matchedBy: deviceResolution.matchedBy,
+				foundByApiKey: deviceResolution.foundByApiKey,
+				foundByMac: deviceResolution.foundByMac,
+				foundByFriendlyId: deviceResolution.foundByFriendlyId,
+				headerKeys: headers.headerKeys,
+			});
+			logError(`Display device identity not found | ${detail}`, {
 				source: "api/display",
 				metadata: {
 					apiKey: maskApiKey(headers.apiKey),
@@ -97,7 +158,13 @@ export async function GET(request: Request) {
 					headerKeys: headers.headerKeys,
 				},
 			});
-			return buildErrorResponse("Device not found", baseUrl, uniqueId);
+			return buildErrorResponse("Device not found", baseUrl, uniqueId, {
+				reason: "Display device identity not found",
+				detail,
+				width: headers.width,
+				height: headers.height,
+				grayscale: 2,
+			});
 		}
 
 		const {
@@ -174,6 +241,21 @@ export async function GET(request: Request) {
 				apiKey: maskApiKey(headers.apiKey),
 			},
 		});
-		return buildErrorResponse("Internal server error", baseUrl, uniqueId);
+		return buildErrorResponse("Internal server error", baseUrl, uniqueId, {
+			reason: "Display route internal error",
+			detail: summarizeIdentityState({
+				apiKey: headers.apiKey,
+				macAddress: headers.macAddress,
+				friendlyId: headers.friendlyId,
+				matchedBy: null,
+				foundByApiKey: false,
+				foundByMac: false,
+				foundByFriendlyId: false,
+				headerKeys: headers.headerKeys,
+			}),
+			width: headers.width,
+			height: headers.height,
+			grayscale: 2,
+		});
 	}
 }

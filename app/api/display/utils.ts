@@ -674,8 +674,25 @@ export const buildErrorResponse = (
 	message: string,
 	baseUrl: string,
 	uniqueId: string,
+	options?: {
+		reason?: string;
+		detail?: string;
+		width?: number | null;
+		height?: number | null;
+		grayscale?: number | null;
+	},
 ) => {
-	const notFoundImageUrl = `${baseUrl}/not-found.bmp`;
+	const params = new URLSearchParams();
+	if (options?.reason) params.set("reason", options.reason);
+	if (options?.detail) params.set("detail", options.detail);
+	if (options?.width && options.width > 0)
+		params.set("width", String(options.width));
+	if (options?.height && options.height > 0)
+		params.set("height", String(options.height));
+	if (options?.grayscale && options.grayscale > 0)
+		params.set("grayscale", String(options.grayscale));
+
+	const notFoundImageUrl = `${baseUrl}/not-found.bmp${params.size ? `?${params.toString()}` : ""}`;
 	return NextResponse.json(
 		{
 			status: 0,

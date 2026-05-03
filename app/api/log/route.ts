@@ -116,6 +116,12 @@ export async function POST(request: Request) {
 				"deviceFriendlyId",
 			]),
 		);
+		const summarizeIdentityState = () =>
+			[
+				`token=${apiKey ? "yes" : "no"}`,
+				`mac=${macAddress ? "yes" : "no"}`,
+				`friendly=${friendlyId ? "yes" : "no"}`,
+			].join(" | ");
 
 		// TRMNL API requires Access-Token header
 		if (!apiKey) {
@@ -248,16 +254,19 @@ export async function POST(request: Request) {
 				},
 			});
 		} else {
-			logInfo("Log request skipped for unknown device identity", {
-				source: "api/log",
-				metadata: {
-					apiKey: maskApiKey(apiKey),
-					macAddress,
-					friendlyId,
-					matchedBy: matchedDevice.matchedBy,
-					reason: "device_must_be_registered_by_setup_first",
+			logInfo(
+				`Log request skipped for unknown device identity | ${summarizeIdentityState()} | matchedBy=${matchedDevice.matchedBy || "none"}`,
+				{
+					source: "api/log",
+					metadata: {
+						apiKey: maskApiKey(apiKey),
+						macAddress,
+						friendlyId,
+						matchedBy: matchedDevice.matchedBy,
+						reason: "device_must_be_registered_by_setup_first",
+					},
 				},
-			});
+			);
 			return new NextResponse(null, { status: 204 });
 		}
 

@@ -27,6 +27,8 @@ export async function GET(
 		const heightParam = searchParams.get("height");
 		const grayscaleParam = searchParams.get("grayscale");
 		const ownerParam = searchParams.get("_owner");
+		const reasonParam = searchParams.get("reason");
+		const detailParam = searchParams.get("detail");
 
 		const width = widthParam ? parseInt(widthParam, 10) : DEFAULT_IMAGE_WIDTH;
 		const height = heightParam
@@ -67,7 +69,13 @@ export async function GET(
 			logger.warn(
 				`Failed to generate bitmap for ${recipeId}, returning fallback`,
 			);
-			const fallback = await renderFallbackBitmap();
+			const fallback = await renderFallbackBitmap({
+				slug: recipeSlug,
+				width: validWidth,
+				height: validHeight,
+				reason: reasonParam || "Bitmap render failed",
+				detail: detailParam || `Could not generate bitmap for ${recipeId}.`,
+			});
 			return fallback;
 		}
 
@@ -82,7 +90,14 @@ export async function GET(
 		logger.error("Error generating image:", error);
 
 		// Instead of returning an error, return the NotFoundScreen as a fallback
-		return await renderFallbackBitmap("Error occurred");
+		return await renderFallbackBitmap({
+			slug: "Error occurred",
+			reason: "Bitmap route error",
+			detail:
+				error instanceof Error
+					? error.message
+					: "Unknown bitmap rendering error.",
+		});
 	}
 }
 
@@ -122,15 +137,27 @@ const renderRecipeBitmap = cache(
 	},
 );
 
-const renderFallbackBitmap = cache(async (slug: string = "not-found") => {
+const renderFallbackBitmap = async ({
+	slug = "not-found",
+	width = DEFAULT_IMAGE_WIDTH,
+	height = DEFAULT_IMAGE_HEIGHT,
+	reason,
+	detail,
+}: {
+	slug?: string;
+	width?: number;
+	height?: number;
+	reason?: string;
+	detail?: string;
+}) => {
 	try {
 		const renders = await renderRecipeOutputs({
-			slug,
+			slug: "not-found",
 			Component: NotFoundScreen,
-			props: { slug },
+			props: { slug, reason, detail },
 			config: null,
-			imageWidth: DEFAULT_IMAGE_WIDTH,
-			imageHeight: DEFAULT_IMAGE_HEIGHT,
+			imageWidth: width,
+			imageHeight: height,
 			formats: ["bitmap"],
 			grayscale: 2, // Default to 2 levels for fallback
 		});
@@ -155,4 +182,4 @@ const renderFallbackBitmap = cache(async (slug: string = "not-found") => {
 			},
 		});
 	}
-});
+};
