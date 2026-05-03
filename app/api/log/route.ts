@@ -119,9 +119,14 @@ export async function POST(request: Request) {
 		const summarizeIdentityState = () =>
 			[
 				`token=${apiKey ? "yes" : "no"}`,
+				apiKey ? `tokenValue=${maskApiKey(apiKey)}` : null,
 				`mac=${macAddress ? "yes" : "no"}`,
+				macAddress ? `macValue=${macAddress}` : null,
 				`friendly=${friendlyId ? "yes" : "no"}`,
-			].join(" | ");
+				friendlyId ? `friendlyValue=${friendlyId}` : null,
+			]
+				.filter(Boolean)
+				.join(" | ");
 
 		// TRMNL API requires Access-Token header
 		if (!apiKey) {

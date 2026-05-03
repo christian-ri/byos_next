@@ -65,6 +65,23 @@ export const parseRequestHeaders = (request: Request): RequestHeaders => {
 		return null;
 	};
 
+	const rawIdUpper = headers.get("ID");
+	const rawIdLower = headers.get("id");
+	const rawAccessTokenUpper = headers.get("Access-Token");
+	const rawAccessTokenLower = headers.get("access-token");
+	console.log("TRMNL display parseRequestHeaders", {
+		path: url.pathname,
+		rawIdUpper,
+		rawIdLower,
+		rawAccessTokenUpper: rawAccessTokenUpper
+			? `${rawAccessTokenUpper.slice(0, 4)}...${rawAccessTokenUpper.slice(-4)}`
+			: null,
+		rawAccessTokenLower: rawAccessTokenLower
+			? `${rawAccessTokenLower.slice(0, 4)}...${rawAccessTokenLower.slice(-4)}`
+			: null,
+		headerKeys: Array.from(headers.keys()).sort(),
+	});
+
 	return {
 		apiKey: normalizeIdentifier(
 			firstIdentifier([
@@ -589,12 +606,24 @@ export const resolveDeviceForDisplay = async (
 			headers.updateSource,
 	);
 
+	console.log("TRMNL display sole_device_fallback check", {
+		apiKeyPresent: Boolean(apiKey),
+		apiKeyValue: apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : null,
+		macAddress,
+		friendlyId,
+		looksLikeTrmnlRequest,
+	});
+
 	if (looksLikeTrmnlRequest) {
 		const devices = await db
 			.selectFrom("devices")
 			.selectAll()
 			.limit(2)
 			.execute();
+		console.log("TRMNL display sole_device_fallback device count", {
+			deviceCount: devices.length,
+			deviceFriendlyIds: devices.map((device) => device.friendly_id),
+		});
 		if (devices.length === 1) {
 			logInfo("Display resolved by sole-device fallback", {
 				source: "api/display",

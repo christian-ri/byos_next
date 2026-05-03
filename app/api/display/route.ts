@@ -37,8 +37,11 @@ const summarizeIdentityState = ({
 	const headerPreview = headerKeys.slice(0, 8).join(",");
 	return [
 		`token=${apiKey ? "yes" : "no"}`,
+		apiKey ? `tokenValue=${maskApiKey(apiKey)}` : null,
 		`mac=${macAddress ? "yes" : "no"}`,
+		macAddress ? `macValue=${macAddress}` : null,
 		`friendly=${friendlyId ? "yes" : "no"}`,
+		friendlyId ? `friendlyValue=${friendlyId}` : null,
 		`foundByToken=${foundByApiKey ? "yes" : "no"}`,
 		`foundByMac=${foundByMac ? "yes" : "no"}`,
 		`foundByFriendly=${foundByFriendlyId ? "yes" : "no"}`,

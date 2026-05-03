@@ -81,11 +81,23 @@ export const findDeviceByIdentity = async ({
 	const normalizedCompactMacAddress = compactMacAddress(macAddress);
 	const normalizedFriendlyId = normalizeFriendlyId(friendlyId);
 
+	console.log("TRMNL findDeviceByIdentity normalized values", {
+		apiKeyPresent: Boolean(normalizedApiKey),
+		apiKeyValue: normalizedApiKey
+			? `${normalizedApiKey.slice(0, 4)}...${normalizedApiKey.slice(-4)}`
+			: null,
+		macAddress,
+		normalizedMacAddress,
+		normalizedCompactMacAddress,
+		friendlyId,
+		normalizedFriendlyId,
+	});
+
 	const deviceByApiKey = normalizedApiKey
 		? await db
 				.selectFrom("devices")
 				.selectAll()
-				.where("api_key", "=", normalizedApiKey)
+				.where(sql<string>`trim(coalesce(api_key, ''))`, "=", normalizedApiKey)
 				.executeTakeFirst()
 		: null;
 	const deviceByMac = normalizedCompactMacAddress
@@ -109,11 +121,28 @@ export const findDeviceByIdentity = async ({
 		? await db
 				.selectFrom("devices")
 				.selectAll()
-				.where("friendly_id", "=", normalizedFriendlyId)
+				.where(
+					sql<string>`upper(trim(coalesce(friendly_id, '')))`,
+					"=",
+					normalizedFriendlyId,
+				)
 				.executeTakeFirst()
 		: null;
 
 	const matchedDevice = deviceByApiKey || deviceByMac || deviceByFriendlyId;
+
+	console.log("TRMNL findDeviceByIdentity lookup result", {
+		foundByApiKey: Boolean(deviceByApiKey),
+		foundByMac: Boolean(deviceByMac),
+		foundByFriendlyId: Boolean(deviceByFriendlyId),
+		matchedBy: deviceByApiKey
+			? "api_key"
+			: deviceByMac
+				? "mac_address"
+				: deviceByFriendlyId
+					? "friendly_id"
+					: null,
+	});
 
 	return {
 		device: matchedDevice ? (matchedDevice as unknown as Device) : null,
