@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import {
 	findDeviceByIdentity,
+	macAddressesEqual,
 	maskApiKey,
 	normalizeFriendlyId,
 	normalizeIdentifier,
@@ -217,15 +218,15 @@ export async function POST(request: Request) {
 
 			if (
 				macAddress &&
-				macAddress !== device.mac_address &&
+				!macAddressesEqual(macAddress, device.mac_address) &&
 				!matchedDevice.foundByMac
 			) {
-				const macOwner = await db
-					.selectFrom("devices")
-					.select("id")
-					.where("mac_address", "=", macAddress)
-					.executeTakeFirst();
-				if (!macOwner) {
+				const macOwner = await findDeviceByIdentity({
+					apiKey: null,
+					macAddress,
+					friendlyId: null,
+				});
+				if (!macOwner.device || macOwner.device.id === device.id) {
 					updateData.mac_address = macAddress;
 				}
 			}

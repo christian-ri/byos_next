@@ -67,6 +67,10 @@ export async function GET(request: Request) {
 				accessTokenPresent: Boolean(headers.apiKey),
 				macPresent: Boolean(headers.macAddress),
 				friendlyIdPresent: Boolean(headers.friendlyId),
+				modelPresent: Boolean(headers.model),
+				width: headers.width,
+				height: headers.height,
+				updateSource: headers.updateSource,
 			},
 		},
 	});
@@ -86,6 +90,11 @@ export async function GET(request: Request) {
 					foundByApiKey: deviceResolution.foundByApiKey,
 					foundByMac: deviceResolution.foundByMac,
 					foundByFriendlyId: deviceResolution.foundByFriendlyId,
+					model: headers.model,
+					width: headers.width,
+					height: headers.height,
+					updateSource: headers.updateSource,
+					headerKeys: headers.headerKeys,
 				},
 			});
 			return buildErrorResponse("Device not found", baseUrl, uniqueId);
@@ -144,6 +153,10 @@ export async function GET(request: Request) {
 				finalScreen: screenToDisplay,
 				fallbackUsed,
 				fallbackReason,
+				model: headers.model,
+				width: headers.width,
+				height: headers.height,
+				updateSource: headers.updateSource,
 			},
 		});
 		logInfo("Display request successful", { source: "api/display", metadata });

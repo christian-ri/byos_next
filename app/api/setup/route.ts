@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
 	findDeviceByIdentity,
+	macAddressesEqual,
 	maskApiKey,
 	normalizeFriendlyId,
 	normalizeIdentifier,
@@ -353,15 +354,15 @@ export async function GET(request: Request) {
 
 		if (
 			macAddress &&
-			macAddress !== device.mac_address &&
+			!macAddressesEqual(macAddress, device.mac_address) &&
 			!existingMatch.foundByMac
 		) {
-			const macOwner = await db
-				.selectFrom("devices")
-				.select("id")
-				.where("mac_address", "=", macAddress)
-				.executeTakeFirst();
-			if (!macOwner) {
+			const macOwner = await findDeviceByIdentity({
+				apiKey: null,
+				macAddress,
+				friendlyId: null,
+			});
+			if (!macOwner.device || macOwner.device.id === device.id) {
 				updateData.mac_address = macAddress;
 				shouldUpdate = true;
 			}

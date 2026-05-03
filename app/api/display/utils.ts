@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
 	findDeviceByIdentity,
+	macAddressesEqual,
 	normalizeFriendlyId,
 	normalizeIdentifier,
 	normalizeMacAddress,
@@ -33,6 +34,12 @@ export interface RequestHeaders {
 	batteryVoltage: string | null;
 	fwVersion: string | null;
 	rssi: string | null;
+	model: string | null;
+	updateSource: string | null;
+	width: number | null;
+	height: number | null;
+	specialFunction: string | null;
+	headerKeys: string[];
 	hostUrl: string;
 }
 
@@ -41,6 +48,11 @@ export interface RequestHeaders {
 export const parseRequestHeaders = (request: Request): RequestHeaders => {
 	const headers = request.headers;
 	const url = new URL(request.url);
+	const parseIntegerHeader = (value: string | null) => {
+		if (!value) return null;
+		const parsed = Number.parseInt(value, 10);
+		return Number.isFinite(parsed) ? parsed : null;
+	};
 	const firstIdentifier = (names: string[]) => {
 		for (const name of names) {
 			const headerValue = headers.get(name);
@@ -89,6 +101,24 @@ export const parseRequestHeaders = (request: Request): RequestHeaders => {
 			firstIdentifier(["FW-Version", "fw-version", "fw_version"]),
 		),
 		rssi: normalizeIdentifier(firstIdentifier(["RSSI", "rssi"])),
+		model: normalizeIdentifier(firstIdentifier(["Model", "model"])),
+		updateSource: normalizeIdentifier(
+			firstIdentifier(["Update-Source", "update-source", "update_source"]),
+		),
+		width: parseIntegerHeader(
+			firstIdentifier(["Width", "width", "screen_width"]),
+		),
+		height: parseIntegerHeader(
+			firstIdentifier(["Height", "height", "screen_height"]),
+		),
+		specialFunction: normalizeIdentifier(
+			firstIdentifier([
+				"Special-Function",
+				"special-function",
+				"special_function",
+			]),
+		),
+		headerKeys: Array.from(headers.keys()).sort(),
 		hostUrl:
 			(headers.get("x-forwarded-proto") || "http") +
 			"://" +
@@ -290,6 +320,7 @@ export const resolveDeviceDisplayTarget = async ({
 	let fallbackUsed = initialScreenResolution.fallbackUsed;
 	let fallbackReason = initialScreenResolution.fallbackReason;
 	const fallbackScreen = initialScreenResolution.screen;
+	let normalizeModeToScreen = false;
 
 	switch (device.display_mode) {
 		case DeviceDisplayMode.PLAYLIST:
@@ -338,6 +369,7 @@ export const resolveDeviceDisplayTarget = async ({
 				dynamicRefreshRate = 60;
 				fallbackUsed = true;
 				fallbackReason = "playlist_missing_playlist_id";
+				normalizeModeToScreen = true;
 			}
 			imageUrl = `${baseUrl}/${screenToDisplay || DEFAULT_SCREEN}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
 			break;
@@ -357,6 +389,7 @@ export const resolveDeviceDisplayTarget = async ({
 				screenToDisplay = fallbackScreen;
 				fallbackUsed = true;
 				fallbackReason = "mixup_missing_mixup_id";
+				normalizeModeToScreen = true;
 			}
 			dynamicRefreshRate = calculateRefreshRate(
 				device.refresh_schedule as unknown as RefreshSchedule,
@@ -373,6 +406,40 @@ export const resolveDeviceDisplayTarget = async ({
 			);
 			imageUrl = `${baseUrl}/${(screenToDisplay || DEFAULT_SCREEN).trim()}.bmp?width=${width}&height=${height}&grayscale=${grayscaleLevels}`;
 			break;
+	}
+
+	if (normalizeModeToScreen) {
+		void db
+			.updateTable("devices")
+			.set({
+				display_mode: DeviceDisplayMode.SCREEN,
+				playlist_id: null,
+				mixup_id: null,
+				current_playlist_index: null,
+				screen: screenToDisplay || fallbackScreen || DEFAULT_SCREEN,
+				updated_at: new Date().toISOString(),
+			})
+			.where("id", "=", device.id.toString())
+			.execute()
+			.then(() => {
+				logInfo("Display normalized stale device mode to screen", {
+					source: "api/display",
+					metadata: {
+						deviceId: device.friendly_id,
+						finalScreen: screenToDisplay || fallbackScreen || DEFAULT_SCREEN,
+						fallbackReason,
+					},
+				});
+			})
+			.catch(() => {
+				logError("Failed to normalize stale device mode", {
+					source: "api/display",
+					metadata: {
+						deviceId: device.friendly_id,
+						fallbackReason,
+					},
+				});
+			});
 	}
 
 	return {
@@ -416,6 +483,12 @@ export const updateDeviceStatus = async (
 	if (headers.rssi) {
 		updateData.rssi = Number.parseInt(headers.rssi, 10);
 	}
+	if (headers.width && headers.width > 0) {
+		updateData.screen_width = headers.width;
+	}
+	if (headers.height && headers.height > 0) {
+		updateData.screen_height = headers.height;
+	}
 	if (device.timezone) {
 		updateData.timezone = device.timezone;
 	}
@@ -438,7 +511,12 @@ export const resolveDeviceForDisplay = async (
 	headers: RequestHeaders,
 ): Promise<{
 	device: Device | null;
-	matchedBy: "api_key" | "mac_address" | "friendly_id" | null;
+	matchedBy:
+		| "api_key"
+		| "mac_address"
+		| "friendly_id"
+		| "sole_device_fallback"
+		| null;
 	foundByApiKey: boolean;
 	foundByMac: boolean;
 	foundByFriendlyId: boolean;
@@ -465,13 +543,17 @@ export const resolveDeviceForDisplay = async (
 			}
 		}
 
-		if (macAddress && macAddress !== device.mac_address && !match.foundByMac) {
-			const macOwner = await db
-				.selectFrom("devices")
-				.select("id")
-				.where("mac_address", "=", macAddress)
-				.executeTakeFirst();
-			if (!macOwner) {
+		if (
+			macAddress &&
+			!macAddressesEqual(macAddress, device.mac_address) &&
+			!match.foundByMac
+		) {
+			const macOwner = await findDeviceByIdentity({
+				apiKey: null,
+				macAddress,
+				friendlyId: null,
+			});
+			if (!macOwner.device || macOwner.device.id === device.id) {
 				updateData.mac_address = macAddress;
 				shouldUpdate = true;
 			}
@@ -496,6 +578,45 @@ export const resolveDeviceForDisplay = async (
 			foundByMac: match.foundByMac,
 			foundByFriendlyId: match.foundByFriendlyId,
 		};
+	}
+
+	const looksLikeTrmnlRequest = Boolean(
+		headers.apiKey ||
+			headers.macAddress ||
+			headers.model ||
+			headers.width ||
+			headers.height ||
+			headers.updateSource,
+	);
+
+	if (looksLikeTrmnlRequest) {
+		const devices = await db
+			.selectFrom("devices")
+			.selectAll()
+			.limit(2)
+			.execute();
+		if (devices.length === 1) {
+			logInfo("Display resolved by sole-device fallback", {
+				source: "api/display",
+				metadata: {
+					apiKeyPresent: Boolean(apiKey),
+					macPresent: Boolean(macAddress),
+					friendlyIdPresent: Boolean(friendlyId),
+					model: headers.model,
+					updateSource: headers.updateSource,
+					headerKeys: headers.headerKeys,
+					deviceId: devices[0].friendly_id,
+				},
+			});
+
+			return {
+				device: devices[0] as unknown as Device,
+				matchedBy: "sole_device_fallback",
+				foundByApiKey: false,
+				foundByMac: false,
+				foundByFriendlyId: false,
+			};
+		}
 	}
 
 	return {

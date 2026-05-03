@@ -4,6 +4,7 @@ import { getCurrentUserId } from "@/lib/auth/get-user";
 import { db } from "@/lib/database/db";
 import { withUserScope } from "@/lib/database/scoped-db";
 import { checkDbConnection } from "@/lib/database/utils";
+import { DeviceDisplayMode } from "@/lib/mixup/constants";
 import type { Device, Log } from "@/lib/types";
 
 /**
@@ -169,6 +170,19 @@ export async function updateDevice(
 	// Prepare the update data
 	// We construct object with optional properties explicitly
 	const updateData: Record<string, unknown> = {};
+	const normalizedScreen =
+		typeof device.screen === "string"
+			? device.screen.trim() || null
+			: device.screen;
+	const normalizedPlaylistId =
+		typeof device.playlist_id === "string"
+			? device.playlist_id.trim() || null
+			: device.playlist_id;
+	const normalizedMixupId =
+		typeof device.mixup_id === "string"
+			? device.mixup_id.trim() || null
+			: device.mixup_id;
+	const normalizedDisplayMode = device.display_mode;
 
 	if (device.name !== undefined) updateData.name = device.name;
 	if (device.mac_address !== undefined)
@@ -181,12 +195,12 @@ export async function updateDevice(
 		updateData.refresh_schedule = device.refresh_schedule
 			? JSON.stringify(device.refresh_schedule)
 			: null;
-	if (device.screen !== undefined) updateData.screen = device.screen;
+	if (device.screen !== undefined) updateData.screen = normalizedScreen;
 	if (device.playlist_id !== undefined)
-		updateData.playlist_id = device.playlist_id;
-	if (device.mixup_id !== undefined) updateData.mixup_id = device.mixup_id;
+		updateData.playlist_id = normalizedPlaylistId;
+	if (device.mixup_id !== undefined) updateData.mixup_id = normalizedMixupId;
 	if (device.display_mode !== undefined)
-		updateData.display_mode = device.display_mode;
+		updateData.display_mode = normalizedDisplayMode;
 	if (device.battery_voltage !== undefined)
 		updateData.battery_voltage = device.battery_voltage;
 	if (device.firmware_version !== undefined)
@@ -199,6 +213,31 @@ export async function updateDevice(
 	if (device.screen_orientation !== undefined)
 		updateData.screen_orientation = device.screen_orientation;
 	if (device.grayscale !== undefined) updateData.grayscale = device.grayscale;
+
+	if (normalizedDisplayMode === DeviceDisplayMode.SCREEN) {
+		updateData.playlist_id = null;
+		updateData.mixup_id = null;
+		updateData.current_playlist_index = null;
+		updateData.screen = normalizedScreen || "simple-text";
+	}
+
+	if (normalizedDisplayMode === DeviceDisplayMode.PLAYLIST) {
+		updateData.mixup_id = null;
+		if (!normalizedPlaylistId) {
+			updateData.display_mode = DeviceDisplayMode.SCREEN;
+			updateData.screen = normalizedScreen || "simple-text";
+			updateData.current_playlist_index = null;
+		}
+	}
+
+	if (normalizedDisplayMode === DeviceDisplayMode.MIXUP) {
+		updateData.playlist_id = null;
+		updateData.current_playlist_index = null;
+		if (!normalizedMixupId) {
+			updateData.display_mode = DeviceDisplayMode.SCREEN;
+			updateData.screen = normalizedScreen || "simple-text";
+		}
+	}
 
 	updateData.updated_at = new Date().toISOString();
 	const userId = await getCurrentUserId();

@@ -10,6 +10,7 @@ import DeviceView from "@/components/device/device-view";
 import DeviceLogsContainer from "@/components/device-logs/device-logs-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DeviceDisplayMode } from "@/lib/mixup/constants";
 import {
 	DEFAULT_IMAGE_HEIGHT,
 	DEFAULT_IMAGE_WIDTH,
@@ -176,6 +177,25 @@ export default function DevicePageClient({
 				},
 			});
 		} else {
+			if (name === "display_mode") {
+				const nextMode = value as Device["display_mode"];
+				setEditedDevice({
+					...editedDevice,
+					display_mode: nextMode,
+					playlist_id:
+						nextMode === DeviceDisplayMode.PLAYLIST
+							? editedDevice.playlist_id
+							: null,
+					mixup_id:
+						nextMode === DeviceDisplayMode.MIXUP ? editedDevice.mixup_id : null,
+					screen:
+						nextMode === DeviceDisplayMode.SCREEN
+							? editedDevice.screen || "simple-text"
+							: editedDevice.screen,
+				});
+				return;
+			}
+
 			// Convert grayscale to number
 			if (name === "grayscale") {
 				setEditedDevice({
@@ -195,7 +215,10 @@ export default function DevicePageClient({
 	const handleScreenChange = (screenId: string | null) => {
 		setEditedDevice({
 			...editedDevice,
-			screen: screenId,
+			screen: screenId || "simple-text",
+			display_mode: DeviceDisplayMode.SCREEN,
+			playlist_id: null,
+			mixup_id: null,
 		});
 	};
 
@@ -386,7 +409,9 @@ export default function DevicePageClient({
 					orderIndex: item.order_index,
 				}));
 			setPlaylistScreens(playlistScreens);
+			return;
 		}
+		setPlaylistScreens([]);
 	}, [editedDevice.playlist_id, playlistItems]);
 
 	return (
