@@ -6,8 +6,85 @@ import {
 import { PreSatori } from "@/utils/pre-satori";
 import type { SkyWatchRecipeData } from "./getData";
 
-function headingTransform(heading: number) {
-	return `rotate(${heading}deg)`;
+function PlaneIcon({
+	heading,
+	brightness,
+	size = 28,
+}: {
+	heading: number;
+	brightness: number;
+	size?: number;
+}) {
+	return (
+		<svg
+			viewBox="0 0 64 64"
+			width={size}
+			height={size}
+			aria-hidden="true"
+			focusable="false"
+			style={{
+				transform: `rotate(${heading}deg)`,
+				opacity: brightness,
+			}}
+		>
+			<path
+				d="M31 3L38 24L55 31L38 36L43 60L32 49L21 60L26 36L9 31L26 24L31 3Z"
+				fill="#fff"
+				stroke="#fff"
+				strokeWidth="2"
+				strokeLinejoin="round"
+			/>
+		</svg>
+	);
+}
+
+function AirplaneMarker({
+	x,
+	y,
+	heading,
+	brightness,
+	label,
+	meta,
+	detail,
+}: {
+	x: number;
+	y: number;
+	heading: number;
+	brightness: number;
+	label: string;
+	meta: string;
+	detail: string;
+}) {
+	return (
+		<div
+			style={{
+				position: "absolute",
+				left: `${x * 100}%`,
+				top: `${y * 100}%`,
+				transform: "translate(-50%, -50%)",
+				display: "flex",
+				alignItems: "center",
+				gap: 8,
+			}}
+		>
+			<PlaneIcon heading={heading} brightness={brightness} size={38} />
+			<div
+				style={{
+					backgroundColor: "rgba(255,255,255,0.12)",
+					padding: "4px 6px",
+					minWidth: 112,
+				}}
+			>
+				<div className="font-blockkie leading-none text-white text-[16px]">
+					{label}
+				</div>
+				<div className="mt-1 font-geneva9 text-[11px] leading-tight text-white">
+					<div>{meta}</div>
+					<div>{detail}</div>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export default function SkyWatch({
@@ -21,117 +98,102 @@ export default function SkyWatch({
 	height = 480,
 }: SkyWatchRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const visibleAircraft = aircraft.slice(0, profile.isDense ? 5 : 8);
+	const visibleAircraft = aircraft.slice(0, profile.isDense ? 6 : 10);
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div
-				className="flex h-full w-full gap-4 border border-black bg-white"
+				className="h-full w-full overflow-hidden rounded-2xl border border-black bg-[#141414] text-white"
 				style={{ padding: profile.padding }}
 			>
-				<div className="relative flex-[1.05] rounded-2xl border border-black bg-[#f4f4f2]">
-					<div className="absolute left-4 top-4 font-blockkie leading-none">
-						<span
-							style={{
-								fontSize: scaleText(28, profile, {
-									compactBase: 20,
-									denseBase: 16,
-									min: 14,
-									max: 28,
-								}),
-							}}
-						>
-							{title}
-						</span>
-					</div>
-					<div className="absolute inset-0 flex items-center justify-center">
-						<div className="relative h-[78%] w-[78%] rounded-full border border-black">
-							<div className="absolute inset-[16%] rounded-full border border-gray-400" />
-							<div className="absolute inset-[33%] rounded-full border border-gray-300" />
-							<div className="absolute inset-x-1/2 top-0 h-full w-px -translate-x-1/2 bg-gray-300" />
-							<div className="absolute inset-y-1/2 left-0 h-px w-full -translate-y-1/2 bg-gray-300" />
-							{visibleAircraft.map((flight) => (
-								<div
-									key={flight.id}
-									style={{
-										position: "absolute",
-										left: `${flight.x * 100}%`,
-										top: `${flight.y * 100}%`,
-										transform: "translate(-50%, -50%)",
-									}}
-									className="flex flex-col items-center"
-								>
-									<div
-										className="h-4 w-4 rounded-full border border-black bg-black"
-										style={{ transform: headingTransform(flight.heading) }}
-									/>
-									<div
-										className="mt-1 font-geneva9 text-center"
-										style={{
-											fontSize: scaleText(11, profile, {
-												compactBase: 9,
-												denseBase: 8,
-												min: 8,
-												max: 11,
-											}),
-											maxWidth: 54,
-										}}
-									>
-										{clampText(flight.callsign, 8)}
-									</div>
-								</div>
-							))}
-						</div>
+				<div
+					className="relative h-full w-full overflow-hidden rounded-xl"
+					style={{ backgroundColor: "#1d1d1d" }}
+				>
+					<div
+						style={{
+							position: "absolute",
+							inset: 0,
+							backgroundImage:
+								"radial-gradient(circle at 20% 20%, rgba(255,255,255,0.09) 0 1px, transparent 1px), radial-gradient(circle at 80% 35%, rgba(255,255,255,0.08) 0 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)",
+							backgroundSize: "120px 120px, 150px 150px, 64px 64px, 64px 64px",
+							opacity: 0.55,
+						}}
+					/>
+					<div
+						className="absolute right-4 top-4 rounded-lg bg-white px-3 py-2 text-black"
+						style={{ fontSize: 14 }}
+					>
+						airplanes.live
 					</div>
 					<div
-						className="absolute bottom-4 left-4 right-4 flex items-center justify-between font-geneva9"
+						className="absolute left-6 top-5 font-geneva9 uppercase"
+						style={{ letterSpacing: "0.22em", fontSize: 12, opacity: 0.7 }}
+					>
+						live radar
+					</div>
+					<div
+						className="absolute left-[58%] top-[16%] font-geneva9 text-[14px]"
+						style={{ opacity: 0.75 }}
+					>
+						{radiusLabel}
+					</div>
+					<div
+						className="absolute left-[56%] top-[19%] h-7 w-7 rounded-full border border-white"
+						style={{ opacity: 0.8 }}
+					/>
+					<div
+						className="absolute left-[56.9%] top-[19.8%] h-[10px] w-[10px] rounded-full bg-white"
+						style={{ opacity: 0.95 }}
+					/>
+
+					{visibleAircraft.map((flight) => (
+						<AirplaneMarker
+							key={flight.id}
+							x={flight.x}
+							y={flight.y}
+							heading={flight.heading}
+							brightness={flight.brightness}
+							label={clampText(flight.callsign, 10)}
+							meta={clampText(flight.aircraftType, 28)}
+							detail={`${flight.altitudeLabel} · ${flight.speedLabel}`}
+						/>
+					))}
+
+					<div
+						className="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-white/20 px-5"
 						style={{
-							fontSize: scaleText(14, profile, {
-								compactBase: 11,
-								denseBase: 9,
-								min: 8,
-								max: 14,
-							}),
+							height: 56,
+							backgroundColor: "rgba(0,0,0,0.4)",
 						}}
 					>
-						<span>{locationLabel}</span>
-						<span>{radiusLabel}</span>
+						<div className="flex items-center gap-3">
+							<PlaneIcon heading={35} brightness={1} size={24} />
+							<div className="font-blockkie leading-none">
+								<span
+									style={{
+										fontSize: scaleText(26, profile, {
+											compactBase: 20,
+											denseBase: 18,
+											min: 16,
+											max: 26,
+										}),
+									}}
+								>
+									{title}
+								</span>
+							</div>
+						</div>
+						<div className="text-right font-geneva9 text-[16px]">
+							<div>{locationLabel}</div>
+							<div className="mt-1 text-[13px] opacity-80">
+								Updated {updatedAt}
+							</div>
+						</div>
 					</div>
 				</div>
-
-				<div className="flex flex-1 flex-col rounded-2xl border border-black p-4">
-					<div className="border-b border-black pb-3">
-						<div className="font-blockkie leading-none text-[28px]">
-							Live Traffic
-						</div>
-						<div className="mt-2 font-geneva9 text-[14px]">
-							Updated {updatedAt}
-						</div>
-					</div>
-					<div className="flex flex-1 flex-col gap-3 pt-3">
-						{visibleAircraft.map((flight) => (
-							<div
-								key={`list-${flight.id}`}
-								className="flex items-center justify-between border-b border-gray-200 pb-2"
-							>
-								<div className="flex flex-col">
-									<span className="font-blockkie leading-none text-[22px]">
-										{clampText(flight.callsign, 14)}
-									</span>
-									<span className="mt-1 font-geneva9 text-[12px]">
-										{flight.status}
-									</span>
-								</div>
-								<div className="text-right font-geneva9 text-[12px]">
-									<div>{flight.altitudeFt.toLocaleString("en-US")} ft</div>
-									<div>{flight.speedKt} kt</div>
-								</div>
-							</div>
-						))}
-					</div>
-					<div className="border-t border-black pt-3 font-geneva9 text-[12px]">
-						{clampText(note || "", profile.isDense ? 48 : 86)}
-					</div>
+				<div className="mt-2 px-1 font-geneva9 text-[11px] text-white">
+					{clampText(note || "", profile.isDense ? 52 : 100)}
 				</div>
 			</div>
 		</PreSatori>

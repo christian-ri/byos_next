@@ -11,39 +11,36 @@ type SkyWatchParams = {
 	radiusKm?: string | number;
 };
 
-type OpenSkyResponse = {
-	states?: Array<
-		[
-			string,
-			string | null,
-			string | null,
-			number | null,
-			number | null,
-			number | null,
-			number | null,
-			number | null,
-			boolean | null,
-			number | null,
-			number | null,
-			number | null,
-			number[] | null,
-			number | null,
-			string | null,
-			boolean | null,
-			number | null,
-		]
-	>;
+type AirplanesLiveAircraft = {
+	hex: string;
+	flight?: string;
+	r?: string;
+	t?: string;
+	desc?: string;
+	alt_baro?: number | string;
+	gs?: number;
+	track?: number;
+	lat?: number;
+	lon?: number;
+	dst?: number;
+	dir?: number;
+};
+
+type AirplanesLiveResponse = {
+	ac?: AirplanesLiveAircraft[];
 };
 
 type Aircraft = {
 	id: string;
 	callsign: string;
-	altitudeFt: number;
-	speedKt: number;
+	aircraftType: string;
+	routeLabel: string;
+	altitudeLabel: string;
+	speedLabel: string;
 	x: number;
 	y: number;
 	heading: number;
-	status: string;
+	brightness: number;
 };
 
 export type SkyWatchRecipeData = {
@@ -55,68 +52,80 @@ export type SkyWatchRecipeData = {
 	aircraft: Aircraft[];
 };
 
-const DEFAULT_LAT = 40.7128;
-const DEFAULT_LON = -74.006;
-const DEFAULT_RADIUS_KM = 80;
-
-function toRadians(value: number) {
-	return (value * Math.PI) / 180;
-}
+const DEFAULT_LAT = 50.8503;
+const DEFAULT_LON = 4.3517;
+const DEFAULT_RADIUS_KM = 90;
 
 function clamp(value: number, min: number, max: number) {
 	return Math.min(max, Math.max(min, value));
 }
 
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-	const earthRadiusKm = 6371;
-	const dLat = toRadians(lat2 - lat1);
-	const dLon = toRadians(lon2 - lon1);
-	const a =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos(toRadians(lat1)) *
-			Math.cos(toRadians(lat2)) *
-			Math.sin(dLon / 2) ** 2;
+function toNm(km: number) {
+	return km * 0.539957;
+}
 
-	return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
+function formatAltitude(value?: number | string) {
+	if (value === "ground") return "Ground";
+	const numeric = Number(value);
+	if (!Number.isFinite(numeric) || numeric <= 0) return "--";
+	return `${Math.round(numeric / 100) / 10}k ft`;
 }
 
 function buildFallback(note?: string): SkyWatchRecipeData {
 	return {
 		title: "SkyWatch",
-		locationLabel: "New York Harbor",
-		radiusLabel: "80 km radius",
+		locationLabel: "Brussels",
+		radiusLabel: "50 nm",
 		updatedAt: formatUpdatedAt(new Date()),
 		note,
 		aircraft: [
 			{
 				id: "sample-1",
-				callsign: "DAL2417",
-				altitudeFt: 19200,
-				speedKt: 322,
-				x: 0.2,
-				y: 0.35,
-				heading: 45,
-				status: "Climb",
+				callsign: "EZY2850",
+				aircraftType: "AIRBUS A-320neo",
+				routeLabel: "DLM → BRS",
+				altitudeLabel: "38k ft",
+				speedLabel: "419 kt",
+				x: 0.33,
+				y: 0.23,
+				heading: 295,
+				brightness: 1,
 			},
 			{
 				id: "sample-2",
-				callsign: "JBU529",
-				altitudeFt: 6400,
-				speedKt: 178,
-				x: 0.62,
-				y: 0.56,
-				heading: 280,
-				status: "Approach",
+				callsign: "BAW169",
+				aircraftType: "BOEING 787-9 Dreamliner",
+				routeLabel: "LHR → PVG",
+				altitudeLabel: "35k ft",
+				speedLabel: "511 kt",
+				x: 0.67,
+				y: 0.58,
+				heading: 120,
+				brightness: 0.92,
 			},
 			{
 				id: "sample-3",
-				callsign: "BAW117",
-				altitudeFt: 33100,
-				speedKt: 472,
-				x: 0.78,
-				y: 0.22,
-				heading: 120,
-				status: "Cruise",
+				callsign: "PGTP9SG",
+				aircraftType: "AIRBUS A-321neo",
+				routeLabel: "STN → SAW",
+				altitudeLabel: "37.1k ft",
+				speedLabel: "472 kt",
+				x: 0.46,
+				y: 0.67,
+				heading: 340,
+				brightness: 0.88,
+			},
+			{
+				id: "sample-4",
+				callsign: "OOI37",
+				aircraftType: "FLIGHT DESIGN",
+				routeLabel: "",
+				altitudeLabel: "600 ft",
+				speedLabel: "57 kt",
+				x: 0.89,
+				y: 0.79,
+				heading: 76,
+				brightness: 0.7,
 			},
 		],
 	};
@@ -130,71 +139,59 @@ export default async function getData(
 	const radiusKm = clamp(
 		Number(params?.radiusKm ?? DEFAULT_RADIUS_KM),
 		20,
-		200,
+		160,
 	);
+	const radiusNm = Math.round(toNm(radiusKm));
 
 	try {
-		const latDelta = radiusKm / 111;
-		const lonDelta =
-			radiusKm / (Math.max(Math.cos(toRadians(latitude)), 0.25) * 111);
-
-		const response = await fetchJsonWithTimeout<OpenSkyResponse>(
-			`https://opensky-network.org/api/states/all?lamin=${latitude - latDelta}&lomin=${longitude - lonDelta}&lamax=${latitude + latDelta}&lomax=${longitude + lonDelta}`,
+		const response = await fetchJsonWithTimeout<AirplanesLiveResponse>(
+			`https://api.airplanes.live/v2/point/${latitude}/${longitude}/${radiusNm}`,
 			{ headers: { Accept: "application/json" } },
 			10000,
 		);
 
 		const aircraft =
-			response.states
-				?.map((state) => {
-					const lon = state[5];
-					const lat = state[6];
-					if (lon == null || lat == null) return null;
-
-					const distance = haversineKm(latitude, longitude, lat, lon);
-					if (distance > radiusKm) return null;
+			response.ac
+				?.filter(
+					(entry) => Number.isFinite(entry.lat) && Number.isFinite(entry.lon),
+				)
+				.slice(0, 12)
+				.map((entry) => {
+					const dst = clamp(Number(entry.dst || 0), 0, radiusNm);
+					const dir = Number(entry.dir || 0);
+					const angle = ((dir - 90) * Math.PI) / 180;
+					const radial = dst / Math.max(radiusNm, 1);
+					const x = clamp(0.5 + Math.cos(angle) * radial * 0.42, 0.06, 0.94);
+					const y = clamp(0.5 + Math.sin(angle) * radial * 0.42, 0.08, 0.9);
+					const altitudeNumeric = Number(entry.alt_baro);
+					const brightness = Number.isFinite(altitudeNumeric)
+						? clamp(0.45 + altitudeNumeric / 50000, 0.5, 1)
+						: 0.55;
 
 					return {
-						id: state[0],
-						callsign: state[1]?.trim() || state[0].slice(0, 6).toUpperCase(),
-						altitudeFt: Math.round((state[13] || state[7] || 0) * 3.28084),
-						speedKt: Math.round((state[9] || 0) * 1.94384),
-						x: clamp(
-							(lon - (longitude - lonDelta)) / (lonDelta * 2),
-							0.04,
-							0.96,
-						),
-						y: clamp(
-							(latDelta - (lat - latitude)) / (latDelta * 2),
-							0.06,
-							0.94,
-						),
-						heading: state[10] || 0,
-						status: state[8]
-							? "Ground"
-							: distance < radiusKm * 0.35
-								? "Approach"
-								: "Cruise",
-						distance,
+						id: entry.hex,
+						callsign: entry.flight?.trim() || entry.r || entry.hex.slice(0, 6),
+						aircraftType: entry.desc || entry.t || "Aircraft",
+						routeLabel: entry.r || "",
+						altitudeLabel: formatAltitude(entry.alt_baro),
+						speedLabel: `${Math.round(entry.gs || 0)} kt`,
+						x,
+						y,
+						heading: Number(entry.track || 0),
+						brightness,
 					};
-				})
-				.filter((entry): entry is Aircraft & { distance: number } =>
-					Boolean(entry),
-				)
-				.sort((a, b) => a.distance - b.distance)
-				.slice(0, 8)
-				.map(({ distance: _distance, ...entry }) => entry) || [];
+				}) || [];
 
 		if (aircraft.length === 0) {
-			return buildFallback("No live aircraft returned for this radius.");
+			return buildFallback("No live aircraft returned for this area.");
 		}
 
 		return {
 			title: "SkyWatch",
 			locationLabel: `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`,
-			radiusLabel: `${radiusKm} km radius`,
+			radiusLabel: `${radiusNm} nm`,
 			updatedAt: formatUpdatedAt(new Date()),
-			note: "Live aircraft positions via public state vectors.",
+			note: "Aircraft via airplanes.live public point feed.",
 			aircraft,
 		};
 	} catch (error) {

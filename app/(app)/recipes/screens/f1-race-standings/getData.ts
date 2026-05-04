@@ -3,6 +3,10 @@ import {
 	formatDateTime,
 	formatUpdatedAt,
 } from "@/app/(app)/recipes/screens/_shared/fetch-utils";
+import {
+	getTeamBadgeLabel,
+	getTrackImageUrl,
+} from "@/app/(app)/recipes/screens/f1-race-standings/f1-assets";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +34,18 @@ type DriverMeta = {
 	full_name: string;
 	name_acronym: string;
 	team_name: string;
+	team_colour?: string;
+	headshot_url?: string;
+};
+
+type ChampionshipTeam = {
+	team_name: string;
+	position_current: number | null;
+	points_current: number | null;
 };
 
 type SessionSummary = {
+	day: string;
 	label: string;
 	time: string;
 };
@@ -42,12 +55,15 @@ type DriverStanding = {
 	name: string;
 	team: string;
 	points: number;
+	headshotUrl?: string;
+	teamBadge: string;
 };
 
 type TeamStanding = {
 	position: number;
 	team: string;
 	points: number;
+	teamBadge: string;
 };
 
 export type F1RaceStandingsRecipeData = {
@@ -56,6 +72,7 @@ export type F1RaceStandingsRecipeData = {
 	nextRaceName: string;
 	nextRaceDate: string;
 	nextRaceRound: string;
+	nextRaceTrackImageUrl?: string | null;
 	schedule: SessionSummary[];
 	driverStandings: DriverStanding[];
 	teamStandings: TeamStanding[];
@@ -98,7 +115,7 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 						!race.is_cancelled && new Date(race.date_start).getTime() <= now,
 				) || nextRace;
 
-		const [weekendSessions, driverStandingsRaw, driversMeta] =
+		const [weekendSessions, driverStandingsRaw, driversMeta, teamStandingsRaw] =
 			await Promise.all([
 				fetchJsonWithTimeout<F1Session[]>(
 					`https://api.openf1.org/v1/sessions?meeting_key=${nextRace.meeting_key}`,
@@ -115,6 +132,11 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 					{ headers: { Accept: "application/json" } },
 					10000,
 				),
+				fetchJsonWithTimeout<ChampionshipTeam[]>(
+					`https://api.openf1.org/v1/championship_teams?session_key=${completedRace.session_key}`,
+					{ headers: { Accept: "application/json" } },
+					10000,
+				).catch(() => []),
 			]);
 
 		const driversByNumber = new Map(
@@ -132,27 +154,49 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 					`Driver ${entry.driver_number}`,
 				team: driversByNumber.get(entry.driver_number)?.team_name || "Unknown",
 				points: Math.round(entry.points_current || 0),
+				headshotUrl: driversByNumber.get(entry.driver_number)?.headshot_url,
+				teamBadge: getTeamBadgeLabel(
+					driversByNumber.get(entry.driver_number)?.team_name || "Unknown",
+				),
 			}));
 
-		const teamTotals = new Map<string, number>();
-		for (const entry of driverStandingsRaw) {
-			const meta = driversByNumber.get(entry.driver_number);
-			if (!meta?.team_name) continue;
-			teamTotals.set(
-				meta.team_name,
-				(teamTotals.get(meta.team_name) || 0) +
-					Math.round(entry.points_current || 0),
-			);
-		}
+		const teamStandings =
+			teamStandingsRaw.length > 0
+				? teamStandingsRaw
+						.filter((entry) => entry.position_current != null)
+						.sort(
+							(a, b) =>
+								(a.position_current || 999) - (b.position_current || 999),
+						)
+						.slice(0, 5)
+						.map((entry) => ({
+							position: entry.position_current || 0,
+							team: entry.team_name,
+							points: Math.round(entry.points_current || 0),
+							teamBadge: getTeamBadgeLabel(entry.team_name),
+						}))
+				: (() => {
+						const teamTotals = new Map<string, number>();
+						for (const entry of driverStandingsRaw) {
+							const meta = driversByNumber.get(entry.driver_number);
+							if (!meta?.team_name) continue;
+							teamTotals.set(
+								meta.team_name,
+								(teamTotals.get(meta.team_name) || 0) +
+									Math.round(entry.points_current || 0),
+							);
+						}
 
-		const teamStandings = [...teamTotals.entries()]
-			.sort((a, b) => b[1] - a[1])
-			.slice(0, 5)
-			.map(([team, points], index) => ({
-				position: index + 1,
-				team,
-				points,
-			}));
+						return [...teamTotals.entries()]
+							.sort((a, b) => b[1] - a[1])
+							.slice(0, 5)
+							.map(([team, points], index) => ({
+								position: index + 1,
+								team,
+								points,
+								teamBadge: getTeamBadgeLabel(team),
+							}));
+					})();
 
 		const schedule = [...weekendSessions]
 			.sort(
@@ -161,9 +205,9 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 			)
 			.slice(0, 5)
 			.map((session) => ({
+				day: formatDateTime(session.date_start, { weekday: "long" }),
 				label: session.session_name,
 				time: formatDateTime(session.date_start, {
-					weekday: "short",
 					hour: "numeric",
 					minute: "2-digit",
 				}),
@@ -180,11 +224,18 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 				minute: "2-digit",
 			}),
 			nextRaceRound: parseRaceRound(sortedRaces, nextRace),
+			nextRaceTrackImageUrl: getTrackImageUrl(
+				nextRace.circuit_short_name,
+				nextRace.location,
+			),
 			schedule,
 			driverStandings,
 			teamStandings,
 			updatedAt: formatUpdatedAt(new Date()),
-			note: "Standings via OpenF1; team totals derived from driver points.",
+			note:
+				teamStandingsRaw.length > 0
+					? "Standings and driver profiles via OpenF1."
+					: "Standings via OpenF1; team totals derived from driver points.",
 		};
 	} catch (error) {
 		console.error("Error loading F1 standings data:", error);
@@ -194,23 +245,54 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 			nextRaceName: "Miami Grand Prix",
 			nextRaceDate: "May 03, 5:00 PM",
 			nextRaceRound: "Round 4",
+			nextRaceTrackImageUrl: getTrackImageUrl("Miami"),
 			schedule: [
-				{ label: "Practice 1", time: "Fri 6:30 PM" },
-				{ label: "Sprint", time: "Sat 6:00 PM" },
-				{ label: "Qualifying", time: "Sat 10:00 PM" },
-				{ label: "Race", time: "Sun 10:00 PM" },
+				{ day: "Friday", label: "Practice 1", time: "6:30 PM" },
+				{ day: "Saturday", label: "Sprint", time: "6:00 PM" },
+				{ day: "Saturday", label: "Qualifying", time: "10:00 PM" },
+				{ day: "Sunday", label: "Race", time: "10:00 PM" },
 			],
 			driverStandings: [
-				{ position: 1, name: "Kimi Antonelli", team: "Mercedes", points: 72 },
-				{ position: 2, name: "George Russell", team: "Mercedes", points: 63 },
-				{ position: 3, name: "Charles Leclerc", team: "Ferrari", points: 49 },
-				{ position: 4, name: "Lewis Hamilton", team: "Ferrari", points: 41 },
-				{ position: 5, name: "Lando Norris", team: "McLaren", points: 25 },
+				{
+					position: 1,
+					name: "Kimi Antonelli",
+					team: "Mercedes",
+					points: 72,
+					teamBadge: "M",
+				},
+				{
+					position: 2,
+					name: "George Russell",
+					team: "Mercedes",
+					points: 63,
+					teamBadge: "M",
+				},
+				{
+					position: 3,
+					name: "Charles Leclerc",
+					team: "Ferrari",
+					points: 49,
+					teamBadge: "F",
+				},
+				{
+					position: 4,
+					name: "Lewis Hamilton",
+					team: "Ferrari",
+					points: 41,
+					teamBadge: "F",
+				},
+				{
+					position: 5,
+					name: "Lando Norris",
+					team: "McLaren",
+					points: 25,
+					teamBadge: "Mc",
+				},
 			],
 			teamStandings: [
-				{ position: 1, team: "Mercedes", points: 135 },
-				{ position: 2, team: "Ferrari", points: 90 },
-				{ position: 3, team: "McLaren", points: 46 },
+				{ position: 1, team: "Mercedes", points: 135, teamBadge: "M" },
+				{ position: 2, team: "Ferrari", points: 90, teamBadge: "F" },
+				{ position: 3, team: "McLaren", points: 46, teamBadge: "Mc" },
 			],
 			updatedAt: formatUpdatedAt(new Date()),
 			note: "Live F1 fetch failed, so this preview is showing sample standings.",
