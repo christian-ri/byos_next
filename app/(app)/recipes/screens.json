@@ -797,5 +797,174 @@
 		},
 		"version": "1.0.0",
 		"category": "system-components"
+	},
+	"skywatch": {
+		"title": "SkyWatch",
+		"published": true,
+		"createdAt": "2026-05-03T00:00:00Z",
+		"updatedAt": "2026-05-03T00:00:00Z",
+		"description": "Local air-traffic radar inspired by the TRMNL SkyWatch plugin.",
+		"componentPath": "./screens/skywatch",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"latitude": {
+				"type": "number",
+				"label": "Latitude",
+				"description": "Center latitude for the radar view.",
+				"default": 40.7128
+			},
+			"longitude": {
+				"type": "number",
+				"label": "Longitude",
+				"description": "Center longitude for the radar view.",
+				"default": -74.006
+			},
+			"radiusKm": {
+				"type": "number",
+				"label": "Radius (km)",
+				"description": "Traffic search radius in kilometers.",
+				"default": 80
+			}
+		},
+		"tags": ["aviation", "radar", "live-data", "community"],
+		"author": {
+			"name": "Inspired by ExcuseMi",
+			"github": "ExcuseMi"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"lp-weather": {
+		"title": "LP Weather",
+		"published": true,
+		"createdAt": "2026-05-03T00:00:00Z",
+		"updatedAt": "2026-05-03T00:00:00Z",
+		"description": "Readable Open-Meteo forecast inspired by lucaspimentel's TRMNL weather plugin.",
+		"componentPath": "./screens/lp-weather",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"location": {
+				"type": "string",
+				"label": "Location",
+				"description": "City or region name for the forecast.",
+				"default": "Boston"
+			},
+			"units": {
+				"type": "string",
+				"label": "Units",
+				"description": "Use metric or imperial.",
+				"default": "metric"
+			}
+		},
+		"tags": ["weather", "forecast", "open-meteo", "live-data"],
+		"author": {
+			"name": "Inspired by lucaspimentel",
+			"github": "lucaspimentel"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"f1-race-standings": {
+		"title": "F1 Race + Standings",
+		"published": true,
+		"createdAt": "2026-05-03T00:00:00Z",
+		"updatedAt": "2026-05-03T00:00:00Z",
+		"description": "Next race weekend plus driver and constructor standings using OpenF1.",
+		"componentPath": "./screens/f1-race-standings",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {},
+		"tags": ["formula-1", "f1", "sports", "openf1", "live-data"],
+		"author": {
+			"name": "OpenF1-based import",
+			"github": "br-g"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"nasa-image-of-the-day": {
+		"title": "NASA Image of the Day",
+		"published": true,
+		"createdAt": "2026-05-03T00:00:00Z",
+		"updatedAt": "2026-05-03T00:00:00Z",
+		"description": "Daily NASA space image with caption and date.",
+		"componentPath": "./screens/nasa-image-of-the-day",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"apiKey": {
+				"type": "string",
+				"label": "NASA API Key",
+				"description": "Optional NASA API key. Defaults to DEMO_KEY.",
+				"default": "DEMO_KEY"
+			}
+		},
+		"tags": ["nasa", "space", "image", "daily"],
+		"author": {
+			"name": "Inspired by lanrat",
+			"github": "lanrat"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"vercel-overview": {
+		"title": "Vercel Overview",
+		"published": true,
+		"createdAt": "2026-05-03T00:00:00Z",
+		"updatedAt": "2026-05-03T00:00:00Z",
+		"description": "Projects and recent deployments from the Vercel REST API.",
+		"componentPath": "./screens/vercel-overview",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"apiToken": {
+				"type": "string",
+				"label": "Vercel API Token",
+				"description": "Personal or team-scoped Vercel access token.",
+				"default": ""
+			},
+			"teamId": {
+				"type": "string",
+				"label": "Team ID",
+				"description": "Optional team ID if you want to read team resources.",
+				"default": ""
+			},
+			"projectLimit": {
+				"type": "number",
+				"label": "Projects",
+				"description": "How many projects to show.",
+				"default": 4
+			},
+			"deploymentLimit": {
+				"type": "number",
+				"label": "Deployments",
+				"description": "How many deployments to show.",
+				"default": 4
+			}
+		},
+		"tags": ["vercel", "deployments", "projects", "api"],
+		"author": {
+			"name": "BYOS",
+			"github": "christian-ri"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
 	}
 }

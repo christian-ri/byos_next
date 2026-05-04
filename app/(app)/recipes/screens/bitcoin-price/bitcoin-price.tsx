@@ -50,7 +50,7 @@ export default function CryptoPrice({
 	const isHalfScreen = width === 400 && height === 480;
 
 	return (
-		<PreSatori width={width} height={height}>
+		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="flex h-full w-full flex-col bg-white justify-between p-4">
 				<div className="flex flex-col">
 					<div className="flex flex-col">

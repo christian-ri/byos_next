@@ -60,6 +60,7 @@ function EventLine({
 	maxChars: number;
 }) {
 	const label = clampText(eventLabel(event, includeEventTime), maxChars);
+	const isBadge = event.allDay || event.multiDay;
 	const style: BoxStyle = {
 		position: "absolute",
 		left,
@@ -69,8 +70,17 @@ function EventLine({
 
 	return (
 		<div
-			style={style}
-			className={`${event.allDay || event.multiDay ? "bg-black text-white rounded-sm px-1" : "text-black"} leading-tight font-geneva9 overflow-hidden`}
+			style={{
+				...style,
+				display: "flex",
+				alignItems: "center",
+				padding: isBadge ? "2px 6px" : undefined,
+				borderRadius: isBadge ? 4 : undefined,
+				backgroundColor: isBadge ? "#000" : undefined,
+				color: isBadge ? "#fff" : "#000",
+				overflow: "hidden",
+			}}
+			className="font-geneva9 leading-tight"
 		>
 			<span style={{ fontSize, maxWidth: width }}>{label}</span>
 		</div>
@@ -104,6 +114,8 @@ function Header({
 					left: profile.padding + 10,
 					top: headerTop,
 					width: leftWidth,
+					display: "flex",
+					flexDirection: "column",
 				}}
 			>
 				<div
@@ -120,8 +132,9 @@ function Header({
 					{title}
 				</div>
 				<div
-					className="mt-2 font-geneva9 leading-none text-gray-500"
+					className="mt-2 font-geneva9 leading-none"
 					style={{
+						color: "#6b7280",
 						fontSize: scaleText(17, profile, {
 							compactBase: 14,
 							denseBase: 11,
@@ -139,8 +152,13 @@ function Header({
 					right: profile.padding + 10,
 					top: headerTop + 2,
 					width: metaWidth,
+					color: "#6b7280",
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "flex-end",
+					textAlign: "right",
 				}}
-				className="text-right font-geneva9 leading-tight text-gray-500"
+				className="font-geneva9 leading-tight"
 			>
 				<div
 					style={{
@@ -192,6 +210,7 @@ function PanelHeader({
 					left: profile.padding + 18,
 					top: panelTop + 14,
 					width: Math.max(120, width * 0.28),
+					display: "flex",
 				}}
 				className="font-blockkie leading-none"
 			>
@@ -218,6 +237,9 @@ function PanelHeader({
 						backgroundColor: "#dbe8ff",
 						borderRadius: 16,
 						padding: profile.isDense ? "4px 8px" : "6px 12px",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
 					}}
 					className="text-center font-geneva9 leading-none text-[#4f79d8]"
 				>
@@ -293,8 +315,10 @@ function MonthView({
 						left: panelLeft + index * colWidth,
 						top: contentTop + 5,
 						width: colWidth,
+						display: "flex",
+						justifyContent: "center",
 					}}
-					className="text-center font-geneva9 leading-none"
+					className="font-geneva9 leading-none"
 				>
 					<span
 						style={{
@@ -314,7 +338,7 @@ function MonthView({
 				week.map((day, dayIndex) => {
 					const left = panelLeft + dayIndex * colWidth;
 					const top = gridTop + weekIndex * rowHeight;
-					const textColor = day.isCurrentMonth ? "text-black" : "text-gray-400";
+					const textColor = day.isCurrentMonth ? "#000" : "#9ca3af";
 					const visibleEvents = day.events.slice(0, profile.isDense ? 1 : 2);
 
 					return (
@@ -336,8 +360,10 @@ function MonthView({
 									left: left + colWidth - 26,
 									top: top + 8,
 									width: 20,
+									color: textColor,
+									textAlign: "right",
 								}}
-								className={`text-right font-geneva9 leading-none ${textColor}`}
+								className="font-geneva9 leading-none"
 							>
 								<span
 									style={{
@@ -373,6 +399,64 @@ function MonthView({
 					);
 				}),
 			)}
+		</>
+	);
+}
+
+function VerticalRule({
+	left,
+	top,
+	height,
+}: {
+	left: number;
+	top: number;
+	height: number;
+}) {
+	return (
+		<div
+			style={{
+				position: "absolute",
+				left,
+				top,
+				width: 1,
+				height,
+				backgroundColor: "#000",
+			}}
+		/>
+	);
+}
+
+function HorizontalDashRule({
+	left,
+	top,
+	width,
+}: {
+	left: number;
+	top: number;
+	width: number;
+}) {
+	const segmentWidth = 7;
+	const gapWidth = 5;
+	const segmentCount = Math.max(
+		1,
+		Math.floor(width / (segmentWidth + gapWidth)),
+	);
+
+	return (
+		<>
+			{Array.from({ length: segmentCount }).map((_, index) => (
+				<div
+					key={`dash-${index}`}
+					style={{
+						position: "absolute",
+						left: left + index * (segmentWidth + gapWidth),
+						top,
+						width: segmentWidth,
+						height: 1,
+						backgroundColor: "#000",
+					}}
+				/>
+			))}
 		</>
 	);
 }
@@ -415,23 +499,27 @@ function WeekView({
 
 				return (
 					<div key={day.key}>
-						<div
-							style={{
-								position: "absolute",
-								left,
-								top: contentTop,
-								width: colWidth,
-								height: panelTop + panelHeight - contentTop,
-								borderRight: "1px solid #000",
-								borderTop: "1px dashed #000",
-							}}
+						<VerticalRule
+							left={left + colWidth}
+							top={contentTop}
+							height={panelTop + panelHeight - contentTop}
 						/>
+						{dayIndex === 0 ? (
+							<HorizontalDashRule
+								left={panelLeft}
+								top={contentTop}
+								width={panelWidth}
+							/>
+						) : null}
 						<div
 							style={{
 								position: "absolute",
 								left,
 								top: contentTop + 12,
 								width: colWidth,
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
 							}}
 							className="text-center font-geneva9 leading-none"
 						>
@@ -486,8 +574,9 @@ function WeekView({
 									left: left + 10,
 									top: eventTop,
 									width: colWidth - 20,
+									color: "#9ca3af",
 								}}
-								className="font-geneva9 leading-none text-gray-400"
+								className="font-geneva9 leading-none"
 							>
 								<span
 									style={{
@@ -546,23 +635,26 @@ function DefaultView({
 				const left = panelLeft + dayIndex * colWidth;
 				return (
 					<div key={day.key}>
-						<div
-							style={{
-								position: "absolute",
-								left,
-								top: contentTop,
-								width: colWidth,
-								height: panelTop + panelHeight - contentTop,
-								borderRight: "1px solid #000",
-								borderTop: "1px dashed #000",
-							}}
+						<VerticalRule
+							left={left + colWidth}
+							top={contentTop}
+							height={panelTop + panelHeight - contentTop}
 						/>
+						{dayIndex === 0 ? (
+							<HorizontalDashRule
+								left={panelLeft}
+								top={contentTop}
+								width={panelWidth}
+							/>
+						) : null}
 						<div
 							style={{
 								position: "absolute",
 								left: left + 14,
 								top: contentTop + 16,
 								width: colWidth - 28,
+								display: "flex",
+								flexDirection: "column",
 							}}
 							className="font-geneva9 leading-tight"
 						>
@@ -615,8 +707,9 @@ function DefaultView({
 											left: left + 14,
 											top: contentTop + 84 + eventIndex * 34,
 											width: colWidth - 28,
+											color: "#6b7280",
 										}}
-										className="font-geneva9 leading-none text-gray-500"
+										className="font-geneva9 leading-none"
 									>
 										<span
 											style={{

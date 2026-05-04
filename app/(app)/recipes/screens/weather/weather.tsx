@@ -78,7 +78,7 @@ export default function Weather({
 	const isHalfScreen = width === 400 && height === 480;
 
 	return (
-		<PreSatori width={width} height={height}>
+		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="flex flex-col w-full h-full bg-white">
 				<div
 					className={`flex p-4 sm:flex-row items-center justify-between ${isHalfScreen ? "flex-row" : "flex-col sm:flex-row"}`}

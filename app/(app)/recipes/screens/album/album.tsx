@@ -17,7 +17,7 @@ export default async function Album({
 		params?.imageUrl || "https://byos-nextjs.vercel.app/album/london.png";
 
 	return (
-		<PreSatori width={width} height={height}>
+		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="w-full h-full bg-black flex flex-col items-center justify-center relative">
 				<picture className="w-full h-full absolute inset-0">
 					<source srcSet={imageUrl} type="image/png" />

@@ -35,7 +35,7 @@ export default function BitmapPatterns({
 	// Calculate row height to evenly distribute across the container
 	const rowHeight = height / Math.ceil(ditherValues.length / 2);
 	return (
-		<PreSatori width={width} height={height}>
+		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="w-full h-full bg-white relative">
 				<div
 					style={{
