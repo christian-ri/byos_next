@@ -91,6 +91,35 @@ type BuildDayOptions = {
 
 const DEFAULT_TIME_ZONE = "America/New_York";
 const DAY_NAMES = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const TIME_ZONE_ALIASES: Record<string, string> = {
+	"eastern standard time": "America/New_York",
+	"eastern daylight time": "America/New_York",
+	"eastern time": "America/New_York",
+	"eastern time (us & canada)": "America/New_York",
+	"central standard time": "America/Chicago",
+	"central daylight time": "America/Chicago",
+	"central time": "America/Chicago",
+	"central time (us & canada)": "America/Chicago",
+	"mountain standard time": "America/Denver",
+	"mountain daylight time": "America/Denver",
+	"mountain time": "America/Denver",
+	"pacific standard time": "America/Los_Angeles",
+	"pacific daylight time": "America/Los_Angeles",
+	"pacific time": "America/Los_Angeles",
+	"pacific time (us & canada)": "America/Los_Angeles",
+	"greenwich standard time": "Europe/London",
+	"gmt standard time": "Europe/London",
+	"w. europe standard time": "Europe/Berlin",
+	"central europe standard time": "Europe/Budapest",
+	"romance standard time": "Europe/Paris",
+	"central european standard time": "Europe/Warsaw",
+	"tokyo standard time": "Asia/Tokyo",
+	"india standard time": "Asia/Kolkata",
+	"aus eastern standard time": "Australia/Sydney",
+	"australian eastern standard time": "Australia/Sydney",
+	utc: "UTC",
+	"etc/utc": "UTC",
+};
 
 function parseBoolean(value: string | boolean | undefined, fallback = true) {
 	if (typeof value === "boolean") return value;
@@ -119,6 +148,33 @@ function normalizeFirstDay(value?: string): 0 | 1 {
 
 function normalizeTimeFormat(value?: string): "12h" | "24h" {
 	return (value || "").trim().toLowerCase() === "24h" ? "24h" : "12h";
+}
+
+function normalizeTimeZoneIdentifier(value?: string) {
+	const trimmed = String(value || "")
+		.trim()
+		.replace(/^"+|"+$/g, "")
+		.replace(/^'+|'+$/g, "");
+	if (!trimmed) {
+		return DEFAULT_TIME_ZONE;
+	}
+
+	try {
+		new Intl.DateTimeFormat("en-US", { timeZone: trimmed });
+		return trimmed;
+	} catch {
+		const normalizedKey = trimmed.toLowerCase().replace(/\s+/g, " ");
+		const aliased =
+			TIME_ZONE_ALIASES[normalizedKey] ||
+			Object.entries(TIME_ZONE_ALIASES).find(([key]) =>
+				normalizedKey.includes(key),
+			)?.[1];
+		if (aliased) {
+			return aliased;
+		}
+	}
+
+	return DEFAULT_TIME_ZONE;
 }
 
 function dayKey(date: Date, timeZone: string) {
@@ -442,7 +498,7 @@ function parseIcsDate(
 	}
 
 	const dateBits = parseDateBits(value);
-	const timeZone = params.TZID?.trim();
+	const timeZone = normalizeTimeZoneIdentifier(params.TZID?.trim());
 
 	return {
 		date: timeZone
@@ -911,7 +967,7 @@ export async function loadCalendarRecipeData(
 	providerLabel: string,
 	params?: CalendarParams,
 ): Promise<CalendarRecipeData> {
-	const timeZone = String(params?.timezone || DEFAULT_TIME_ZONE).trim();
+	const timeZone = normalizeTimeZoneIdentifier(params?.timezone);
 	const eventLayout = normalizeLayout(params?.eventLayout);
 	const includeDescription = parseBoolean(params?.includeDescription, true);
 	const includeEventTime = parseBoolean(params?.includeEventTime, true);
