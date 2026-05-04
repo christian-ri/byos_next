@@ -9,11 +9,12 @@ import {
 	getBitmapLayoutProfile,
 	scaleText,
 } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
-import { PreSatori } from "@/utils/pre-satori";
+import { PreSatori, type RendererType } from "@/utils/pre-satori";
 
 type Props = CalendarRecipeData & {
 	width?: number;
 	height?: number;
+	rendererType?: RendererType;
 };
 
 type BoxStyle = {
@@ -749,6 +750,7 @@ export default function CalendarScreen({
 	monthLabel = "",
 	width = 800,
 	height = 480,
+	rendererType,
 }: Props) {
 	const profile = getBitmapLayoutProfile(width, height);
 	const isMonth = eventLayout === "month";
@@ -758,7 +760,12 @@ export default function CalendarScreen({
 	const panelHeight = height - panelTop - profile.padding;
 
 	return (
-		<PreSatori useDoubling={true} width={width} height={height}>
+		<PreSatori
+			useDoubling={true}
+			width={width}
+			height={height}
+			rendererType={rendererType}
+		>
 			<div className="relative h-full w-full overflow-hidden bg-[#efefed] text-black">
 				<Header
 					title={title}

@@ -7,7 +7,7 @@ import NotFoundScreen from "@/app/(app)/recipes/screens/not-found/not-found";
 import screens from "@/app/(app)/recipes/screens.json";
 import { getScreenParams } from "@/app/actions/screens-params";
 import { getTakumiFonts } from "@/lib/fonts";
-import { RendererProvider, type RendererType } from "@/utils/pre-satori";
+import type { RendererType } from "@/utils/pre-satori";
 import { DitheringMethod, renderBmp } from "@/utils/render-bmp";
 
 // Logging utility shared between recipe renderers
@@ -264,6 +264,14 @@ type RenderOptions = {
 	grayscale?: number; // Number of gray levels: 2, 4, or 16
 };
 
+const addRendererTypeToProps = (
+	props: ComponentProps,
+	rendererType: RendererType,
+): ComponentProps => ({
+	...props,
+	rendererType,
+});
+
 type RenderResults = {
 	bitmap: Buffer | null;
 	png: Buffer | null;
@@ -298,9 +306,8 @@ export const renderRecipeOutputs = cache(
 				(async () => {
 					try {
 						const element = createElement(
-							RendererProvider,
-							{ value: rendererType },
-							createElement(Component, props),
+							Component,
+							addRendererTypeToProps(props, rendererType),
 						);
 						const png =
 							rendererType === "satori"
@@ -334,9 +341,8 @@ export const renderRecipeOutputs = cache(
 				(async () => {
 					try {
 						const element = createElement(
-							RendererProvider,
-							{ value: rendererType },
-							createElement(Component, props),
+							Component,
+							addRendererTypeToProps(props, rendererType),
 						);
 						const pngBuffer =
 							rendererType === "satori"

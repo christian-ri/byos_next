@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React from "react";
 import { extractFontFamily } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import {
@@ -14,28 +14,22 @@ interface PreSatoriProps {
 	useDoubling?: boolean;
 	width?: number;
 	height?: number;
+	rendererType?: RendererType;
 	children: React.ReactNode;
 }
-const RendererContext = createContext<RendererType | null>(null);
 
 export const getRendererType = (): RendererType => {
 	const renderer = process.env.REACT_RENDERER?.toLowerCase();
 	return renderer === "satori" ? "satori" : "takumi";
 };
 
-export const RendererProvider = RendererContext.Provider;
-
-export const useResolvedRendererType = (): RendererType =>
-	useContext(RendererContext) ?? getRendererType();
-
 export const PreSatori: React.FC<PreSatoriProps> = ({
 	useDoubling = false,
 	width = 800,
 	height = 480,
+	rendererType = getRendererType(),
 	children,
 }) => {
-	const rendererType = useResolvedRendererType();
-
 	// Define a helper to recursively transform children.
 	const transform = (child: React.ReactNode): React.ReactNode => {
 		if (React.isValidElement(child)) {
