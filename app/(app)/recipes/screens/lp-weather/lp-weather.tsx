@@ -341,135 +341,145 @@ function TemperatureChart({
 				gap: 6,
 			}}
 		>
-			<svg
-				width={chartWidth}
-				height={chartHeight}
-				viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-				aria-hidden="true"
-				focusable="false"
+			<div
+				style={{
+					position: "relative",
+					width: chartWidth,
+					height: chartHeight,
+				}}
 			>
-				{[0.25, 0.5, 0.75].map((ratio) => (
-					<line
-						key={ratio}
-						x1={paddingLeft}
-						y1={paddingTop + innerHeight * ratio}
-						x2={chartWidth - 18}
-						y2={paddingTop + innerHeight * ratio}
-						stroke="#aaa"
-						strokeWidth="1"
-						strokeDasharray="2 3"
-					/>
-				))}
+				<svg
+					width={chartWidth}
+					height={chartHeight}
+					viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+					aria-hidden="true"
+					focusable="false"
+				>
+					{[0.25, 0.5, 0.75].map((ratio) => (
+						<line
+							key={ratio}
+							x1={paddingLeft}
+							y1={paddingTop + innerHeight * ratio}
+							x2={chartWidth - 18}
+							y2={paddingTop + innerHeight * ratio}
+							stroke="#aaa"
+							strokeWidth="1"
+							strokeDasharray="2 3"
+						/>
+					))}
 
-				{sunsetLabel ? (
-					<rect
-						x={paddingLeft + (2 / Math.max(1, hourly.length - 1)) * innerWidth}
-						y={paddingTop}
-						width={innerWidth * 0.42}
-						height={innerHeight}
-						fill="url(#nightDots)"
-						opacity="0.65"
-					/>
-				) : null}
-				<defs>
-					<pattern
-						id="nightDots"
-						width="6"
-						height="6"
-						patternUnits="userSpaceOnUse"
-					>
-						<circle cx="1.5" cy="1.5" r="0.8" fill="#777" />
-					</pattern>
-					<pattern
-						id="rainHatch"
-						width="8"
-						height="8"
-						patternUnits="userSpaceOnUse"
-						patternTransform="rotate(12)"
-					>
-						<line x1="0" y1="0" x2="0" y2="8" stroke="#666" strokeWidth="2" />
-					</pattern>
-				</defs>
-
-				<path d={areaPath} fill="url(#rainHatch)" opacity="0.45" />
-				<path
-					d={linePath}
-					fill="none"
-					stroke="#111"
-					strokeWidth="4"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				/>
-
-				{points.map((point) => (
-					<g key={point.timeLabel}>
-						<circle cx={point.x} cy={point.y} r="3.2" fill="#111" />
-						<foreignObject
-							x={point.x - 12}
-							y={Math.max(0, point.y - 34)}
-							width="24"
-							height="24"
+					{sunsetLabel ? (
+						<rect
+							x={
+								paddingLeft + (2 / Math.max(1, hourly.length - 1)) * innerWidth
+							}
+							y={paddingTop}
+							width={innerWidth * 0.42}
+							height={innerHeight}
+							fill="url(#nightDots)"
+							opacity="0.65"
+						/>
+					) : null}
+					<defs>
+						<pattern
+							id="nightDots"
+							width="6"
+							height="6"
+							patternUnits="userSpaceOnUse"
 						>
-							<div
-								style={{
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									width: "100%",
-									height: "100%",
-								}}
+							<circle cx="1.5" cy="1.5" r="0.8" fill="#777" />
+						</pattern>
+						<pattern
+							id="rainHatch"
+							width="8"
+							height="8"
+							patternUnits="userSpaceOnUse"
+							patternTransform="rotate(12)"
+						>
+							<line x1="0" y1="0" x2="0" y2="8" stroke="#666" strokeWidth="2" />
+						</pattern>
+					</defs>
+
+					<path d={areaPath} fill="url(#rainHatch)" opacity="0.45" />
+					<path
+						d={linePath}
+						fill="none"
+						stroke="#111"
+						strokeWidth="4"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					/>
+
+					{points.map((point) => (
+						<g key={point.timeLabel}>
+							<circle cx={point.x} cy={point.y} r="3.2" fill="#111" />
+							<text
+								x={point.x}
+								y={point.y - 10}
+								textAnchor="middle"
+								fontSize="11"
+								fontFamily="Geneva"
+								fill="#111"
 							>
-								<WeatherIcon icon={point.icon} size={16} />
-							</div>
-						</foreignObject>
+								{point.temperature}°
+							</text>
+							<text
+								x={point.x}
+								y={chartHeight - 6}
+								textAnchor="middle"
+								fontSize="12"
+								fontFamily="Geneva"
+								fill="#111"
+							>
+								{point.timeLabel}
+							</text>
+						</g>
+					))}
+
+					{sunsetLabel ? (
 						<text
-							x={point.x}
-							y={point.y - 10}
-							textAnchor="middle"
-							fontSize="11"
-							fontFamily="Geneva"
-							fill="#111"
-						>
-							{point.temperature}°
-						</text>
-						<text
-							x={point.x}
-							y={chartHeight - 6}
+							x={paddingLeft + innerWidth * 0.28}
+							y="14"
 							textAnchor="middle"
 							fontSize="12"
 							fontFamily="Geneva"
 							fill="#111"
 						>
-							{point.timeLabel}
+							{sunsetLabel}
 						</text>
-					</g>
-				))}
+					) : null}
+					{sunriseLabel ? (
+						<text
+							x={paddingLeft + innerWidth * 0.72}
+							y="14"
+							textAnchor="middle"
+							fontSize="12"
+							fontFamily="Geneva"
+							fill="#111"
+						>
+							{sunriseLabel}
+						</text>
+					) : null}
+				</svg>
 
-				{sunsetLabel ? (
-					<text
-						x={paddingLeft + innerWidth * 0.28}
-						y="14"
-						textAnchor="middle"
-						fontSize="12"
-						fontFamily="Geneva"
-						fill="#111"
+				{points.map((point) => (
+					<div
+						key={`${point.timeLabel}-icon`}
+						style={{
+							position: "absolute",
+							left: point.x - 10,
+							top: Math.max(2, point.y - 34),
+							width: 20,
+							height: 20,
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+						}}
 					>
-						{sunsetLabel}
-					</text>
-				) : null}
-				{sunriseLabel ? (
-					<text
-						x={paddingLeft + innerWidth * 0.72}
-						y="14"
-						textAnchor="middle"
-						fontSize="12"
-						fontFamily="Geneva"
-						fill="#111"
-					>
-						{sunriseLabel}
-					</text>
-				) : null}
-			</svg>
+						<WeatherIcon icon={point.icon} size={16} />
+					</div>
+				))}
+			</div>
 			<div className="font-geneva9 text-[11px]">
 				Temperatures span {spread}° across the next {hourly.length} hours.
 			</div>
@@ -594,7 +604,6 @@ export default function LpWeather({
 												border: "1px solid #888",
 												borderRadius: "4px",
 												padding: "2px 6px",
-												width: "fit-content",
 												fontSize: 11,
 											}}
 										>

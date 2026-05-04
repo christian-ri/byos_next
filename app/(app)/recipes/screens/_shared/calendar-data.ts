@@ -364,6 +364,58 @@ function parseDateBits(value: string) {
 	};
 }
 
+function getTimeZoneOffsetMs(date: Date, timeZone: string) {
+	const parts = new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+		hour12: false,
+	}).formatToParts(date);
+
+	const values = parts.reduce<Record<string, string>>((acc, part) => {
+		if (part.type !== "literal") {
+			acc[part.type] = part.value;
+		}
+		return acc;
+	}, {});
+
+	const asUtc = Date.UTC(
+		Number(values.year),
+		Number(values.month) - 1,
+		Number(values.day),
+		Number(values.hour),
+		Number(values.minute),
+		Number(values.second),
+	);
+
+	return asUtc - date.getTime();
+}
+
+function zonedDateTimeToUtc(
+	parts: ReturnType<typeof parseDateBits>,
+	timeZone: string,
+) {
+	const guess = Date.UTC(
+		parts.year,
+		parts.month,
+		parts.day,
+		parts.hour,
+		parts.minute,
+		parts.second,
+	);
+	const firstOffset = getTimeZoneOffsetMs(new Date(guess), timeZone);
+	const firstPass = guess - firstOffset;
+	const secondOffset = getTimeZoneOffsetMs(new Date(firstPass), timeZone);
+
+	return new Date(
+		secondOffset === firstOffset ? firstPass : guess - secondOffset,
+	);
+}
+
 function parseIcsDate(
 	value: string,
 	params: Record<string, string>,
@@ -389,9 +441,20 @@ function parseIcsDate(
 		};
 	}
 
-	const { year, month, day, hour, minute, second } = parseDateBits(value);
+	const dateBits = parseDateBits(value);
+	const timeZone = params.TZID?.trim();
+
 	return {
-		date: new Date(year, month, day, hour, minute, second),
+		date: timeZone
+			? zonedDateTimeToUtc(dateBits, timeZone)
+			: new Date(
+					dateBits.year,
+					dateBits.month,
+					dateBits.day,
+					dateBits.hour,
+					dateBits.minute,
+					dateBits.second,
+				),
 		allDay: false,
 	};
 }

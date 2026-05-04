@@ -387,10 +387,10 @@ function MonthView({
 									top={top + 28 + eventIndex * eventLineHeight}
 									width={colWidth - 14}
 									fontSize={scaleText(10, profile, {
-										compactBase: 9,
-										denseBase: 8,
-										min: 7,
-										max: 10,
+										compactBase: 10,
+										denseBase: 9,
+										min: 8,
+										max: 11,
 									})}
 									maxChars={profile.isDense ? 9 : 12}
 								/>
@@ -559,10 +559,10 @@ function WeekView({
 									top={eventTop + eventIndex * eventSpacing}
 									width={colWidth - 16}
 									fontSize={scaleText(13, profile, {
-										compactBase: 11,
-										denseBase: 9,
-										min: 8,
-										max: 13,
+										compactBase: 12,
+										denseBase: 10,
+										min: 9,
+										max: 14,
 									})}
 									maxChars={profile.isDense ? 11 : 16}
 								/>
@@ -693,10 +693,10 @@ function DefaultView({
 									top={contentTop + 68 + eventIndex * 34}
 									width={colWidth - 28}
 									fontSize={scaleText(15, profile, {
-										compactBase: 13,
-										denseBase: 10,
-										min: 8,
-										max: 15,
+										compactBase: 14,
+										denseBase: 12,
+										min: 10,
+										max: 16,
 									})}
 									maxChars={profile.isDense ? 18 : 28}
 								/>
@@ -714,10 +714,10 @@ function DefaultView({
 										<span
 											style={{
 												fontSize: scaleText(10, profile, {
-													compactBase: 9,
-													denseBase: 8,
-													min: 8,
-													max: 10,
+													compactBase: 10,
+													denseBase: 9,
+													min: 9,
+													max: 11,
 												}),
 											}}
 										>

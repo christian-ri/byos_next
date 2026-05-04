@@ -115,9 +115,39 @@ export default function SkyWatch({
 							position: "absolute",
 							inset: 0,
 							backgroundImage:
-								"radial-gradient(circle at 20% 20%, rgba(255,255,255,0.09) 0 1px, transparent 1px), radial-gradient(circle at 80% 35%, rgba(255,255,255,0.08) 0 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)",
-							backgroundSize: "120px 120px, 150px 150px, 64px 64px, 64px 64px",
-							opacity: 0.55,
+								"linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)",
+							backgroundSize: "64px 64px",
+							opacity: 0.35,
+						}}
+					/>
+					<div
+						style={{
+							position: "absolute",
+							inset: 0,
+							backgroundImage:
+								"linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
+							backgroundSize: "64px 64px",
+							opacity: 0.35,
+						}}
+					/>
+					<div
+						style={{
+							position: "absolute",
+							inset: 0,
+							backgroundImage:
+								"radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08) 0 1px, transparent 1px)",
+							backgroundSize: "120px 120px",
+							opacity: 0.45,
+						}}
+					/>
+					<div
+						style={{
+							position: "absolute",
+							inset: 0,
+							backgroundImage:
+								"radial-gradient(circle at 80% 35%, rgba(255,255,255,0.08) 0 1px, transparent 1px)",
+							backgroundSize: "150px 150px",
+							opacity: 0.4,
 						}}
 					/>
 					<div
@@ -161,10 +191,11 @@ export default function SkyWatch({
 					))}
 
 					<div
-						className="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-white/20 px-5"
+						className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-5"
 						style={{
 							height: 56,
 							backgroundColor: "rgba(0,0,0,0.4)",
+							borderTop: "1px solid rgba(255,255,255,0.2)",
 						}}
 					>
 						<div className="flex items-center gap-3">

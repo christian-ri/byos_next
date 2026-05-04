@@ -49,10 +49,13 @@ const TRACK_LAYOUT_BY_KEY: Record<string, string> = {
 
 const TEAM_BADGE_BY_NAME: Record<string, string> = {
 	alpine: "A",
+	audi: "Au",
+	"audi revolut f1 team": "Au",
 	"aston martin": "AM",
+	cadillac: "Ca",
+	"cadillac formula 1 team": "Ca",
 	ferrari: "F",
 	haas: "H",
-	"kick sauber": "K",
 	mclaren: "Mc",
 	mercedes: "M",
 	"racing bulls": "RB",
