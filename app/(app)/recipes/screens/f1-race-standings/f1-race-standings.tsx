@@ -68,7 +68,7 @@ export default function F1RaceStandings({
 								letterSpacing: "0.18em",
 								borderBottom: "1px solid #111",
 								paddingBottom: 8,
-								display: "inline-block",
+								display: "block",
 							}}
 						>
 							Next Race

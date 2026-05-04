@@ -80,6 +80,36 @@ export type F1RaceStandingsRecipeData = {
 	note?: string;
 };
 
+function isRateLimitError(error: unknown) {
+	return error instanceof Error && error.message.includes("status 429");
+}
+
+async function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchOpenF1Json<T>(url: string) {
+	let lastError: unknown;
+
+	for (let attempt = 0; attempt < 3; attempt += 1) {
+		try {
+			return await fetchJsonWithTimeout<T>(
+				url,
+				{ headers: { Accept: "application/json" } },
+				10000,
+			);
+		} catch (error) {
+			lastError = error;
+			if (!isRateLimitError(error) || attempt === 2) {
+				throw error;
+			}
+			await sleep(600 * (attempt + 1));
+		}
+	}
+
+	throw lastError;
+}
+
 function parseRaceRound(races: F1Session[], nextRace: F1Session) {
 	const index = races.findIndex(
 		(race) => race.session_key === nextRace.session_key,
@@ -91,10 +121,8 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 	const year = new Date().getUTCFullYear();
 
 	try {
-		const races = await fetchJsonWithTimeout<F1Session[]>(
+		const races = await fetchOpenF1Json<F1Session[]>(
 			`https://api.openf1.org/v1/sessions?year=${year}&session_name=Race`,
-			{ headers: { Accept: "application/json" } },
-			10000,
 		);
 		const sortedRaces = [...races].sort(
 			(a, b) =>
@@ -117,25 +145,17 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 
 		const [weekendSessions, driverStandingsRaw, driversMeta, teamStandingsRaw] =
 			await Promise.all([
-				fetchJsonWithTimeout<F1Session[]>(
+				fetchOpenF1Json<F1Session[]>(
 					`https://api.openf1.org/v1/sessions?meeting_key=${nextRace.meeting_key}`,
-					{ headers: { Accept: "application/json" } },
-					10000,
 				),
-				fetchJsonWithTimeout<ChampionshipDriver[]>(
+				fetchOpenF1Json<ChampionshipDriver[]>(
 					`https://api.openf1.org/v1/championship_drivers?session_key=${completedRace.session_key}`,
-					{ headers: { Accept: "application/json" } },
-					10000,
 				),
-				fetchJsonWithTimeout<DriverMeta[]>(
+				fetchOpenF1Json<DriverMeta[]>(
 					`https://api.openf1.org/v1/drivers?session_key=${completedRace.session_key}`,
-					{ headers: { Accept: "application/json" } },
-					10000,
 				),
-				fetchJsonWithTimeout<ChampionshipTeam[]>(
+				fetchOpenF1Json<ChampionshipTeam[]>(
 					`https://api.openf1.org/v1/championship_teams?session_key=${completedRace.session_key}`,
-					{ headers: { Accept: "application/json" } },
-					10000,
 				).catch(() => []),
 			]);
 
@@ -238,7 +258,11 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 					: "Standings via OpenF1; team totals derived from driver points.",
 		};
 	} catch (error) {
-		console.error("Error loading F1 standings data:", error);
+		if (isRateLimitError(error)) {
+			console.warn("OpenF1 rate limited the request; using fallback data.");
+		} else {
+			console.error("Error loading F1 standings data:", error);
+		}
 		return {
 			title: "F1 Race + Standings",
 			seasonLabel: `${year} season`,
