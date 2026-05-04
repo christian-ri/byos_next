@@ -278,14 +278,16 @@ function TemperatureChart({
 	sunriseIso,
 	sunsetIso,
 	profile,
+	width,
 }: {
 	hourly: LpWeatherRecipeData["hourly"];
 	sunriseIso?: string;
 	sunsetIso?: string;
 	profile: ReturnType<typeof getBitmapLayoutProfile>;
+	width: number;
 }) {
-	const chartWidth = profile.isCompact ? 500 : 540;
-	const chartHeight = profile.isCompact ? 180 : 210;
+	const chartWidth = Math.min(width, profile.isCompact ? 430 : 470);
+	const chartHeight = profile.isCompact ? 170 : 188;
 	const paddingLeft = 18;
 	const paddingTop = 18;
 	const paddingBottom = 24;
@@ -511,61 +513,112 @@ export default function LpWeather({
 	const profile = getBitmapLayoutProfile(width, height);
 	const globalLow = Math.min(...days.map((day) => day.low));
 	const globalHigh = Math.max(...days.map((day) => day.high));
+	const forecastDays = days.slice(0, 6);
+	const rightColumnWidth = profile.isCompact ? 212 : 228;
+	const leftColumnWidth =
+		width - profile.padding * 2 - rightColumnWidth - profile.gap;
+	const detailLabelSize = scaleText(12, profile, {
+		compactBase: 11,
+		denseBase: 10,
+		min: 10,
+		max: 12,
+	});
+	const detailValueSize = scaleText(18, profile, {
+		compactBase: 16,
+		denseBase: 14,
+		min: 12,
+		max: 18,
+	});
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div
-				className="flex h-full w-full flex-col border border-black bg-[#f3f1ee]"
+				className="flex h-full w-full flex-col overflow-hidden border border-black bg-[#f3f1ee]"
 				style={{ padding: profile.padding }}
 			>
-				<div className="flex flex-1 gap-5">
-					<div className="flex flex-[1.1] flex-col justify-between">
-						<div className="flex items-start gap-5">
+				<div
+					className="flex flex-1"
+					style={{ gap: profile.gap, overflow: "hidden" }}
+				>
+					<div
+						className="flex flex-col justify-between"
+						style={{ width: leftColumnWidth, minWidth: leftColumnWidth }}
+					>
+						<div className="flex items-start" style={{ gap: profile.gap }}>
 							<div
 								style={{
 									display: "flex",
 									alignItems: "center",
 									justifyContent: "center",
-									width: 150,
-									height: 130,
+									width: profile.isCompact ? 112 : 128,
+									height: profile.isCompact ? 108 : 120,
+									flexShrink: 0,
 								}}
 							>
 								<WeatherIcon
 									icon={conditionIcon}
-									size={profile.isCompact ? 108 : 128}
+									size={profile.isCompact ? 88 : 100}
 								/>
 							</div>
-							<div className="flex items-start gap-4">
+							<div className="flex items-start" style={{ gap: 14 }}>
 								<div
 									className="font-blockkie leading-none"
 									style={{
-										fontSize: scaleText(108, profile, {
-											compactBase: 88,
-											denseBase: 72,
-											min: 54,
-											max: 108,
+										fontSize: scaleText(96, profile, {
+											compactBase: 78,
+											denseBase: 64,
+											min: 48,
+											max: 96,
 										}),
 									}}
 								>
 									{currentTemp}°
 								</div>
-								<div
-									className="font-geneva9"
-									style={{
-										paddingTop: 8,
-										fontSize: scaleText(18, profile, {
-											compactBase: 16,
-											denseBase: 14,
-											min: 12,
-											max: 18,
-										}),
-									}}
-								>
-									<div>{condition}</div>
-									<div className="mt-1">Feels {feelsLike}°</div>
-									<div className="mt-1">Humidity {humidity}%</div>
-									<div className="mt-1">
-										Wind {windSpeed} {windDirection}
+								<div className="flex flex-col" style={{ paddingTop: 8 }}>
+									<div
+										className="font-blockkie leading-none"
+										style={{
+											fontSize: scaleText(18, profile, {
+												compactBase: 16,
+												denseBase: 13,
+												min: 12,
+												max: 18,
+											}),
+										}}
+									>
+										{condition}
+									</div>
+									<div
+										className="mt-2 grid grid-cols-3 font-geneva9"
+										style={{ gap: 10 }}
+									>
+										<div>
+											<div style={{ fontSize: detailLabelSize }}>Feels</div>
+											<div
+												className="font-blockkie leading-none"
+												style={{ fontSize: detailValueSize }}
+											>
+												{feelsLike}°
+											</div>
+										</div>
+										<div>
+											<div style={{ fontSize: detailLabelSize }}>Humidity</div>
+											<div
+												className="font-blockkie leading-none"
+												style={{ fontSize: detailValueSize }}
+											>
+												{humidity}%
+											</div>
+										</div>
+										<div>
+											<div style={{ fontSize: detailLabelSize }}>Wind</div>
+											<div
+												className="font-blockkie leading-none"
+												style={{ fontSize: detailValueSize }}
+											>
+												{windSpeed} {windDirection}
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -576,35 +629,51 @@ export default function LpWeather({
 							sunriseIso={sunriseIso}
 							sunsetIso={sunsetIso}
 							profile={profile}
+							width={leftColumnWidth}
 						/>
 					</div>
 
 					<div
-						className="flex flex-[0.78] flex-col"
-						style={{ gap: 14, paddingTop: 6 }}
+						className="flex flex-col"
+						style={{
+							width: rightColumnWidth,
+							minWidth: rightColumnWidth,
+							gap: 10,
+							paddingTop: 4,
+						}}
 					>
-						{days.map((day) => (
+						{forecastDays.map((day) => (
 							<div
 								key={day.label}
 								className="flex items-center justify-between"
-								style={{ minHeight: 48 }}
+								style={{ minHeight: 42 }}
 							>
 								<div
 									className="font-geneva9"
-									style={{ width: 96, fontSize: 15 }}
+									style={{
+										width: 76,
+										fontSize: scaleText(13, profile, {
+											compactBase: 12,
+											denseBase: 10,
+											min: 10,
+											max: 13,
+										}),
+									}}
 								>
-									{day.label}
+									<div className="font-blockkie leading-none">
+										{clampText(day.label, 9)}
+									</div>
 									{day.precipProbability > 0 ? (
 										<div
 											style={{
-												marginTop: 6,
+												marginTop: 4,
 												display: "flex",
 												alignItems: "center",
-												gap: 5,
+												gap: 4,
 												border: "1px solid #888",
 												borderRadius: "4px",
-												padding: "2px 6px",
-												fontSize: 11,
+												padding: "1px 4px",
+												fontSize: 10,
 											}}
 										>
 											<span>◔</span>
@@ -617,14 +686,15 @@ export default function LpWeather({
 									style={{
 										display: "flex",
 										alignItems: "center",
-										gap: 10,
-										width: 236,
+										gap: 6,
+										width: 136,
+										justifyContent: "flex-end",
 									}}
 								>
-									<WeatherIcon icon={day.icon} size={28} />
+									<WeatherIcon icon={day.icon} size={20} />
 									<div
 										className="font-blockkie"
-										style={{ width: 42, fontSize: 26, textAlign: "right" }}
+										style={{ width: 28, fontSize: 20, textAlign: "right" }}
 									>
 										{day.low}°
 									</div>
@@ -633,11 +703,12 @@ export default function LpWeather({
 										high={day.high}
 										globalLow={globalLow}
 										globalHigh={globalHigh}
-										width={120}
+										width={64}
+										height={18}
 									/>
 									<div
 										className="font-blockkie"
-										style={{ width: 42, fontSize: 26, textAlign: "right" }}
+										style={{ width: 32, fontSize: 20, textAlign: "right" }}
 									>
 										{day.high}°
 									</div>
@@ -653,19 +724,22 @@ export default function LpWeather({
 				>
 					<div className="flex items-center gap-2">
 						<WeatherIcon icon={conditionIcon} size={22} />
-						<div className="font-blockkie text-[22px] leading-none">
+						<div className="font-blockkie text-[20px] leading-none">
 							{title}
 						</div>
-						<div className="font-geneva9 text-[13px]">
-							{clampText(locationLabel, profile.isCompact ? 20 : 28)}
+						<div className="font-geneva9 text-[12px]">
+							{clampText(locationLabel, profile.isCompact ? 18 : 24)}
 						</div>
 					</div>
-					<div className="font-geneva9 text-[13px]">
-						Sunrise {sunrise} · Sunset {sunset} · Updated {updatedAt}
+					<div className="font-geneva9 text-[12px]">
+						{clampText(
+							`Sunrise ${sunrise} · Sunset ${sunset} · Updated ${updatedAt}`,
+							profile.isCompact ? 34 : 52,
+						)}
 					</div>
 				</div>
-				<div className="mt-1 font-geneva9 text-[11px]">
-					{clampText(note || "", profile.isDense ? 46 : 120)}
+				<div className="mt-1 font-geneva9 text-[10px]">
+					{clampText(note || "", profile.isDense ? 40 : 88)}
 				</div>
 			</div>
 		</PreSatori>
