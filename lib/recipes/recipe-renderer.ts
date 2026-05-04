@@ -83,10 +83,9 @@ export const addDimensionsToProps = (
 	height,
 });
 
-// Get renderer type from environment variable (defaults to "takumi")
+// Default renderer for screens without an explicit override
 export const getRendererType = (): RendererType => {
-	const renderer = process.env.REACT_RENDERER?.toLowerCase();
-	return renderer === "satori" ? "satori" : "takumi";
+	return "takumi";
 };
 
 export const resolveRendererType = (

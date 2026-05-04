@@ -19,8 +19,7 @@ interface PreSatoriProps {
 }
 
 export const getRendererType = (): RendererType => {
-	const renderer = process.env.REACT_RENDERER?.toLowerCase();
-	return renderer === "satori" ? "satori" : "takumi";
+	return "takumi";
 };
 
 export const PreSatori: React.FC<PreSatoriProps> = ({
