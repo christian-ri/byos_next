@@ -52,6 +52,25 @@ const renderField = (
 	value: unknown,
 	onChange: (key: string, value: unknown) => void,
 ) => {
+	if (definition.type === "boolean") {
+		return (
+			<label
+				htmlFor={key}
+				className="inline-flex items-center gap-3 rounded-md border px-3 py-2 max-w-lg"
+			>
+				<input
+					id={key}
+					name={key}
+					type="checkbox"
+					checked={Boolean(value)}
+					onChange={(event) => onChange(key, event.target.checked)}
+					className="size-4"
+				/>
+				<span className="text-sm">Enabled</span>
+			</label>
+		);
+	}
+
 	const commonProps = {
 		id: key,
 		name: key,

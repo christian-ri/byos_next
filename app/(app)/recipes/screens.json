@@ -990,5 +990,97 @@
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
+	},
+	"pollen-air-quality": {
+		"title": "Pollen & Air Quality",
+		"published": true,
+		"createdAt": "2026-05-04T00:00:00Z",
+		"updatedAt": "2026-05-04T00:00:00Z",
+		"description": "Open-Meteo air quality dashboard with State College defaults, optional coordinates, and per-indicator toggles.",
+		"componentPath": "./screens/pollen-air-quality",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"location": {
+				"type": "string",
+				"label": "Location",
+				"description": "City or place name. Used unless latitude and longitude are both set.",
+				"default": "State College, PA"
+			},
+			"latitude": {
+				"type": "number",
+				"label": "Latitude",
+				"description": "Optional latitude override."
+			},
+			"longitude": {
+				"type": "number",
+				"label": "Longitude",
+				"description": "Optional longitude override."
+			},
+			"showUsAqi": {
+				"type": "boolean",
+				"label": "Show US AQI",
+				"description": "Toggle the main US AQI card and trend default.",
+				"default": true
+			},
+			"showPm25": {
+				"type": "boolean",
+				"label": "Show PM2.5",
+				"description": "Fine particulate matter.",
+				"default": true
+			},
+			"showPm10": {
+				"type": "boolean",
+				"label": "Show PM10",
+				"description": "Coarse particulate matter.",
+				"default": true
+			},
+			"showNo2": {
+				"type": "boolean",
+				"label": "Show NO2",
+				"description": "Nitrogen dioxide.",
+				"default": true
+			},
+			"showO3": {
+				"type": "boolean",
+				"label": "Show O3",
+				"description": "Ozone.",
+				"default": true
+			},
+			"showCo": {
+				"type": "boolean",
+				"label": "Show CO",
+				"description": "Carbon monoxide.",
+				"default": false
+			},
+			"showSo2": {
+				"type": "boolean",
+				"label": "Show SO2",
+				"description": "Sulphur dioxide.",
+				"default": false
+			},
+			"showUvIndex": {
+				"type": "boolean",
+				"label": "Show UV Index",
+				"description": "Current UV index from Open-Meteo.",
+				"default": true
+			},
+			"showPollen": {
+				"type": "boolean",
+				"label": "Show Pollen Summary",
+				"description": "Show pollen availability or current pollen summary when the region is supported.",
+				"default": true
+			}
+		},
+		"tags": ["open-meteo", "air-quality", "pollen", "aqi", "configurable"],
+		"author": {
+			"name": "BYOS",
+			"github": "christian-ri"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
 	}
 }
