@@ -29,6 +29,36 @@ export type NasaImageOfDayRecipeData = {
 
 const FALLBACK_IMAGE =
 	"https://apod.nasa.gov/apod/image/2605/TrifidPillar_Hubble_960.jpg";
+const SUPPORTED_IMAGE_EXTENSIONS = new Set([
+	".jpg",
+	".jpeg",
+	".png",
+	".webp",
+	".gif",
+]);
+
+function hasSupportedImageExtension(value?: string) {
+	if (!value) return false;
+
+	try {
+		const { pathname } = new URL(value);
+		const lowerPath = pathname.toLowerCase();
+		for (const extension of SUPPORTED_IMAGE_EXTENSIONS) {
+			if (lowerPath.endsWith(extension)) {
+				return true;
+			}
+		}
+	} catch {
+		return false;
+	}
+
+	return false;
+}
+
+function chooseRenderableImage(response: ApodResponse) {
+	const candidates = [response.url, response.hdurl].filter(Boolean) as string[];
+	return candidates.find(hasSupportedImageExtension) || FALLBACK_IMAGE;
+}
 
 export default async function getData(
 	params?: NasaParams,
@@ -41,17 +71,23 @@ export default async function getData(
 			{ headers: { Accept: "application/json" } },
 			10000,
 		);
+		const imageUrl =
+			response.media_type === "image"
+				? chooseRenderableImage(response)
+				: FALLBACK_IMAGE;
 
 		return {
 			title: response.title || "NASA Image of the Day",
-			imageUrl: response.hdurl || response.url || FALLBACK_IMAGE,
+			imageUrl,
 			caption: response.explanation || "NASA APOD",
 			date: response.date || "",
 			updatedAt: formatUpdatedAt(new Date()),
 			note:
 				response.media_type && response.media_type !== "image"
 					? "Today’s APOD was not an image, so the latest still image fallback is shown."
-					: "NASA Astronomy Picture of the Day.",
+					: imageUrl === FALLBACK_IMAGE
+						? "Today’s APOD image format was not renderer-safe, so a NASA fallback image is shown."
+						: "NASA Astronomy Picture of the Day.",
 		};
 	} catch (error) {
 		console.error("Error loading NASA image of the day:", error);
