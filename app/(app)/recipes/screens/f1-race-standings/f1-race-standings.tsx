@@ -1,29 +1,17 @@
 import {
 	clampText,
 	getBitmapLayoutProfile,
+	scaleText,
 } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
 import type { F1RaceStandingsRecipeData } from "./getData";
 
-function TeamBadge({ label }: { label: string }) {
-	return (
-		<div
-			style={{
-				display: "flex",
-				alignItems: "center",
-				justifyContent: "center",
-				width: 36,
-				height: 36,
-				borderRadius: "18px",
-				backgroundColor: "#111",
-				color: "#fff",
-				border: "1px solid #111",
-			}}
-			className="font-geneva9"
-		>
-			<span style={{ fontSize: label.length > 1 ? 11 : 14 }}>{label}</span>
-		</div>
-	);
+function compactDriverName(name: string) {
+	const parts = name.trim().split(/\s+/).filter(Boolean);
+	if (parts.length <= 2) {
+		return name;
+	}
+	return `${parts[0]} ${parts[parts.length - 1]}`;
 }
 
 export default function F1RaceStandings({
@@ -32,221 +20,206 @@ export default function F1RaceStandings({
 	nextRaceDate,
 	nextRaceRound,
 	nextRaceTrackImageUrl,
-	schedule,
 	driverStandings,
-	teamStandings,
 	updatedAt,
 	note,
 	width = 800,
 	height = 480,
 }: F1RaceStandingsRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const groupedSchedule = schedule.reduce<Record<string, typeof schedule>>(
-		(acc, item) => {
-			if (!acc[item.day]) acc[item.day] = [];
-			acc[item.day].push(item);
-			return acc;
-		},
-		{},
-	);
+	const leftWidth = profile.isCompact ? 220 : 232;
+	const rightWidth = width - profile.padding * 2 - leftWidth - profile.gap;
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div
-				className="flex h-full w-full gap-4 border border-black bg-[#f3f1ee]"
-				style={{ padding: profile.padding }}
+				className="flex h-full w-full border border-black bg-[#f3f1ee]"
+				style={{ padding: profile.padding, gap: profile.gap }}
 			>
-				<div className="flex w-[31%] flex-col gap-4">
+				<div
+					className="flex h-full flex-col rounded-2xl bg-white"
+					style={{
+						width: leftWidth,
+						border: "1px solid #111",
+						padding: 16,
+						flexShrink: 0,
+					}}
+				>
 					<div
-						className="rounded-2xl bg-white"
-						style={{ border: "1px solid #111", padding: 16 }}
+						className="font-geneva9 uppercase"
+						style={{
+							fontSize: 12,
+							letterSpacing: "0.18em",
+							borderBottom: "1px solid #111",
+							paddingBottom: 8,
+							color: "#111",
+						}}
 					>
-						<div
-							className="font-geneva9 uppercase"
-							style={{
-								fontSize: 12,
-								letterSpacing: "0.18em",
-								borderBottom: "1px solid #111",
-								paddingBottom: 8,
-								display: "block",
-							}}
-						>
-							Next Race
-						</div>
-						<div
-							className="mt-4 flex items-center justify-center"
-							style={{ minHeight: 142 }}
-						>
-							{nextRaceTrackImageUrl ? (
-								// biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs
-								<img
-									src={nextRaceTrackImageUrl}
-									alt={nextRaceName}
-									style={{
-										width: "100%",
-										maxWidth: 220,
-										maxHeight: 128,
-										objectFit: "contain",
-									}}
-								/>
-							) : (
-								<div
-									className="flex items-center justify-center rounded-2xl border border-black"
-									style={{ width: 220, height: 120 }}
-								>
-									<span className="font-blockkie text-[26px]">F1</span>
-								</div>
-							)}
-						</div>
-						<div className="mt-2 font-blockkie text-[34px] leading-none">
-							{clampText(nextRaceName, 18)}
-						</div>
-						<div className="mt-5 flex gap-8">
-							<div className="font-geneva9">
-								<div className="text-[14px] text-gray-500">Race Date</div>
-								<div className="mt-1 text-[22px]">{nextRaceDate}</div>
-							</div>
-							<div className="font-geneva9">
-								<div className="text-[14px] text-gray-500">Round</div>
-								<div className="mt-1 text-[22px]">{nextRaceRound}</div>
-							</div>
-						</div>
+						Next Race
 					</div>
 
 					<div
-						className="flex-1 rounded-2xl bg-white"
-						style={{ border: "1px solid #111", padding: 16 }}
+						className="mt-4 flex items-center justify-center"
+						style={{ minHeight: 156 }}
 					>
-						<div className="font-blockkie text-[22px] leading-none">
-							Schedule
+						{nextRaceTrackImageUrl ? (
+							// biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs
+							<img
+								src={nextRaceTrackImageUrl}
+								alt={nextRaceName}
+								style={{
+									width: "100%",
+									maxWidth: 180,
+									maxHeight: 132,
+									objectFit: "contain",
+								}}
+							/>
+						) : (
+							<div
+								className="flex items-center justify-center rounded-2xl border border-black"
+								style={{ width: 180, height: 124 }}
+							>
+								<span className="font-blockkie text-[24px]">F1</span>
+							</div>
+						)}
+					</div>
+
+					<div
+						className="mt-3 font-blockkie leading-none"
+						style={{
+							fontSize: scaleText(22, profile, {
+								compactBase: 18,
+								denseBase: 16,
+								min: 14,
+								max: 22,
+							}),
+						}}
+					>
+						{clampText(nextRaceName, 18)}
+					</div>
+
+					<div className="mt-5 flex gap-6">
+						<div className="font-geneva9">
+							<div className="text-[12px] text-[#6b7280]">Race Date</div>
+							<div className="mt-1 font-blockkie text-[18px] leading-none">
+								{nextRaceDate}
+							</div>
 						</div>
-						<div className="mt-4 flex flex-col gap-4">
-							{Object.entries(groupedSchedule).map(([day, sessions]) => (
-								<div key={day}>
-									<div
-										className="font-geneva9 uppercase text-[13px]"
-										style={{ letterSpacing: "0.18em" }}
-									>
-										{day}
-									</div>
-									<div className="mt-2 flex flex-col gap-2">
-										{sessions.map((item) => (
-											<div
-												key={`${day}-${item.label}-${item.time}`}
-												className="flex items-center justify-between font-geneva9 text-[16px]"
-											>
-												<span>{clampText(item.label, 18)}</span>
-												<span>{item.time}</span>
-											</div>
-										))}
-									</div>
-								</div>
-							))}
+						<div className="font-geneva9">
+							<div className="text-[12px] text-[#6b7280]">Round</div>
+							<div className="mt-1 font-blockkie text-[18px] leading-none">
+								{nextRaceRound}
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<div className="flex flex-1 flex-col gap-4">
-					<div
-						className="rounded-2xl bg-white"
-						style={{ border: "1px solid #111", padding: 16 }}
-					>
-						<div className="font-blockkie text-[24px] leading-none">
+				<div
+					className="flex h-full flex-col rounded-2xl bg-white"
+					style={{
+						width: rightWidth,
+						border: "1px solid #111",
+						padding: 16,
+						overflow: "hidden",
+					}}
+				>
+					<div className="flex items-end justify-between">
+						<div
+							className="font-blockkie leading-none"
+							style={{
+								fontSize: scaleText(24, profile, {
+									compactBase: 20,
+									denseBase: 18,
+									min: 16,
+									max: 24,
+								}),
+							}}
+						>
 							Driver Standings {seasonLabel.replace(" season", "")}
 						</div>
-						<div className="mt-3 flex flex-col">
-							{driverStandings.map((driver) => (
-								<div
-									key={`${driver.position}-${driver.name}`}
-									className="flex items-center justify-between"
-									style={{
-										padding: "11px 0",
-										borderBottom: "1px solid #d9d9d9",
-									}}
-								>
-									<div className="flex items-center gap-4">
-										<span className="font-blockkie text-[20px]">
-											{driver.position}
-										</span>
-										<div
-											className="overflow-hidden rounded-full border border-gray-300 bg-[#efefef]"
-											style={{ width: 44, height: 44 }}
-										>
-											{driver.headshotUrl ? (
-												// biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs
-												<img
-													src={driver.headshotUrl}
-													alt={driver.name}
-													style={{
-														width: "100%",
-														height: "100%",
-														objectFit: "cover",
-													}}
-												/>
-											) : (
-												<div className="flex h-full w-full items-center justify-center font-geneva9 text-[12px]">
-													{driver.teamBadge}
-												</div>
-											)}
-										</div>
-										<span className="font-blockkie text-[24px] leading-none">
-											{clampText(driver.name, 24)}
-										</span>
-									</div>
-									<div className="flex items-center gap-3">
-										<TeamBadge label={driver.teamBadge} />
-										<div className="min-w-[118px] font-geneva9 text-[15px]">
-											{clampText(driver.team, 14)}
-										</div>
-										<span className="min-w-[38px] text-right font-blockkie text-[24px]">
-											{driver.points}
-										</span>
-									</div>
-								</div>
-							))}
+						<div className="font-geneva9 text-[12px] text-[#4b5563]">
+							Updated {updatedAt}
 						</div>
 					</div>
 
-					<div
-						className="flex-1 rounded-2xl bg-white"
-						style={{ border: "1px solid #111", padding: 16 }}
-					>
-						<div className="flex items-end justify-between">
-							<div className="font-blockkie text-[24px] leading-none">
-								Constructor Standings {seasonLabel.replace(" season", "")}
-							</div>
-							<div className="font-geneva9 text-[13px]">
-								Updated {updatedAt}
-							</div>
-						</div>
-						<div className="mt-4 flex flex-col">
-							{teamStandings.map((team) => (
+					<div className="mt-3 flex flex-1 flex-col">
+						{driverStandings.map((driver, index) => (
+							<div
+								key={`${driver.position}-${driver.name}`}
+								className="flex items-center justify-between"
+								style={{
+									padding: "12px 0",
+									borderBottom:
+										index === driverStandings.length - 1
+											? "none"
+											: "1px solid #d9d9d9",
+								}}
+							>
 								<div
-									key={`${team.position}-${team.team}`}
-									className="flex items-center justify-between"
-									style={{
-										padding: "14px 0",
-										borderBottom: "1px solid #d9d9d9",
-									}}
+									className="flex items-center"
+									style={{ gap: 14, width: rightWidth - 110 }}
 								>
-									<div className="flex items-center gap-4">
-										<span className="font-blockkie text-[20px]">
-											{team.position}
-										</span>
-										<TeamBadge label={team.teamBadge} />
-										<span className="font-blockkie text-[24px] leading-none">
-											{clampText(team.team, 20)}
-										</span>
+									<div
+										className="font-blockkie leading-none"
+										style={{ width: 24, fontSize: 18 }}
+									>
+										{driver.position}
 									</div>
-									<span className="font-blockkie text-[24px]">
-										{team.points}
-									</span>
+									<div
+										className="overflow-hidden rounded-full border border-[#d1d5db] bg-[#efefef]"
+										style={{ width: 42, height: 42, flexShrink: 0 }}
+									>
+										{driver.headshotUrl ? (
+											// biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs
+											<img
+												src={driver.headshotUrl}
+												alt={driver.name}
+												style={{
+													width: "100%",
+													height: "100%",
+													objectFit: "cover",
+												}}
+											/>
+										) : (
+											<div className="flex h-full w-full items-center justify-center font-geneva9 text-[11px]">
+												{driver.teamBadge}
+											</div>
+										)}
+									</div>
+									<div
+										className="flex flex-col"
+										style={{ width: rightWidth - 210, minWidth: 0 }}
+									>
+										<div
+											className="font-blockkie leading-none"
+											style={{
+												fontSize: scaleText(19, profile, {
+													compactBase: 17,
+													denseBase: 15,
+													min: 14,
+													max: 19,
+												}),
+											}}
+										>
+											{clampText(compactDriverName(driver.name), 18)}
+										</div>
+										<div className="mt-1 font-geneva9 text-[13px] text-[#4b5563]">
+											{clampText(driver.team, 16)}
+										</div>
+									</div>
 								</div>
-							))}
-						</div>
-						<div className="mt-3 font-geneva9 text-[12px]">
-							{clampText(note || "", profile.isDense ? 40 : 98)}
-						</div>
+								<div
+									className="font-blockkie leading-none"
+									style={{ width: 46, fontSize: 22, textAlign: "right" }}
+								>
+									{driver.points}
+								</div>
+							</div>
+						))}
+					</div>
+
+					<div className="mt-3 font-geneva9 text-[11px] text-[#4b5563]">
+						{clampText(note || "Driver standings via OpenF1.", 92)}
 					</div>
 				</div>
 			</div>

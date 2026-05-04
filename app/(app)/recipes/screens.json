@@ -876,12 +876,33 @@
 		"category": "trmnl-imports"
 	},
 	"f1-race-standings": {
-		"title": "F1 Race + Standings",
+		"title": "F1 Driver Standings",
 		"published": true,
 		"createdAt": "2026-05-03T00:00:00Z",
-		"updatedAt": "2026-05-03T00:00:00Z",
-		"description": "Next race weekend plus driver and constructor standings using OpenF1.",
+		"updatedAt": "2026-05-04T00:00:00Z",
+		"description": "Next race card plus clean driver standings using OpenF1.",
 		"componentPath": "./screens/f1-race-standings",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {},
+		"tags": ["formula-1", "f1", "sports", "openf1", "live-data"],
+		"author": {
+			"name": "OpenF1-based import",
+			"github": "br-g"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"f1-weekend-teams": {
+		"title": "F1 Weekend + Constructors",
+		"published": true,
+		"createdAt": "2026-05-04T00:00:00Z",
+		"updatedAt": "2026-05-04T00:00:00Z",
+		"description": "Next race weekend schedule plus constructor standings using OpenF1.",
+		"componentPath": "./screens/f1-weekend-teams",
 		"hasDataFetch": true,
 		"props": {},
 		"params": {},
