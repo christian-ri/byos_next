@@ -22,7 +22,7 @@ type VercelUserResponse = {
 type VercelProject = {
 	id: string;
 	name: string;
-	latestDeployments?: Array<{ state?: string }>;
+	latestDeployments?: Array<{ state?: string; readyState?: string }>;
 };
 
 type VercelProjectsResponse =
@@ -144,7 +144,10 @@ export default async function getData(
 			updatedAt: formatUpdatedAt(new Date()),
 			projects: projectList.slice(0, projectLimit).map((project) => ({
 				name: project.name,
-				status: project.latestDeployments?.[0]?.state || "UNKNOWN",
+				status:
+					project.latestDeployments?.[0]?.readyState ||
+					project.latestDeployments?.[0]?.state ||
+					"UNKNOWN",
 			})),
 			deployments:
 				deployments.deployments
