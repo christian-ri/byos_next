@@ -6,6 +6,69 @@ import {
 import { PreSatori } from "@/utils/pre-satori";
 import type { ApplePhotosRecipeData } from "./getData";
 
+function ClockIcon({ size = 18 }: { size?: number }) {
+	return (
+		<svg
+			viewBox="0 0 24 24"
+			width={size}
+			height={size}
+			aria-hidden="true"
+			focusable="false"
+		>
+			<circle
+				cx="12"
+				cy="12"
+				r="8.5"
+				fill="none"
+				stroke="#fff"
+				strokeWidth="2"
+			/>
+			<path
+				d="M12 7.5v5l3.5 2"
+				fill="none"
+				stroke="#fff"
+				strokeWidth="2"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+		</svg>
+	);
+}
+
+function AlbumIcon({ size = 18 }: { size?: number }) {
+	return (
+		<svg
+			viewBox="0 0 24 24"
+			width={size}
+			height={size}
+			aria-hidden="true"
+			focusable="false"
+		>
+			<rect
+				x="5"
+				y="7"
+				width="12"
+				height="10"
+				rx="1.5"
+				fill="none"
+				stroke="#fff"
+				strokeWidth="2"
+			/>
+			<rect
+				x="8"
+				y="5"
+				width="12"
+				height="10"
+				rx="1.5"
+				fill="none"
+				stroke="#fff"
+				strokeWidth="2"
+				opacity="0.75"
+			/>
+		</svg>
+	);
+}
+
 export default function ApplePhotos({
 	title = "Apple Photos",
 	albumName = "Shared Album",
@@ -22,12 +85,6 @@ export default function ApplePhotos({
 	height = 480,
 }: ApplePhotosRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const titleSize = scaleText(30, profile, {
-		compactBase: 24,
-		denseBase: 18,
-		min: 16,
-		max: 30,
-	});
 	const subtitleSize = scaleText(16, profile, {
 		compactBase: 14,
 		denseBase: 11,
@@ -40,13 +97,19 @@ export default function ApplePhotos({
 		min: 9,
 		max: 14,
 	});
-	const captionSize = scaleText(18, profile, {
-		compactBase: 14,
-		denseBase: 12,
-		min: 10,
-		max: 18,
-	});
 	const overlayPadding = profile.isDense ? 10 : 16;
+	const timeSize = scaleText(28, profile, {
+		compactBase: 24,
+		denseBase: 18,
+		min: 16,
+		max: 28,
+	});
+	const hudSubtitleSize = scaleText(15, profile, {
+		compactBase: 13,
+		denseBase: 10,
+		min: 9,
+		max: 15,
+	});
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
@@ -67,16 +130,23 @@ export default function ApplePhotos({
 				</picture>
 
 				<div
-					className="absolute inset-x-0 top-0 flex items-start justify-between"
-					style={{ padding: overlayPadding, gap: profile.gap }}
+					className="absolute left-0 top-0"
+					style={{ padding: overlayPadding }}
 				>
 					<div
 						className="rounded-xl px-4 py-3 flex flex-col"
-						style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }}
+						style={{ backgroundColor: "rgba(0, 0, 0, 0.58)" }}
 					>
 						<span
 							className="font-blockkie leading-none"
-							style={{ fontSize: titleSize }}
+							style={{
+								fontSize: scaleText(22, profile, {
+									compactBase: 18,
+									denseBase: 15,
+									min: 13,
+									max: 22,
+								}),
+							}}
 						>
 							{title}
 						</span>
@@ -87,65 +157,71 @@ export default function ApplePhotos({
 							{clampText(albumName, profile.isDense ? 20 : 30)}
 						</span>
 					</div>
-
-					{showTimestamp && (
-						<div
-							className="rounded-xl px-4 py-3 text-right text-gray-100 font-geneva9"
-							style={{ backgroundColor: "rgba(0, 0, 0, 0.65)" }}
-						>
-							{currentTime && (
-								<div
-									className="leading-none"
-									style={{
-										fontSize: scaleText(22, profile, {
-											compactBase: 18,
-											denseBase: 14,
-											min: 12,
-											max: 22,
-										}),
-									}}
-								>
-									{currentTime}
-								</div>
-							)}
-							{timeZoneLabel && (
-								<div
-									className="mt-1 leading-none"
-									style={{ fontSize: metaSize }}
-								>
-									{timeZoneLabel}
-								</div>
-							)}
-							<div className="mt-1" style={{ fontSize: metaSize }}>
-								{updatedAt}
-							</div>
-							{note && !profile.isDense && (
-								<div
-									className="mt-1 text-gray-300"
-									style={{ fontSize: metaSize }}
-								>
-									{clampText(note, 36)}
-								</div>
-							)}
-						</div>
-					)}
 				</div>
 
-				{showCaption && caption.trim() ? (
+				{showTimestamp ? (
 					<div
-						className="absolute inset-x-0 bottom-0"
+						className="absolute left-0 bottom-0"
 						style={{ padding: overlayPadding }}
 					>
 						<div
-							className="rounded-xl px-4 py-3 leading-tight font-geneva9"
-							style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
+							className="rounded-xl px-4 py-3"
+							style={{ backgroundColor: "rgba(0, 0, 0, 0.62)" }}
 						>
-							<span style={{ fontSize: captionSize }}>
-								{clampText(caption, profile.isDense ? 64 : 120)}
-							</span>
+							<div className="flex items-center gap-3">
+								<ClockIcon size={profile.isDense ? 16 : 18} />
+								<div className="flex flex-col">
+									{currentTime ? (
+										<div
+											className="font-blockkie leading-none"
+											style={{ fontSize: timeSize }}
+										>
+											{currentTime}
+										</div>
+									) : null}
+									<div
+										className="mt-1 font-geneva9 leading-none text-gray-200"
+										style={{ fontSize: hudSubtitleSize }}
+									>
+										{[timeZoneLabel, updatedAt].filter(Boolean).join(" · ")}
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 				) : null}
+
+				<div
+					className="absolute right-0 bottom-0"
+					style={{ padding: overlayPadding }}
+				>
+					<div
+						className="rounded-xl px-4 py-3"
+						style={{ backgroundColor: "rgba(0, 0, 0, 0.62)" }}
+					>
+						<div className="flex items-center gap-3">
+							<AlbumIcon size={profile.isDense ? 16 : 18} />
+							<div className="flex flex-col items-end text-right">
+								{note ? (
+									<div
+										className="font-geneva9 leading-none text-gray-100"
+										style={{ fontSize: subtitleSize }}
+									>
+										{clampText(note, profile.isDense ? 24 : 34)}
+									</div>
+								) : null}
+								{showCaption && caption.trim() ? (
+									<div
+										className="mt-1 font-geneva9 leading-none text-gray-300"
+										style={{ fontSize: metaSize }}
+									>
+										{clampText(caption, profile.isDense ? 26 : 42)}
+									</div>
+								) : null}
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</PreSatori>
 	);
