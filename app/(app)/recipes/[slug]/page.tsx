@@ -23,11 +23,11 @@ import {
 	fetchRecipeComponent,
 	fetchRecipeConfig,
 	fetchRecipeProps,
+	getRendererType,
 	isBuildPhase,
 	logger,
 	RecipeConfig,
 	renderRecipeOutputs,
-	resolveRendererType,
 } from "@/lib/recipes/recipe-renderer";
 
 export async function generateMetadata() {
@@ -241,8 +241,6 @@ export default async function RecipePage({
 		notFound();
 	}
 
-	const previewRendererType = resolveRendererType(config);
-
 	const screenParams = config.params
 		? await getScreenParams(slug, config.params)
 		: {};
@@ -364,7 +362,7 @@ export default async function RecipePage({
 					}
 					bmpLinkComponent={
 						<p className="leading-7 text-xs">
-							JSX → utils/pre-satori.tsx → {previewRendererType} PNG →
+							JSX → utils/pre-satori.tsx → {getRendererType()} PNG →
 							utils/render-bmp.ts →
 							<Link
 								href={bitmapHref}
@@ -378,7 +376,7 @@ export default async function RecipePage({
 						<p className="leading-7 text-xs">
 							JSX → utils/pre-satori.tsx →{" "}
 							<span className="text-blue-600 dark:text-blue-400">
-								{previewRendererType} PNG
+								{getRendererType()} PNG
 							</span>{" "}
 							→ utils/render-bmp.ts →
 							<Link href={bitmapHref} className="hover:underline">

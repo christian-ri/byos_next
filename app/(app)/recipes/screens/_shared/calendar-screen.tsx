@@ -9,12 +9,11 @@ import {
 	getBitmapLayoutProfile,
 	scaleText,
 } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
-import { PreSatori, type RendererType } from "@/utils/pre-satori";
+import { PreSatori } from "@/utils/pre-satori";
 
 type Props = CalendarRecipeData & {
 	width?: number;
 	height?: number;
-	rendererType?: RendererType;
 };
 
 type BoxStyle = {
@@ -75,9 +74,9 @@ function EventLine({
 				...style,
 				display: "flex",
 				alignItems: "center",
-				padding: isBadge ? "2px 6px" : undefined,
-				borderRadius: isBadge ? 4 : undefined,
-				backgroundColor: isBadge ? "#000" : undefined,
+				padding: isBadge ? "2px 6px" : "0px",
+				borderRadius: isBadge ? "4px" : "0px",
+				backgroundColor: isBadge ? "#000" : "transparent",
 				color: isBadge ? "#fff" : "#000",
 				overflow: "hidden",
 			}}
@@ -236,7 +235,7 @@ function PanelHeader({
 						top: panelTop + 12,
 						width: Math.min(profile.isDense ? 168 : 340, width * 0.46),
 						backgroundColor: "#dbe8ff",
-						borderRadius: 16,
+						borderRadius: "16px",
 						padding: profile.isDense ? "4px 8px" : "6px 12px",
 						display: "flex",
 						alignItems: "center",
@@ -750,7 +749,6 @@ export default function CalendarScreen({
 	monthLabel = "",
 	width = 800,
 	height = 480,
-	rendererType,
 }: Props) {
 	const profile = getBitmapLayoutProfile(width, height);
 	const isMonth = eventLayout === "month";
@@ -760,12 +758,7 @@ export default function CalendarScreen({
 	const panelHeight = height - panelTop - profile.padding;
 
 	return (
-		<PreSatori
-			useDoubling={true}
-			width={width}
-			height={height}
-			rendererType={rendererType}
-		>
+		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="relative h-full w-full overflow-hidden bg-[#efefed] text-black">
 				<Header
 					title={title}
@@ -784,7 +777,7 @@ export default function CalendarScreen({
 						height: panelHeight,
 						backgroundColor: "#fff",
 						border: "1px solid #d1d5db",
-						borderRadius: profile.panelRadius,
+						borderRadius: `${profile.panelRadius}px`,
 					}}
 				/>
 				{isMonth ? (

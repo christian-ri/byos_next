@@ -14,7 +14,6 @@ interface PreSatoriProps {
 	useDoubling?: boolean;
 	width?: number;
 	height?: number;
-	rendererType?: RendererType;
 	children: React.ReactNode;
 }
 
@@ -26,9 +25,10 @@ export const PreSatori: React.FC<PreSatoriProps> = ({
 	useDoubling = false,
 	width = 800,
 	height = 480,
-	rendererType = getRendererType(),
 	children,
 }) => {
+	const rendererType = getRendererType();
+
 	// Define a helper to recursively transform children.
 	const transform = (child: React.ReactNode): React.ReactNode => {
 		if (React.isValidElement(child)) {
