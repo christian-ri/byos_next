@@ -104,7 +104,7 @@ function Header({
 }) {
 	const headerTop = profile.padding - 2;
 	const leftWidth = Math.max(180, width - (profile.isDense ? 160 : 260));
-	const metaWidth = profile.isDense ? 132 : 190;
+	const metaWidth = profile.isDense ? 152 : 220;
 
 	return (
 		<>
@@ -152,7 +152,7 @@ function Header({
 					right: profile.padding + 10,
 					top: headerTop + 2,
 					width: metaWidth,
-					color: "#6b7280",
+					color: "#4b5563",
 					display: "flex",
 					flexDirection: "column",
 					alignItems: "flex-end",
@@ -162,23 +162,24 @@ function Header({
 			>
 				<div
 					style={{
-						fontSize: scaleText(12, profile, {
-							compactBase: 10,
-							denseBase: 9,
-							min: 8,
-							max: 12,
+						fontSize: scaleText(14, profile, {
+							compactBase: 12,
+							denseBase: 10,
+							min: 10,
+							max: 14,
 						}),
 					}}
 				>
-					{clampText(timeZone, profile.isDense ? 18 : 24)}
+					{clampText(timeZone, profile.isDense ? 22 : 30)}
 				</div>
 				<div
+					className="mt-1"
 					style={{
-						fontSize: scaleText(12, profile, {
-							compactBase: 10,
-							denseBase: 9,
-							min: 8,
-							max: 12,
+						fontSize: scaleText(14, profile, {
+							compactBase: 12,
+							denseBase: 10,
+							min: 10,
+							max: 14,
 						}),
 					}}
 				>

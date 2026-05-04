@@ -255,6 +255,32 @@ function startOfDay(date: Date) {
 	);
 }
 
+function zonedCalendarDate(date: Date, timeZone: string) {
+	const parts = new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	}).formatToParts(date);
+
+	const values = parts.reduce<Record<string, string>>((acc, part) => {
+		if (part.type !== "literal") {
+			acc[part.type] = part.value;
+		}
+		return acc;
+	}, {});
+
+	return new Date(
+		Number(values.year),
+		Number(values.month) - 1,
+		Number(values.day),
+		12,
+		0,
+		0,
+		0,
+	);
+}
+
 function addDays(date: Date, days: number) {
 	const next = new Date(date);
 	next.setDate(next.getDate() + days);
@@ -811,7 +837,7 @@ function buildDay(
 	const dayStart = startOfDay(dayDate);
 	const dayEnd = new Date(dayStart);
 	dayEnd.setHours(23, 59, 59, 999);
-	const now = new Date();
+	const now = zonedCalendarDate(new Date(), options.timeZone);
 
 	const dayEvents = events
 		.filter((event) => {
@@ -863,7 +889,7 @@ function buildCalendarData({
 	rawEvents: RawCalendarEvent[];
 	note?: string;
 }): CalendarRecipeData {
-	const today = new Date();
+	const today = zonedCalendarDate(new Date(), timeZone);
 	const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 	const currentMonthEnd = new Date(
 		today.getFullYear(),
