@@ -7,6 +7,7 @@ import NotFoundScreen from "@/app/(app)/recipes/screens/not-found/not-found";
 import screens from "@/app/(app)/recipes/screens.json";
 import { getScreenParams } from "@/app/actions/screens-params";
 import { getTakumiFonts } from "@/lib/fonts";
+import { RendererProvider, type RendererType } from "@/utils/pre-satori";
 import { DitheringMethod, renderBmp } from "@/utils/render-bmp";
 
 // Logging utility shared between recipe renderers
@@ -83,9 +84,18 @@ export const addDimensionsToProps = (
 });
 
 // Get renderer type from environment variable (defaults to "takumi")
-export const getRendererType = (): "takumi" | "satori" => {
+export const getRendererType = (): RendererType => {
 	const renderer = process.env.REACT_RENDERER?.toLowerCase();
 	return renderer === "satori" ? "satori" : "takumi";
+};
+
+export const resolveRendererType = (
+	config?: RecipeConfig | null,
+): RendererType => {
+	const renderer = config?.renderSettings?.renderer;
+	return renderer === "satori" || renderer === "takumi"
+		? renderer
+		: getRendererType();
 };
 
 // Cache the fonts at module initialization
@@ -277,7 +287,7 @@ export const renderRecipeOutputs = cache(
 	}: RenderOptions): Promise<RenderResults> => {
 		const results = getDefaultRenderResults();
 		const imageOptions = getRecipeImageOptions(config, imageWidth, imageHeight);
-		const rendererType = getRendererType();
+		const rendererType = resolveRendererType(config);
 
 		const tasks: Array<
 			Promise<{ key: keyof RenderResults; value: Buffer | null }>
@@ -287,7 +297,11 @@ export const renderRecipeOutputs = cache(
 			tasks.push(
 				(async () => {
 					try {
-						const element = createElement(Component, props);
+						const element = createElement(
+							RendererProvider,
+							{ value: rendererType },
+							createElement(Component, props),
+						);
 						const png =
 							rendererType === "satori"
 								? await renderWithSatori(
@@ -319,7 +333,11 @@ export const renderRecipeOutputs = cache(
 			tasks.push(
 				(async () => {
 					try {
-						const element = createElement(Component, props);
+						const element = createElement(
+							RendererProvider,
+							{ value: rendererType },
+							createElement(Component, props),
+						);
 						const pngBuffer =
 							rendererType === "satori"
 								? await renderWithSatori(

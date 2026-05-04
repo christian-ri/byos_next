@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext, useContext } from "react";
 import { extractFontFamily } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import {
@@ -8,16 +8,25 @@ import {
 	processResponsive,
 } from "./pre-satori-tailwind";
 
+export type RendererType = "takumi" | "satori";
+
 interface PreSatoriProps {
 	useDoubling?: boolean;
 	width?: number;
 	height?: number;
 	children: React.ReactNode;
 }
-export const getRendererType = (): "takumi" | "satori" => {
+const RendererContext = createContext<RendererType | null>(null);
+
+export const getRendererType = (): RendererType => {
 	const renderer = process.env.REACT_RENDERER?.toLowerCase();
 	return renderer === "satori" ? "satori" : "takumi";
 };
+
+export const RendererProvider = RendererContext.Provider;
+
+export const useResolvedRendererType = (): RendererType =>
+	useContext(RendererContext) ?? getRendererType();
 
 export const PreSatori: React.FC<PreSatoriProps> = ({
 	useDoubling = false,
@@ -25,6 +34,8 @@ export const PreSatori: React.FC<PreSatoriProps> = ({
 	height = 480,
 	children,
 }) => {
+	const rendererType = useResolvedRendererType();
+
 	// Define a helper to recursively transform children.
 	const transform = (child: React.ReactNode): React.ReactNode => {
 		if (React.isValidElement(child)) {
@@ -47,7 +58,7 @@ export const PreSatori: React.FC<PreSatoriProps> = ({
 			};
 
 			// Special handling for display properties
-			if (getRendererType() === "satori") {
+			if (rendererType === "satori") {
 				if (
 					style?.display !== "flex" &&
 					style?.display !== "contents" &&
@@ -60,15 +71,12 @@ export const PreSatori: React.FC<PreSatoriProps> = ({
 			// Process className for dither patterns, gap classes, and responsive breakpoints
 			const responsiveClass = processResponsive(className, width);
 			// Check if element should be hidden - don't render it at all
-			if (
-				responsiveClass.includes("hidden") &&
-				getRendererType() === "satori"
-			) {
+			if (responsiveClass.includes("hidden") && rendererType === "satori") {
 				return null;
 			}
 			let afterGapClass = responsiveClass;
 			let gapStyle = {};
-			if (getRendererType() === "satori") {
+			if (rendererType === "satori") {
 				({ style: gapStyle, className: afterGapClass } =
 					processGap(responsiveClass));
 			}

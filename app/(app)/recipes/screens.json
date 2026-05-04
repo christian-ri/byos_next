@@ -15,7 +15,8 @@
 			"github": "ghcpuman902"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "satori"
 		},
 		"version": "0.1.0",
 		"category": "display-components"
@@ -44,7 +45,8 @@
 			"github": "ghcpuman902"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "satori"
 		},
 		"version": "0.2.0",
 		"category": "display-components"
@@ -113,7 +115,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "satori"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
