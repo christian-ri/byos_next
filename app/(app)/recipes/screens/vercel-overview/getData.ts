@@ -25,6 +25,12 @@ type VercelProject = {
 	latestDeployments?: Array<{ state?: string }>;
 };
 
+type VercelProjectsResponse =
+	| VercelProject[]
+	| {
+			projects?: VercelProject[];
+	  };
+
 type VercelDeployment = {
 	name?: string;
 	readyState?: string;
@@ -55,6 +61,14 @@ export type VercelOverviewRecipeData = {
 	deployments: DeploymentSummary[];
 	note?: string;
 };
+
+function extractProjects(response: VercelProjectsResponse): VercelProject[] {
+	if (Array.isArray(response)) {
+		return response;
+	}
+
+	return Array.isArray(response.projects) ? response.projects : [];
+}
 
 function buildFallback(note?: string): VercelOverviewRecipeData {
 	return {
@@ -108,7 +122,7 @@ export default async function getData(
 				{ headers },
 				10000,
 			),
-			fetchJsonWithTimeout<VercelProject[]>(
+			fetchJsonWithTimeout<VercelProjectsResponse>(
 				`https://api.vercel.com/v10/projects${teamQuery}`,
 				{ headers },
 				10000,
@@ -119,6 +133,7 @@ export default async function getData(
 				10000,
 			),
 		]);
+		const projectList = extractProjects(projects);
 
 		return {
 			title: "Vercel Overview",
@@ -127,7 +142,7 @@ export default async function getData(
 				user.user?.username ||
 				(teamId ? `Team ${teamId}` : "Vercel account"),
 			updatedAt: formatUpdatedAt(new Date()),
-			projects: projects.slice(0, projectLimit).map((project) => ({
+			projects: projectList.slice(0, projectLimit).map((project) => ({
 				name: project.name,
 				status: project.latestDeployments?.[0]?.state || "UNKNOWN",
 			})),
