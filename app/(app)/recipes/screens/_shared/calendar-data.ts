@@ -175,11 +175,7 @@ function dayNumber(date: Date, timeZone: string) {
 	);
 }
 
-function formatClock(
-	date: Date,
-	timeZone: string,
-	timeFormat: "12h" | "24h",
-) {
+function formatClock(date: Date, timeZone: string, timeFormat: "12h" | "24h") {
 	return formatDateTime(
 		date,
 		{
@@ -192,7 +188,15 @@ function formatClock(
 }
 
 function startOfDay(date: Date) {
-	return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+	return new Date(
+		date.getFullYear(),
+		date.getMonth(),
+		date.getDate(),
+		0,
+		0,
+		0,
+		0,
+	);
 }
 
 function addDays(date: Date, days: number) {
@@ -490,7 +494,9 @@ function expandRecurringEvent(
 	}
 
 	const parsedByDay =
-		rule.BYDAY?.split(",").map(dayCodeToIndex).filter((day) => day >= 0) || [];
+		rule.BYDAY?.split(",")
+			.map(dayCodeToIndex)
+			.filter((day) => day >= 0) || [];
 	const byDay = parsedByDay.length > 0 ? parsedByDay : [event.start.getDay()];
 	const cursor = new Date(windowStart);
 	cursor.setHours(
@@ -609,7 +615,10 @@ function parseEventsFromIcs(source: string) {
 	return events;
 }
 
-function filterIgnoredEvents(events: RawCalendarEvent[], ignoredPhrases: string[]) {
+function filterIgnoredEvents(
+	events: RawCalendarEvent[],
+	ignoredPhrases: string[],
+) {
 	if (ignoredPhrases.length === 0) {
 		return events;
 	}
@@ -638,10 +647,8 @@ function buildEventForDay(
 ): CalendarDayEvent {
 	const dayStart = startOfDay(dayDate);
 	const inclusiveEnd = eventEndInclusive(event);
-	const startsToday =
-		startOfDay(event.start).getTime() === dayStart.getTime();
-	const endsToday =
-		startOfDay(inclusiveEnd).getTime() === dayStart.getTime();
+	const startsToday = startOfDay(event.start).getTime() === dayStart.getTime();
+	const endsToday = startOfDay(inclusiveEnd).getTime() === dayStart.getTime();
 	const multiDay =
 		startOfDay(event.start).getTime() !== startOfDay(inclusiveEnd).getTime();
 	const continuesBefore = !startsToday;
@@ -698,10 +705,11 @@ function buildDay(
 
 	return {
 		key: dayKey(dayDate, options.timeZone),
-		label: `${weekdayShort(dayDate, options.timeZone)} ${shortDateLabel(dayDate, options.timeZone)}`,
+		label: shortDateLabel(dayDate, options.timeZone),
 		shortLabel: weekdayShort(dayDate, options.timeZone),
 		dayNumber: dayNumber(dayDate, options.timeZone),
-		isToday: dayKey(dayDate, options.timeZone) === dayKey(now, options.timeZone),
+		isToday:
+			dayKey(dayDate, options.timeZone) === dayKey(now, options.timeZone),
 		isCurrentMonth:
 			options.currentMonth === undefined ||
 			dayDate.getMonth() === options.currentMonth,
@@ -738,7 +746,11 @@ function buildCalendarData({
 }): CalendarRecipeData {
 	const today = new Date();
 	const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-	const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+	const currentMonthEnd = new Date(
+		today.getFullYear(),
+		today.getMonth() + 1,
+		0,
+	);
 	const monthGridStart = startOfWeek(currentMonthStart, firstDay);
 	const monthGridEnd = endOfWeek(currentMonthEnd, firstDay);
 
@@ -844,7 +856,10 @@ export async function loadCalendarRecipeData(
 	const timeFormat = normalizeTimeFormat(params?.timeFormat);
 	const maxEventsPerDay = Math.max(
 		1,
-		Math.min(8, Number(params?.maxEventsPerDay || (eventLayout === "month" ? 4 : 6))),
+		Math.min(
+			8,
+			Number(params?.maxEventsPerDay || (eventLayout === "month" ? 4 : 6)),
+		),
 	);
 	const calendarName = String(params?.calendarName || "").trim();
 	const title = `${providerLabel} Calendar`;
@@ -923,7 +938,7 @@ export async function loadCalendarRecipeData(
 			timeFormat,
 			maxEventsPerDay,
 			rawEvents,
-			note: "Preview - your device will show actual data",
+			note: undefined,
 		});
 	} catch (error) {
 		console.error(`Error loading ${providerLabel} calendar data:`, error);

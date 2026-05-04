@@ -7,6 +7,11 @@ export const dynamic = "force-dynamic";
 
 type FlightBoardParams = {
 	airportCode?: string;
+	airport?: string;
+	code?: string;
+	iataCode?: string;
+	icaoCode?: string;
+	airport_code?: string;
 	radiusKm?: string | number;
 };
 
@@ -90,6 +95,13 @@ const FALLBACK_AIRPORTS: Record<string, AirportRecord> = {
 	},
 };
 
+for (const airport of Object.values({ ...FALLBACK_AIRPORTS })) {
+	FALLBACK_AIRPORTS[airport.code.toUpperCase()] = airport;
+	if (airport.iata_code) {
+		FALLBACK_AIRPORTS[airport.iata_code.toUpperCase()] = airport;
+	}
+}
+
 const SAMPLE_FLIGHTS: FlightRow[] = [
 	{
 		callsign: "DAL2417",
@@ -129,12 +141,7 @@ function toRadians(value: number) {
 	return (value * Math.PI) / 180;
 }
 
-function haversineKm(
-	lat1: number,
-	lon1: number,
-	lat2: number,
-	lon2: number,
-) {
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
 	const earthRadiusKm = 6371;
 	const dLat = toRadians(lat2 - lat1);
 	const dLon = toRadians(lon2 - lon1);
@@ -165,14 +172,29 @@ function deriveStatus(onGround: boolean | null, verticalRate: number | null) {
 }
 
 function buildFallback(code: string, note?: string): FlightBoardRecipeData {
-	const airport = FALLBACK_AIRPORTS[code] || FALLBACK_AIRPORTS.JFK;
+	const airport =
+		FALLBACK_AIRPORTS[code.toUpperCase()] || FALLBACK_AIRPORTS.JFK;
 	return {
 		airportName: airport.name,
-		airportCode: airport.iata_code || airport.code,
+		airportCode: code || airport.iata_code || airport.code,
 		updatedAt: formatUpdatedAt(new Date()),
 		note,
 		flights: SAMPLE_FLIGHTS,
 	};
+}
+
+function resolveRequestedAirportCode(params?: FlightBoardParams) {
+	return String(
+		params?.airportCode ||
+			params?.airport ||
+			params?.code ||
+			params?.iataCode ||
+			params?.icaoCode ||
+			params?.airport_code ||
+			"JFK",
+	)
+		.trim()
+		.toUpperCase();
 }
 
 async function resolveAirport(code: string): Promise<AirportRecord> {
@@ -197,15 +219,14 @@ async function resolveAirport(code: string): Promise<AirportRecord> {
 export default async function getData(
 	params?: FlightBoardParams,
 ): Promise<FlightBoardRecipeData> {
-	const airportCode = String(params?.airportCode || "JFK").trim().toUpperCase();
+	const airportCode = resolveRequestedAirportCode(params);
 	const radiusKm = Math.max(10, Math.min(150, Number(params?.radiusKm || 60)));
 
 	try {
 		const airport = await resolveAirport(airportCode);
 		const latDelta = radiusKm / 111;
 		const lonDelta =
-			radiusKm /
-			(Math.max(Math.cos(toRadians(airport.latitude)), 0.25) * 111);
+			radiusKm / (Math.max(Math.cos(toRadians(airport.latitude)), 0.25) * 111);
 
 		const data = await fetchJsonWithTimeout<OpenSkyResponse>(
 			`https://opensky-network.org/api/states/all?lamin=${airport.latitude - latDelta}&lomin=${airport.longitude - lonDelta}&lamax=${airport.latitude + latDelta}&lomax=${airport.longitude + lonDelta}`,
@@ -243,7 +264,9 @@ export default async function getData(
 						distanceKm,
 					};
 				})
-				.filter((flight): flight is FlightRow & { distanceKm: number } => Boolean(flight))
+				.filter((flight): flight is FlightRow & { distanceKm: number } =>
+					Boolean(flight),
+				)
 				.sort((a, b) => a.distanceKm - b.distanceKm)
 				.slice(0, 6)
 				.map(({ distanceKm: _distanceKm, ...flight }) => flight) || [];
@@ -266,7 +289,7 @@ export default async function getData(
 		console.error("Error loading flightboard data:", error);
 		return buildFallback(
 			airportCode,
-			"Live airport activity fetch failed, so this preview is showing sample traffic.",
+			`Live airport activity fetch failed for ${airportCode}, so this preview is showing sample traffic.`,
 		);
 	}
 }

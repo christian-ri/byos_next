@@ -1,4 +1,7 @@
-import { formatUpdatedAt } from "@/app/(app)/recipes/screens/_shared/fetch-utils";
+import {
+	formatDateTime,
+	formatUpdatedAt,
+} from "@/app/(app)/recipes/screens/_shared/fetch-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +48,8 @@ export type ApplePhotosRecipeData = {
 	imageUrl: string;
 	caption: string;
 	updatedAt: string;
+	currentTime: string;
+	timeZoneLabel: string;
 	note?: string;
 	showCaption: boolean;
 	showTimestamp: boolean;
@@ -267,12 +272,32 @@ function buildFallbackData(
 	note: string,
 ): ApplePhotosRecipeData {
 	const timeZone = String(params?.timezone || DEFAULT_TIME_ZONE).trim();
+	const now = new Date();
 	return {
 		title: "Apple Photos",
 		albumName: String(params?.albumName || "Shared Album").trim(),
 		imageUrl: SAMPLE_IMAGE_URL,
-		caption: "Shared album preview",
-		updatedAt: formatUpdatedAt(new Date(), timeZone),
+		caption: "",
+		updatedAt: formatUpdatedAt(now, timeZone),
+		currentTime: formatDateTime(
+			now,
+			{
+				hour: "2-digit",
+				minute: "2-digit",
+				hour12: true,
+			},
+			timeZone,
+		),
+		timeZoneLabel:
+			formatDateTime(
+				now,
+				{
+					timeZoneName: "short",
+				},
+				timeZone,
+			)
+				.split(" ")
+				.pop() || timeZone,
 		note,
 		showCaption: parseBoolean(params?.showCaption, true),
 		showTimestamp: parseBoolean(params?.showTimestamp, true),
@@ -285,6 +310,7 @@ export default async function getData(
 ): Promise<ApplePhotosRecipeData> {
 	const album = parseSharedAlbum(params?.sharedAlbumUrl);
 	const timeZone = String(params?.timezone || DEFAULT_TIME_ZONE).trim();
+	const now = new Date();
 
 	if (!album) {
 		return buildFallbackData(
@@ -327,8 +353,27 @@ export default async function getData(
 			title: "Apple Photos",
 			albumName: String(params?.albumName || "Shared Album").trim(),
 			imageUrl,
-			caption: photo.caption || "Random shared photo",
-			updatedAt: formatUpdatedAt(new Date(), timeZone),
+			caption: photo.caption || "",
+			updatedAt: formatUpdatedAt(now, timeZone),
+			currentTime: formatDateTime(
+				now,
+				{
+					hour: "2-digit",
+					minute: "2-digit",
+					hour12: true,
+				},
+				timeZone,
+			),
+			timeZoneLabel:
+				formatDateTime(
+					now,
+					{
+						timeZoneName: "short",
+					},
+					timeZone,
+				)
+					.split(" ")
+					.pop() || timeZone,
 			note: `${photos.length} photos in shared album`,
 			showCaption: parseBoolean(params?.showCaption, true),
 			showTimestamp: parseBoolean(params?.showTimestamp, true),

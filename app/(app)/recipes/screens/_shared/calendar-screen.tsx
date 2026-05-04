@@ -3,6 +3,12 @@ import type {
 	CalendarDayEvent,
 	CalendarRecipeData,
 } from "@/app/(app)/recipes/screens/_shared/calendar-data";
+import {
+	type BitmapLayoutProfile,
+	clampText,
+	getBitmapLayoutProfile,
+	scaleText,
+} from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
 
 type Props = CalendarRecipeData & {
@@ -18,18 +24,22 @@ type BoxStyle = {
 	height?: number;
 };
 
-const innerPadding = 32;
-const panelTop = 98;
-const panelRadius = 18;
-
 function eventLabel(event: CalendarDayEvent, includeEventTime: boolean) {
 	if (!includeEventTime || !event.timeLabel) return event.summary;
 	return `${event.summary} (${event.timeLabel})`;
 }
 
-function fitText(value: string, maxChars: number) {
-	if (value.length <= maxChars) return value;
-	return `${value.slice(0, Math.max(0, maxChars - 1))}…`;
+function getPanelTop(profile: BitmapLayoutProfile) {
+	return Math.max(
+		74,
+		profile.padding +
+			scaleText(60, profile, {
+				compactBase: 66,
+				denseBase: 58,
+				min: 58,
+				max: 74,
+			}),
+	);
 }
 
 function EventLine({
@@ -49,7 +59,7 @@ function EventLine({
 	fontSize: number;
 	maxChars: number;
 }) {
-	const label = fitText(eventLabel(event, includeEventTime), maxChars);
+	const label = clampText(eventLabel(event, includeEventTime), maxChars);
 	const style: BoxStyle = {
 		position: "absolute",
 		left,
@@ -60,9 +70,9 @@ function EventLine({
 	return (
 		<div
 			style={style}
-			className={`${event.allDay || event.multiDay ? "bg-black text-white rounded-sm px-1" : "text-black"} leading-none`}
+			className={`${event.allDay || event.multiDay ? "bg-black text-white rounded-sm px-1" : "text-black"} leading-tight font-geneva9 overflow-hidden`}
 		>
-			<span style={{ fontSize }}>{label}</span>
+			<span style={{ fontSize, maxWidth: width }}>{label}</span>
 		</div>
 	);
 }
@@ -73,44 +83,89 @@ function Header({
 	timeZone,
 	updatedAt,
 	width,
+	profile,
 }: {
 	title: string;
 	subtitle: string;
 	timeZone: string;
 	updatedAt: string;
 	width: number;
+	profile: BitmapLayoutProfile;
 }) {
+	const headerTop = profile.padding - 2;
+	const leftWidth = Math.max(180, width - (profile.isDense ? 160 : 260));
+	const metaWidth = profile.isDense ? 132 : 190;
+
 	return (
 		<>
 			<div
 				style={{
 					position: "absolute",
-					left: innerPadding + 14,
-					top: 18,
-					width: width - 330,
+					left: profile.padding + 10,
+					top: headerTop,
+					width: leftWidth,
 				}}
 			>
-				<div className="font-blockkie leading-none" style={{ fontSize: 34 }}>
+				<div
+					className="font-blockkie leading-none"
+					style={{
+						fontSize: scaleText(34, profile, {
+							compactBase: 28,
+							denseBase: 21,
+							min: 18,
+							max: 34,
+						}),
+					}}
+				>
 					{title}
 				</div>
 				<div
-					className="text-gray-500 leading-none mt-2"
-					style={{ fontSize: 17 }}
+					className="mt-2 font-geneva9 leading-none text-gray-500"
+					style={{
+						fontSize: scaleText(17, profile, {
+							compactBase: 14,
+							denseBase: 11,
+							min: 10,
+							max: 17,
+						}),
+					}}
 				>
-					{subtitle}
+					{clampText(subtitle, profile.isDense ? 24 : 42)}
 				</div>
 			</div>
 			<div
 				style={{
 					position: "absolute",
-					right: innerPadding + 14,
-					top: 20,
-					width: 210,
+					right: profile.padding + 10,
+					top: headerTop + 2,
+					width: metaWidth,
 				}}
-				className="text-right text-gray-500 leading-tight"
+				className="text-right font-geneva9 leading-tight text-gray-500"
 			>
-				<div style={{ fontSize: 12 }}>{timeZone}</div>
-				<div style={{ fontSize: 12 }}>{updatedAt}</div>
+				<div
+					style={{
+						fontSize: scaleText(12, profile, {
+							compactBase: 10,
+							denseBase: 9,
+							min: 8,
+							max: 12,
+						}),
+					}}
+				>
+					{clampText(timeZone, profile.isDense ? 18 : 24)}
+				</div>
+				<div
+					style={{
+						fontSize: scaleText(12, profile, {
+							compactBase: 10,
+							denseBase: 9,
+							min: 8,
+							max: 12,
+						}),
+					}}
+				>
+					{updatedAt}
+				</div>
 			</div>
 		</>
 	);
@@ -120,40 +175,66 @@ function PanelHeader({
 	label,
 	note,
 	width,
+	profile,
 }: {
 	label: string;
 	note?: string;
 	width: number;
+	profile: BitmapLayoutProfile;
 }) {
+	const panelTop = getPanelTop(profile);
+
 	return (
 		<>
 			<div
 				style={{
 					position: "absolute",
-					left: innerPadding + 20,
-					top: panelTop + 18,
-					width: 260,
-				}}
-				className="font-medium leading-none"
-			>
-				<span style={{ fontSize: 20 }}>{label}</span>
-			</div>
-			<div
-				style={{
-					position: "absolute",
-					right: innerPadding + 20,
+					left: profile.padding + 18,
 					top: panelTop + 14,
-					width: Math.min(340, width - 420),
-					backgroundColor: "#dbe8ff",
-					borderRadius: 16,
-					padding: "6px 12px",
+					width: Math.max(120, width * 0.28),
 				}}
-				className="text-[#4f79d8] leading-none text-center"
+				className="font-blockkie leading-none"
 			>
-				<span style={{ fontSize: 11 }}>
-					{fitText(note || "Preview - your device will show actual data", 54)}
+				<span
+					style={{
+						fontSize: scaleText(20, profile, {
+							compactBase: 16,
+							denseBase: 13,
+							min: 11,
+							max: 20,
+						}),
+					}}
+				>
+					{label}
 				</span>
 			</div>
+			{note ? (
+				<div
+					style={{
+						position: "absolute",
+						right: profile.padding + 18,
+						top: panelTop + 12,
+						width: Math.min(profile.isDense ? 168 : 340, width * 0.46),
+						backgroundColor: "#dbe8ff",
+						borderRadius: 16,
+						padding: profile.isDense ? "4px 8px" : "6px 12px",
+					}}
+					className="text-center font-geneva9 leading-none text-[#4f79d8]"
+				>
+					<span
+						style={{
+							fontSize: scaleText(11, profile, {
+								compactBase: 10,
+								denseBase: 8,
+								min: 8,
+								max: 11,
+							}),
+						}}
+					>
+						{clampText(note, profile.isDense ? 28 : 54)}
+					</span>
+				</div>
+			) : null}
 		</>
 	);
 }
@@ -165,6 +246,7 @@ function MonthView({
 	includeEventTime,
 	width,
 	height,
+	profile,
 }: {
 	monthWeeks: CalendarDay[][];
 	monthLabel: string;
@@ -172,16 +254,19 @@ function MonthView({
 	includeEventTime: boolean;
 	width: number;
 	height: number;
+	profile: BitmapLayoutProfile;
 }) {
-	const panelLeft = innerPadding;
-	const panelWidth = width - innerPadding * 2;
-	const panelHeight = height - panelTop - innerPadding;
-	const contentTop = panelTop + 58;
-	const dayHeaderHeight = 26;
+	const panelTop = getPanelTop(profile);
+	const panelLeft = profile.padding;
+	const panelWidth = width - profile.padding * 2;
+	const panelHeight = height - panelTop - profile.padding;
+	const contentTop = panelTop + (profile.isDense ? 44 : 56);
+	const dayHeaderHeight = profile.isDense ? 20 : 24;
 	const gridTop = contentTop + dayHeaderHeight;
 	const gridHeight = panelTop + panelHeight - gridTop;
 	const colWidth = panelWidth / 7;
 	const rowHeight = gridHeight / Math.max(1, monthWeeks.length);
+	const eventLineHeight = profile.isDense ? 14 : 16;
 	const weekdayHeader = monthWeeks[0]?.map((day) => day.shortLabel) || [
 		"Sun",
 		"Mon",
@@ -194,7 +279,12 @@ function MonthView({
 
 	return (
 		<>
-			<PanelHeader label={monthLabel} note={note} width={width} />
+			<PanelHeader
+				label={monthLabel}
+				note={note}
+				width={width}
+				profile={profile}
+			/>
 			{weekdayHeader.map((label, index) => (
 				<div
 					key={label}
@@ -204,9 +294,20 @@ function MonthView({
 						top: contentTop + 5,
 						width: colWidth,
 					}}
-					className="text-center font-medium leading-none"
+					className="text-center font-geneva9 leading-none"
 				>
-					<span style={{ fontSize: 12 }}>{label}</span>
+					<span
+						style={{
+							fontSize: scaleText(12, profile, {
+								compactBase: 11,
+								denseBase: 8,
+								min: 8,
+								max: 12,
+							}),
+						}}
+					>
+						{label}
+					</span>
 				</div>
 			))}
 			{monthWeeks.map((week, weekIndex) =>
@@ -214,7 +315,7 @@ function MonthView({
 					const left = panelLeft + dayIndex * colWidth;
 					const top = gridTop + weekIndex * rowHeight;
 					const textColor = day.isCurrentMonth ? "text-black" : "text-gray-400";
-					const visibleEvents = day.events.slice(0, 2);
+					const visibleEvents = day.events.slice(0, profile.isDense ? 1 : 2);
 
 					return (
 						<div key={`${weekIndex}-${day.key}`}>
@@ -236,9 +337,20 @@ function MonthView({
 									top: top + 8,
 									width: 20,
 								}}
-								className={`text-right leading-none ${textColor}`}
+								className={`text-right font-geneva9 leading-none ${textColor}`}
 							>
-								<span style={{ fontSize: 12 }}>{day.dayNumber}</span>
+								<span
+									style={{
+										fontSize: scaleText(12, profile, {
+											compactBase: 11,
+											denseBase: 8,
+											min: 8,
+											max: 12,
+										}),
+									}}
+								>
+									{day.dayNumber}
+								</span>
 							</div>
 							{visibleEvents.map((event, eventIndex) => (
 								<EventLine
@@ -246,10 +358,15 @@ function MonthView({
 									event={event}
 									includeEventTime={includeEventTime}
 									left={left + 7}
-									top={top + 28 + eventIndex * 16}
+									top={top + 28 + eventIndex * eventLineHeight}
 									width={colWidth - 14}
-									fontSize={9}
-									maxChars={13}
+									fontSize={scaleText(10, profile, {
+										compactBase: 9,
+										denseBase: 8,
+										min: 7,
+										max: 10,
+									})}
+									maxChars={profile.isDense ? 9 : 12}
 								/>
 							))}
 						</div>
@@ -263,34 +380,39 @@ function MonthView({
 function WeekView({
 	weekDays,
 	note,
-	providerLabel,
 	includeEventTime,
 	width,
 	height,
+	profile,
 }: {
 	weekDays: CalendarDay[];
 	note?: string;
-	providerLabel: string;
 	includeEventTime: boolean;
 	width: number;
 	height: number;
+	profile: BitmapLayoutProfile;
 }) {
-	const panelLeft = innerPadding;
-	const panelWidth = width - innerPadding * 2;
-	const panelHeight = height - panelTop - innerPadding;
-	const contentTop = panelTop + 58;
+	const panelTop = getPanelTop(profile);
+	const panelLeft = profile.padding;
+	const panelWidth = width - profile.padding * 2;
+	const panelHeight = height - panelTop - profile.padding;
+	const contentTop = panelTop + (profile.isDense ? 44 : 56);
 	const colWidth = panelWidth / 7;
 
 	return (
 		<>
 			<PanelHeader
-				label={`${providerLabel} Calendar`}
+				label="This Week"
 				note={note}
 				width={width}
+				profile={profile}
 			/>
 			{weekDays.map((day, dayIndex) => {
 				const left = panelLeft + dayIndex * colWidth;
-				const maxEvents = day.events.slice(0, 5);
+				const maxEvents = day.events.slice(0, profile.isDense ? 3 : 4);
+				const eventTop = contentTop + (profile.isDense ? 54 : 62);
+				const eventSpacing = profile.isDense ? 18 : 22;
+
 				return (
 					<div key={day.key}>
 						<div
@@ -311,11 +433,32 @@ function WeekView({
 								top: contentTop + 12,
 								width: colWidth,
 							}}
-							className="text-center leading-none"
+							className="text-center font-geneva9 leading-none"
 						>
-							<div style={{ fontSize: 12 }}>{day.shortLabel}</div>
-							<div className="mt-1" style={{ fontSize: 12 }}>
-								{day.dayNumber}
+							<div
+								style={{
+									fontSize: scaleText(12, profile, {
+										compactBase: 11,
+										denseBase: 8,
+										min: 8,
+										max: 12,
+									}),
+								}}
+							>
+								{day.shortLabel}
+							</div>
+							<div
+								className="mt-1"
+								style={{
+									fontSize: scaleText(11, profile, {
+										compactBase: 10,
+										denseBase: 8,
+										min: 8,
+										max: 11,
+									}),
+								}}
+							>
+								{day.label}
 							</div>
 						</div>
 						{maxEvents.length > 0 ? (
@@ -325,10 +468,15 @@ function WeekView({
 									event={event}
 									includeEventTime={includeEventTime}
 									left={left + 8}
-									top={contentTop + 62 + eventIndex * 22}
+									top={eventTop + eventIndex * eventSpacing}
 									width={colWidth - 16}
-									fontSize={10}
-									maxChars={12}
+									fontSize={scaleText(13, profile, {
+										compactBase: 11,
+										denseBase: 9,
+										min: 8,
+										max: 13,
+									})}
+									maxChars={profile.isDense ? 11 : 16}
 								/>
 							))
 						) : (
@@ -336,12 +484,23 @@ function WeekView({
 								style={{
 									position: "absolute",
 									left: left + 10,
-									top: contentTop + 62,
+									top: eventTop,
 									width: colWidth - 20,
 								}}
-								className="text-gray-400 leading-none"
+								className="font-geneva9 leading-none text-gray-400"
 							>
-								<span style={{ fontSize: 10 }}>-</span>
+								<span
+									style={{
+										fontSize: scaleText(10, profile, {
+											compactBase: 9,
+											denseBase: 8,
+											min: 8,
+											max: 10,
+										}),
+									}}
+								>
+									-
+								</span>
 							</div>
 						)}
 					</div>
@@ -354,32 +513,34 @@ function WeekView({
 function DefaultView({
 	defaultDays,
 	note,
-	providerLabel,
 	includeDescription,
 	includeEventTime,
 	width,
 	height,
+	profile,
 }: {
 	defaultDays: CalendarDay[];
 	note?: string;
-	providerLabel: string;
 	includeDescription: boolean;
 	includeEventTime: boolean;
 	width: number;
 	height: number;
+	profile: BitmapLayoutProfile;
 }) {
-	const panelLeft = innerPadding;
-	const panelWidth = width - innerPadding * 2;
-	const panelHeight = height - panelTop - innerPadding;
-	const contentTop = panelTop + 58;
+	const panelTop = getPanelTop(profile);
+	const panelLeft = profile.padding;
+	const panelWidth = width - profile.padding * 2;
+	const panelHeight = height - panelTop - profile.padding;
+	const contentTop = panelTop + (profile.isDense ? 44 : 56);
 	const colWidth = panelWidth / 3;
 
 	return (
 		<>
 			<PanelHeader
-				label={`${providerLabel} Calendar`}
+				label="Upcoming"
 				note={note}
 				width={width}
+				profile={profile}
 			/>
 			{defaultDays.map((day, dayIndex) => {
 				const left = panelLeft + dayIndex * colWidth;
@@ -403,14 +564,35 @@ function DefaultView({
 								top: contentTop + 16,
 								width: colWidth - 28,
 							}}
-							className="leading-tight"
+							className="font-geneva9 leading-tight"
 						>
-							<div className="font-medium" style={{ fontSize: 16 }}>
+							<div
+								className="font-blockkie leading-none"
+								style={{
+									fontSize: scaleText(16, profile, {
+										compactBase: 14,
+										denseBase: 11,
+										min: 10,
+										max: 16,
+									}),
+								}}
+							>
 								{day.shortLabel}
 							</div>
-							<div style={{ fontSize: 13 }}>{day.label}</div>
+							<div
+								style={{
+									fontSize: scaleText(13, profile, {
+										compactBase: 12,
+										denseBase: 9,
+										min: 9,
+										max: 13,
+									}),
+								}}
+							>
+								{day.label}
+							</div>
 						</div>
-						{day.events.slice(0, 6).map((event, eventIndex) => (
+						{day.events.slice(0, 5).map((event, eventIndex) => (
 							<div key={`${day.key}-${event.id}`}>
 								<EventLine
 									event={event}
@@ -418,10 +600,15 @@ function DefaultView({
 									left={left + 14}
 									top={contentTop + 68 + eventIndex * 34}
 									width={colWidth - 28}
-									fontSize={12}
-									maxChars={28}
+									fontSize={scaleText(15, profile, {
+										compactBase: 13,
+										denseBase: 10,
+										min: 8,
+										max: 15,
+									})}
+									maxChars={profile.isDense ? 18 : 28}
 								/>
-								{includeDescription && event.description && (
+								{includeDescription && event.description ? (
 									<div
 										style={{
 											position: "absolute",
@@ -429,13 +616,22 @@ function DefaultView({
 											top: contentTop + 84 + eventIndex * 34,
 											width: colWidth - 28,
 										}}
-										className="text-gray-500 leading-none"
+										className="font-geneva9 leading-none text-gray-500"
 									>
-										<span style={{ fontSize: 9 }}>
-											{fitText(event.description, 36)}
+										<span
+											style={{
+												fontSize: scaleText(10, profile, {
+													compactBase: 9,
+													denseBase: 8,
+													min: 8,
+													max: 10,
+												}),
+											}}
+										>
+											{clampText(event.description, profile.isDense ? 22 : 34)}
 										</span>
 									</div>
-								)}
+								) : null}
 							</div>
 						))}
 					</div>
@@ -446,7 +642,6 @@ function DefaultView({
 }
 
 export default function CalendarScreen({
-	providerLabel = "Calendar",
 	title = "Calendar",
 	subtitle = "Personal Calendar",
 	timeZone = "America/New_York",
@@ -462,31 +657,34 @@ export default function CalendarScreen({
 	width = 800,
 	height = 480,
 }: Props) {
+	const profile = getBitmapLayoutProfile(width, height);
 	const isMonth = eventLayout === "month";
 	const isWeek = eventLayout === "week";
-	const panelWidth = width - innerPadding * 2;
-	const panelHeight = height - panelTop - innerPadding;
+	const panelTop = getPanelTop(profile);
+	const panelWidth = width - profile.padding * 2;
+	const panelHeight = height - panelTop - profile.padding;
 
 	return (
-		<PreSatori width={width} height={height}>
-			<div className="w-full h-full bg-[#efefed] text-black relative overflow-hidden">
+		<PreSatori useDoubling={true} width={width} height={height}>
+			<div className="relative h-full w-full overflow-hidden bg-[#efefed] text-black">
 				<Header
 					title={title}
 					subtitle={subtitle}
 					timeZone={timeZone}
 					updatedAt={updatedAt}
 					width={width}
+					profile={profile}
 				/>
 				<div
 					style={{
 						position: "absolute",
-						left: innerPadding,
+						left: profile.padding,
 						top: panelTop,
 						width: panelWidth,
 						height: panelHeight,
 						backgroundColor: "#fff",
 						border: "1px solid #d1d5db",
-						borderRadius: panelRadius,
+						borderRadius: profile.panelRadius,
 					}}
 				/>
 				{isMonth ? (
@@ -497,25 +695,26 @@ export default function CalendarScreen({
 						includeEventTime={includeEventTime}
 						width={width}
 						height={height}
+						profile={profile}
 					/>
 				) : isWeek ? (
 					<WeekView
 						weekDays={weekDays}
 						note={note}
-						providerLabel={providerLabel}
 						includeEventTime={includeEventTime}
 						width={width}
 						height={height}
+						profile={profile}
 					/>
 				) : (
 					<DefaultView
 						defaultDays={defaultDays}
 						note={note}
-						providerLabel={providerLabel}
 						includeDescription={includeDescription}
 						includeEventTime={includeEventTime}
 						width={width}
 						height={height}
+						profile={profile}
 					/>
 				)}
 			</div>

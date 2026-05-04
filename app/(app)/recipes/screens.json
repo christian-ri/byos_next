@@ -43,7 +43,9 @@
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.2.0",
 		"category": "display-components"
 	},
@@ -110,7 +112,9 @@
 			"name": "TRMNL",
 			"github": "usetrmnl"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
@@ -129,7 +133,9 @@
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "display-components"
 	},
@@ -183,7 +189,9 @@
 			"name": "Mangle Kuo",
 			"github": "ghcpuman902"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.2.0",
 		"category": "display-components"
 	},
@@ -213,7 +221,9 @@
 			"name": "rbouteiller",
 			"github": ""
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "display-components"
 	},
@@ -232,7 +242,9 @@
 			"name": "rbouteiller",
 			"github": ""
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "display-components"
 	},
@@ -334,7 +346,9 @@
 			"name": "TRMNL",
 			"github": "usetrmnl"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
@@ -436,7 +450,9 @@
 			"name": "TRMNL",
 			"github": "usetrmnl"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
@@ -538,7 +554,9 @@
 			"name": "TRMNL",
 			"github": "usetrmnl"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
@@ -597,7 +615,9 @@
 			"name": "TRMNL",
 			"github": "usetrmnl"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
@@ -657,7 +677,9 @@
 			"name": "Schrockwell",
 			"github": "schrockwell"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
@@ -712,7 +734,9 @@
 			"name": "Alex Varney",
 			"github": "alexvarney"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
@@ -748,7 +772,9 @@
 			"name": "Sriniketh",
 			"github": "sriniketh"
 		},
-		"renderSettings": {},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
