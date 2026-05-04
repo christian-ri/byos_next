@@ -3,6 +3,8 @@ import {
 	getBitmapLayoutProfile,
 	scaleText,
 } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
+import fontData from "@/components/bitmap-font/bitmap-font.json";
+import { BitmapText } from "@/components/bitmap-font/bitmap-text";
 import { PreSatori } from "@/utils/pre-satori";
 import type { LpWeatherRecipeData } from "./getData";
 
@@ -517,17 +519,17 @@ export default function LpWeather({
 	const rightColumnWidth = profile.isCompact ? 212 : 228;
 	const leftColumnWidth =
 		width - profile.padding * 2 - rightColumnWidth - profile.gap;
-	const detailLabelSize = scaleText(12, profile, {
-		compactBase: 11,
-		denseBase: 10,
-		min: 10,
-		max: 12,
+	const metricLabelSize = scaleText(11, profile, {
+		compactBase: 10,
+		denseBase: 9,
+		min: 9,
+		max: 11,
 	});
-	const detailValueSize = scaleText(18, profile, {
-		compactBase: 16,
-		denseBase: 14,
+	const metricValueSize = scaleText(17, profile, {
+		compactBase: 15,
+		denseBase: 13,
 		min: 12,
-		max: 18,
+		max: 17,
 	});
 
 	return (
@@ -562,17 +564,21 @@ export default function LpWeather({
 							</div>
 							<div className="flex items-start" style={{ gap: 14 }}>
 								<div
-									className="font-blockkie leading-none"
 									style={{
-										fontSize: scaleText(96, profile, {
-											compactBase: 78,
-											denseBase: 64,
-											min: 48,
-											max: 96,
-										}),
+										display: "flex",
+										alignItems: "flex-start",
+										minWidth: profile.isCompact ? 138 : 168,
+										paddingTop: 4,
 									}}
 								>
-									{currentTemp}°
+									<BitmapText
+										text={`${currentTemp}°`}
+										fontData={fontData}
+										gridSize="8x16"
+										scale={profile.isCompact ? 5 : 6}
+										gap={0}
+										className="text-black"
+									/>
 								</div>
 								<div className="flex flex-col" style={{ paddingTop: 8 }}>
 									<div
@@ -593,28 +599,28 @@ export default function LpWeather({
 										style={{ gap: 10 }}
 									>
 										<div>
-											<div style={{ fontSize: detailLabelSize }}>Feels</div>
+											<div style={{ fontSize: metricLabelSize }}>Feels</div>
 											<div
-												className="font-blockkie leading-none"
-												style={{ fontSize: detailValueSize }}
+												className="font-geneva9 leading-none"
+												style={{ fontSize: metricValueSize }}
 											>
 												{feelsLike}°
 											</div>
 										</div>
 										<div>
-											<div style={{ fontSize: detailLabelSize }}>Humidity</div>
+											<div style={{ fontSize: metricLabelSize }}>Humidity</div>
 											<div
-												className="font-blockkie leading-none"
-												style={{ fontSize: detailValueSize }}
+												className="font-geneva9 leading-none"
+												style={{ fontSize: metricValueSize }}
 											>
 												{humidity}%
 											</div>
 										</div>
 										<div>
-											<div style={{ fontSize: detailLabelSize }}>Wind</div>
+											<div style={{ fontSize: metricLabelSize }}>Wind</div>
 											<div
-												className="font-blockkie leading-none"
-												style={{ fontSize: detailValueSize }}
+												className="font-geneva9 leading-none"
+												style={{ fontSize: metricValueSize }}
 											>
 												{windSpeed} {windDirection}
 											</div>
@@ -693,8 +699,8 @@ export default function LpWeather({
 								>
 									<WeatherIcon icon={day.icon} size={20} />
 									<div
-										className="font-blockkie"
-										style={{ width: 28, fontSize: 20, textAlign: "right" }}
+										className="font-geneva9"
+										style={{ width: 28, fontSize: 18, textAlign: "right" }}
 									>
 										{day.low}°
 									</div>
@@ -707,8 +713,8 @@ export default function LpWeather({
 										height={18}
 									/>
 									<div
-										className="font-blockkie"
-										style={{ width: 32, fontSize: 20, textAlign: "right" }}
+										className="font-geneva9"
+										style={{ width: 32, fontSize: 18, textAlign: "right" }}
 									>
 										{day.high}°
 									</div>

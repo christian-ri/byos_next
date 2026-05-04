@@ -74,13 +74,13 @@ function EventLine({
 				...style,
 				display: "flex",
 				alignItems: "center",
-				padding: isBadge ? "2px 6px" : "0px",
+				padding: isBadge ? "3px 6px" : "0px",
 				borderRadius: isBadge ? "4px" : "0px",
 				backgroundColor: isBadge ? "#000" : "transparent",
 				color: isBadge ? "#fff" : "#000",
 				overflow: "hidden",
 			}}
-			className="font-geneva9 leading-tight"
+			className="font-geneva9 leading-none"
 		>
 			<span style={{ fontSize, maxWidth: width }}>{label}</span>
 		</div>
@@ -134,11 +134,11 @@ function Header({
 				<div
 					className="mt-2 font-geneva9 leading-none"
 					style={{
-						color: "#6b7280",
+						color: "#4b5563",
 						fontSize: scaleText(17, profile, {
-							compactBase: 14,
-							denseBase: 11,
-							min: 10,
+							compactBase: 15,
+							denseBase: 12,
+							min: 11,
 							max: 17,
 						}),
 					}}
@@ -247,10 +247,10 @@ function PanelHeader({
 					<span
 						style={{
 							fontSize: scaleText(11, profile, {
-								compactBase: 10,
-								denseBase: 8,
-								min: 8,
-								max: 11,
+								compactBase: 11,
+								denseBase: 9,
+								min: 9,
+								max: 12,
 							}),
 						}}
 					>
@@ -319,14 +319,14 @@ function MonthView({
 						display: "flex",
 						justifyContent: "center",
 					}}
-					className="font-geneva9 leading-none"
+					className="font-blockkie leading-none"
 				>
 					<span
 						style={{
 							fontSize: scaleText(12, profile, {
 								compactBase: 11,
-								denseBase: 8,
-								min: 8,
+								denseBase: 9,
+								min: 9,
 								max: 12,
 							}),
 						}}
@@ -364,14 +364,14 @@ function MonthView({
 									color: textColor,
 									textAlign: "right",
 								}}
-								className="font-geneva9 leading-none"
+								className="font-blockkie leading-none"
 							>
 								<span
 									style={{
 										fontSize: scaleText(12, profile, {
 											compactBase: 11,
-											denseBase: 8,
-											min: 8,
+											denseBase: 9,
+											min: 9,
 											max: 12,
 										}),
 									}}
@@ -388,10 +388,10 @@ function MonthView({
 									top={top + 28 + eventIndex * eventLineHeight}
 									width={colWidth - 14}
 									fontSize={scaleText(10, profile, {
-										compactBase: 10,
-										denseBase: 9,
-										min: 8,
-										max: 11,
+										compactBase: 11,
+										denseBase: 10,
+										min: 9,
+										max: 12,
 									})}
 									maxChars={profile.isDense ? 9 : 12}
 								/>
@@ -522,28 +522,29 @@ function WeekView({
 								flexDirection: "column",
 								alignItems: "center",
 							}}
-							className="text-center font-geneva9 leading-none"
+							className="text-center leading-none"
 						>
 							<div
+								className="font-blockkie leading-none"
 								style={{
-									fontSize: scaleText(12, profile, {
-										compactBase: 11,
-										denseBase: 8,
-										min: 8,
-										max: 12,
+									fontSize: scaleText(13, profile, {
+										compactBase: 12,
+										denseBase: 10,
+										min: 10,
+										max: 13,
 									}),
 								}}
 							>
 								{day.shortLabel}
 							</div>
 							<div
-								className="mt-1"
+								className="mt-1 font-geneva9"
 								style={{
-									fontSize: scaleText(11, profile, {
-										compactBase: 10,
-										denseBase: 8,
-										min: 8,
-										max: 11,
+									fontSize: scaleText(12, profile, {
+										compactBase: 11,
+										denseBase: 9,
+										min: 9,
+										max: 12,
 									}),
 								}}
 							>
@@ -560,10 +561,10 @@ function WeekView({
 									top={eventTop + eventIndex * eventSpacing}
 									width={colWidth - 16}
 									fontSize={scaleText(13, profile, {
-										compactBase: 12,
-										denseBase: 10,
-										min: 9,
-										max: 14,
+										compactBase: 13,
+										denseBase: 11,
+										min: 10,
+										max: 15,
 									})}
 									maxChars={profile.isDense ? 11 : 16}
 								/>
@@ -582,10 +583,10 @@ function WeekView({
 								<span
 									style={{
 										fontSize: scaleText(10, profile, {
-											compactBase: 9,
-											denseBase: 8,
-											min: 8,
-											max: 10,
+											compactBase: 10,
+											denseBase: 9,
+											min: 9,
+											max: 11,
 										}),
 									}}
 								>
@@ -663,10 +664,10 @@ function DefaultView({
 								className="font-blockkie leading-none"
 								style={{
 									fontSize: scaleText(16, profile, {
-										compactBase: 14,
-										denseBase: 11,
-										min: 10,
-										max: 16,
+										compactBase: 15,
+										denseBase: 12,
+										min: 11,
+										max: 17,
 									}),
 								}}
 							>
@@ -676,9 +677,9 @@ function DefaultView({
 								style={{
 									fontSize: scaleText(13, profile, {
 										compactBase: 12,
-										denseBase: 9,
-										min: 9,
-										max: 13,
+										denseBase: 10,
+										min: 10,
+										max: 14,
 									}),
 								}}
 							>
@@ -694,10 +695,10 @@ function DefaultView({
 									top={contentTop + 68 + eventIndex * 34}
 									width={colWidth - 28}
 									fontSize={scaleText(15, profile, {
-										compactBase: 14,
-										denseBase: 12,
-										min: 10,
-										max: 16,
+										compactBase: 15,
+										denseBase: 13,
+										min: 11,
+										max: 17,
 									})}
 									maxChars={profile.isDense ? 18 : 28}
 								/>
@@ -715,10 +716,10 @@ function DefaultView({
 										<span
 											style={{
 												fontSize: scaleText(10, profile, {
-													compactBase: 10,
-													denseBase: 9,
-													min: 9,
-													max: 11,
+													compactBase: 11,
+													denseBase: 10,
+													min: 10,
+													max: 12,
 												}),
 											}}
 										>
