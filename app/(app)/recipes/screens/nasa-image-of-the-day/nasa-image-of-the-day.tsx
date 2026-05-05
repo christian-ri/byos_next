@@ -21,6 +21,7 @@ export default function NasaImageOfTheDay({
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="relative h-full w-full overflow-hidden bg-black text-white">
+				{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 				<img
 					src={imageUrl}
 					alt={title}

@@ -115,12 +115,16 @@ export default async function Wikipedia({
 						{safeTitle}
 					</h1>
 				</div>
-				<div className="flex flex-col flex-1 p-4 pb-0 sm:flex-row" style={{ gap: 14 }}>
+				<div
+					className="flex flex-col flex-1 p-4 pb-0 sm:flex-row"
+					style={{ gap: 14 }}
+				>
 					<div className="text-[22px] font-geneva9 flex flex-grow leading-tight">
 						{truncatedExtract}
 					</div>
 					{hasValidThumbnail && thumbnail?.source && !isHalfScreen && (
 						<div className="pt-8 sm:pt-0 sm:pr-4 w-full sm:w-[240px] items-center justify-center">
+							{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 							<img
 								src={thumbnail.source}
 								alt={safeTitle}

@@ -114,7 +114,7 @@ export default function ApplePhotos({
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="w-full h-full bg-black text-white relative overflow-hidden flex">
-				<picture className="absolute inset-0 w-full h-full">
+				{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 				<img
 					src={imageUrl}
 					alt={caption || albumName}
@@ -127,7 +127,6 @@ export default function ApplePhotos({
 						display: "block",
 					}}
 				/>
-
 				<div
 					className="absolute left-0 top-0"
 					style={{ padding: overlayPadding }}

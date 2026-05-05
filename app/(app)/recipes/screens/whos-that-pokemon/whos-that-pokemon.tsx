@@ -44,13 +44,17 @@ export default function WhosThatPokemon({
 						minHeight: isPortrait ? 170 : 0,
 					}}
 				>
+					{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 					<img
 						src={artwork}
 						alt={name}
 						width={300}
 						height={300}
 						className="h-full w-full object-contain"
-						style={{ filter: "grayscale(100%) contrast(1.05)", display: "block" }}
+						style={{
+							filter: "grayscale(100%) contrast(1.05)",
+							display: "block",
+						}}
 					/>
 				</div>
 

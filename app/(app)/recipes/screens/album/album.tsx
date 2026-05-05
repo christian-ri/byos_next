@@ -21,6 +21,7 @@ export default async function Album({
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="w-full h-full bg-black flex flex-col items-center justify-center relative">
+				{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 				<img
 					src={imageUrl}
 					alt="Album"
