@@ -255,7 +255,7 @@ function startOfDay(date: Date) {
 	);
 }
 
-function zonedCalendarDate(date: Date, timeZone: string) {
+function zonedDateBits(date: Date, timeZone: string) {
 	const parts = new Intl.DateTimeFormat("en-US", {
 		timeZone,
 		year: "numeric",
@@ -270,15 +270,21 @@ function zonedCalendarDate(date: Date, timeZone: string) {
 		return acc;
 	}, {});
 
-	return new Date(
-		Number(values.year),
-		Number(values.month) - 1,
-		Number(values.day),
-		12,
-		0,
-		0,
-		0,
-	);
+	return {
+		year: Number(values.year),
+		month: Number(values.month),
+		day: Number(values.day),
+	};
+}
+
+function zonedCalendarDate(date: Date, timeZone: string) {
+	const values = zonedDateBits(date, timeZone);
+
+	return new Date(values.year, values.month - 1, values.day, 12, 0, 0, 0);
+}
+
+function addZonedDays(date: Date, days: number, timeZone: string) {
+	return zonedCalendarDate(addDays(date, days), timeZone);
 }
 
 function addDays(date: Date, days: number) {
@@ -498,9 +504,33 @@ function zonedDateTimeToUtc(
 	);
 }
 
+function zonedStartOfDayUtc(date: Date, timeZone: string) {
+	const bits = zonedDateBits(date, timeZone);
+	return zonedDateTimeToUtc(
+		{
+			year: bits.year,
+			month: bits.month - 1,
+			day: bits.day,
+			hour: 0,
+			minute: 0,
+			second: 0,
+		},
+		timeZone,
+	);
+}
+
+function zonedEndOfDayUtc(date: Date, timeZone: string) {
+	const nextDayStart = zonedStartOfDayUtc(
+		addZonedDays(date, 1, timeZone),
+		timeZone,
+	);
+	return new Date(nextDayStart.getTime() - 1);
+}
+
 function parseIcsDate(
 	value: string,
 	params: Record<string, string>,
+	fallbackTimeZone?: string,
 ): { date: Date; allDay: boolean } | null {
 	if (!value) {
 		return null;
@@ -524,7 +554,9 @@ function parseIcsDate(
 	}
 
 	const dateBits = parseDateBits(value);
-	const timeZone = normalizeTimeZoneIdentifier(params.TZID?.trim());
+	const timeZone = normalizeTimeZoneIdentifier(
+		params.TZID?.trim() || fallbackTimeZone,
+	);
 
 	return {
 		date: timeZone
@@ -684,6 +716,11 @@ function expandRecurringEvent(
 function parseEventsFromIcs(source: string) {
 	const lines = unfoldIcs(source).split(/\r?\n/);
 	const events: RawCalendarEvent[] = [];
+	const calendarTimeZone = normalizeTimeZoneIdentifier(
+		lines
+			.map((line) => parseProperty(line))
+			.find((prop) => prop?.name === "X-WR-TIMEZONE")?.value,
+	);
 	let inEvent = false;
 	let bucket: ParsedProperty[] = [];
 
@@ -700,10 +737,10 @@ function parseEventsFromIcs(source: string) {
 			const dtStartProp = props.find((prop) => prop.name === "DTSTART");
 			const dtEndProp = props.find((prop) => prop.name === "DTEND");
 			const startParsed = dtStartProp
-				? parseIcsDate(dtStartProp.value, dtStartProp.params)
+				? parseIcsDate(dtStartProp.value, dtStartProp.params, calendarTimeZone)
 				: null;
 			const endParsed = dtEndProp
-				? parseIcsDate(dtEndProp.value, dtEndProp.params)
+				? parseIcsDate(dtEndProp.value, dtEndProp.params, calendarTimeZone)
 				: null;
 
 			if (!startParsed) {
@@ -718,7 +755,10 @@ function parseEventsFromIcs(source: string) {
 				.flatMap((prop) =>
 					prop.value
 						.split(",")
-						.map((value) => parseIcsDate(value, prop.params)?.date)
+						.map(
+							(value) =>
+								parseIcsDate(value, prop.params, calendarTimeZone)?.date,
+						)
 						.filter((value): value is Date => value instanceof Date),
 				);
 
@@ -790,12 +830,13 @@ function buildEventForDay(
 	dayDate: Date,
 	options: BuildDayOptions,
 ): CalendarDayEvent {
-	const dayStart = startOfDay(dayDate);
+	const dayStartKey = dayKey(dayDate, options.timeZone);
 	const inclusiveEnd = eventEndInclusive(event);
-	const startsToday = startOfDay(event.start).getTime() === dayStart.getTime();
-	const endsToday = startOfDay(inclusiveEnd).getTime() === dayStart.getTime();
+	const startsToday = dayKey(event.start, options.timeZone) === dayStartKey;
+	const endsToday = dayKey(inclusiveEnd, options.timeZone) === dayStartKey;
 	const multiDay =
-		startOfDay(event.start).getTime() !== startOfDay(inclusiveEnd).getTime();
+		dayKey(event.start, options.timeZone) !==
+		dayKey(inclusiveEnd, options.timeZone);
 	const continuesBefore = !startsToday;
 	const continuesAfter = !endsToday;
 
@@ -834,9 +875,8 @@ function buildDay(
 	events: RawCalendarEvent[],
 	options: BuildDayOptions,
 ): CalendarDay {
-	const dayStart = startOfDay(dayDate);
-	const dayEnd = new Date(dayStart);
-	dayEnd.setHours(23, 59, 59, 999);
+	const dayStart = zonedStartOfDayUtc(dayDate, options.timeZone);
+	const dayEnd = zonedEndOfDayUtc(dayDate, options.timeZone);
 	const now = zonedCalendarDate(new Date(), options.timeZone);
 
 	const dayEvents = events
@@ -890,17 +930,30 @@ function buildCalendarData({
 	note?: string;
 }): CalendarRecipeData {
 	const today = zonedCalendarDate(new Date(), timeZone);
-	const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+	const todayBits = zonedDateBits(today, timeZone);
+	const currentMonthStart = new Date(
+		todayBits.year,
+		todayBits.month - 1,
+		1,
+		12,
+		0,
+		0,
+		0,
+	);
 	const currentMonthEnd = new Date(
-		today.getFullYear(),
-		today.getMonth() + 1,
+		todayBits.year,
+		todayBits.month,
+		0,
+		12,
+		0,
+		0,
 		0,
 	);
 	const monthGridStart = startOfWeek(currentMonthStart, firstDay);
 	const monthGridEnd = endOfWeek(currentMonthEnd, firstDay);
 
 	const defaultDays = Array.from({ length: 3 }, (_, index) =>
-		buildDay(addDays(startOfDay(today), index), rawEvents, {
+		buildDay(addZonedDays(today, index, timeZone), rawEvents, {
 			timeZone,
 			timeFormat,
 			includeEventTime,
@@ -909,7 +962,7 @@ function buildCalendarData({
 	);
 
 	const weekDays = Array.from({ length: 7 }, (_, index) =>
-		buildDay(addDays(startOfDay(today), index), rawEvents, {
+		buildDay(addZonedDays(today, index, timeZone), rawEvents, {
 			timeZone,
 			timeFormat,
 			includeEventTime,
@@ -921,7 +974,7 @@ function buildCalendarData({
 	for (
 		let cursor = new Date(monthGridStart);
 		cursor <= monthGridEnd;
-		cursor = addDays(cursor, 1)
+		cursor = addZonedDays(cursor, 1, timeZone)
 	) {
 		flatMonthDays.push(
 			buildDay(cursor, rawEvents, {
@@ -929,7 +982,7 @@ function buildCalendarData({
 				timeFormat,
 				includeEventTime,
 				maxEventsPerDay,
-				currentMonth: today.getMonth(),
+				currentMonth: todayBits.month - 1,
 			}),
 		);
 	}
@@ -1042,9 +1095,15 @@ export async function loadCalendarRecipeData(
 			);
 		}
 
-		const now = new Date();
-		const windowStart = addDays(startOfDay(now), -35);
-		const windowEnd = addDays(startOfDay(now), 45);
+		const now = zonedCalendarDate(new Date(), timeZone);
+		const windowStart = zonedStartOfDayUtc(
+			addZonedDays(now, -35, timeZone),
+			timeZone,
+		);
+		const windowEnd = zonedEndOfDayUtc(
+			addZonedDays(now, 45, timeZone),
+			timeZone,
+		);
 		const rawEvents = filterIgnoredEvents(
 			sources
 				.flatMap((source) => parseEventsFromIcs(source))
