@@ -3,6 +3,8 @@ import {
 	getBitmapLayoutProfile,
 	scaleText,
 } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
+import fontData from "@/components/bitmap-font/bitmap-font.json";
+import { BitmapText } from "@/components/bitmap-font/bitmap-text";
 import { PreSatori } from "@/utils/pre-satori";
 import type { F1RaceStandingsRecipeData } from "./getData";
 
@@ -29,6 +31,12 @@ export default function F1RaceStandings({
 	const profile = getBitmapLayoutProfile(width, height);
 	const leftWidth = profile.isCompact ? 220 : 232;
 	const rightWidth = width - profile.padding * 2 - leftWidth - profile.gap;
+	const rowNameSize = scaleText(18, profile, {
+		compactBase: 16,
+		denseBase: 14,
+		min: 13,
+		max: 18,
+	});
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
@@ -85,17 +93,18 @@ export default function F1RaceStandings({
 					</div>
 
 					<div
-						className="mt-3 font-blockkie leading-none"
+						className="mt-3 leading-none"
 						style={{
-							fontSize: scaleText(22, profile, {
-								compactBase: 18,
-								denseBase: 16,
-								min: 14,
-								max: 22,
-							}),
+							minHeight: 56,
 						}}
 					>
-						{clampText(nextRaceName, 18)}
+						<BitmapText
+							text={clampText(nextRaceName, 18)}
+							fontData={fontData}
+							gridSize="8x16"
+							scale={profile.isCompact ? 2 : 3}
+							gap={0}
+						/>
 					</div>
 
 					<div className="mt-5 flex gap-6">
@@ -148,20 +157,21 @@ export default function F1RaceStandings({
 								key={`${driver.position}-${driver.name}`}
 								className="flex items-center justify-between"
 								style={{
-									padding: "12px 0",
+									padding: "10px 0",
 									borderBottom:
 										index === driverStandings.length - 1
 											? "none"
 											: "1px solid #d9d9d9",
+									gap: 12,
 								}}
 							>
 								<div
 									className="flex items-center"
-									style={{ gap: 14, width: rightWidth - 110 }}
+									style={{ gap: 12, flex: 1, minWidth: 0 }}
 								>
 									<div
 										className="font-blockkie leading-none"
-										style={{ width: 24, fontSize: 18 }}
+										style={{ width: 22, fontSize: 18, flexShrink: 0 }}
 									>
 										{driver.position}
 									</div>
@@ -188,29 +198,30 @@ export default function F1RaceStandings({
 									</div>
 									<div
 										className="flex flex-col"
-										style={{ width: rightWidth - 210, minWidth: 0 }}
+										style={{ flex: 1, minWidth: 0, maxWidth: rightWidth - 150 }}
 									>
 										<div
 											className="font-blockkie leading-none"
-											style={{
-												fontSize: scaleText(19, profile, {
-													compactBase: 17,
-													denseBase: 15,
-													min: 14,
-													max: 19,
-												}),
-											}}
+											style={{ fontSize: rowNameSize }}
 										>
-											{clampText(compactDriverName(driver.name), 18)}
+											{clampText(compactDriverName(driver.name), 15)}
 										</div>
-										<div className="mt-1 font-geneva9 text-[13px] text-[#4b5563]">
-											{clampText(driver.team, 16)}
+										<div
+											className="mt-1 font-geneva9 text-[#4b5563]"
+											style={{ fontSize: 12 }}
+										>
+											{clampText(driver.team, 14)}
 										</div>
 									</div>
 								</div>
 								<div
 									className="font-blockkie leading-none"
-									style={{ width: 46, fontSize: 22, textAlign: "right" }}
+									style={{
+										width: 52,
+										fontSize: 22,
+										textAlign: "right",
+										flexShrink: 0,
+									}}
 								>
 									{driver.points}
 								</div>

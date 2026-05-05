@@ -21,17 +21,14 @@ export default function NasaImageOfTheDay({
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="relative h-full w-full overflow-hidden bg-black text-white">
-				<picture className="absolute inset-0 h-full w-full">
-					<source srcSet={imageUrl} />
-					<img
-						src={imageUrl}
-						alt={title}
-						width={width}
-						height={height}
-						className="h-full w-full object-cover"
-						style={{ imageRendering: "pixelated" }}
-					/>
-				</picture>
+				<img
+					src={imageUrl}
+					alt={title}
+					width={width}
+					height={height}
+					className="absolute inset-0 h-full w-full object-cover"
+					style={{ imageRendering: "pixelated", display: "block" }}
+				/>
 				<div
 					className="absolute inset-x-0 top-0 flex items-start justify-between"
 					style={{ padding: profile.padding }}
@@ -53,10 +50,12 @@ export default function NasaImageOfTheDay({
 						>
 							{clampText(title, profile.isDense ? 22 : 34)}
 						</div>
-						<div className="mt-2 font-geneva9 text-[14px]">{date}</div>
+						<div className="mt-2 font-geneva9 text-[12px] text-gray-200">
+							{date}
+						</div>
 					</div>
 					<div
-						className="rounded-xl px-4 py-3 text-right font-geneva9 text-[14px]"
+						className="rounded-xl px-4 py-3 text-right font-geneva9 text-[12px]"
 						style={{ backgroundColor: "rgba(0,0,0,0.68)" }}
 					>
 						<div>Updated {updatedAt}</div>
@@ -73,11 +72,11 @@ export default function NasaImageOfTheDay({
 					>
 						<div
 							style={{
-								fontSize: scaleText(16, profile, {
-									compactBase: 12,
+								fontSize: scaleText(14, profile, {
+									compactBase: 11,
 									denseBase: 10,
 									min: 9,
-									max: 16,
+									max: 14,
 								}),
 							}}
 						>

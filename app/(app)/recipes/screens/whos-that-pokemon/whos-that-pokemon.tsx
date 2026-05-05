@@ -3,6 +3,8 @@ import {
 	getBitmapLayoutProfile,
 	scaleText,
 } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
+import fontData from "@/components/bitmap-font/bitmap-font.json";
+import { BitmapText } from "@/components/bitmap-font/bitmap-text";
 import { PreSatori } from "@/utils/pre-satori";
 import type { PokemonRecipeData } from "./getData";
 
@@ -42,17 +44,14 @@ export default function WhosThatPokemon({
 						minHeight: isPortrait ? 170 : 0,
 					}}
 				>
-					<picture className="h-full w-full">
-						<source srcSet={artwork} type="image/png" />
-						<img
-							src={artwork}
-							alt={name}
-							width={300}
-							height={300}
-							className="h-full w-full object-contain"
-							style={{ filter: "grayscale(100%) contrast(1.05)" }}
-						/>
-					</picture>
+					<img
+						src={artwork}
+						alt={name}
+						width={300}
+						height={300}
+						className="h-full w-full object-contain"
+						style={{ filter: "grayscale(100%) contrast(1.05)", display: "block" }}
+					/>
 				</div>
 
 				<div className="flex flex-1 flex-col">
@@ -71,26 +70,25 @@ export default function WhosThatPokemon({
 							Who's That Pokemon
 						</div>
 						<div
-							className="mt-2 font-blockkie leading-none"
-							style={{
-								fontSize: scaleText(52, profile, {
-									compactBase: 36,
-									denseBase: 24,
-									min: 20,
-									max: 52,
-								}),
-							}}
+							className="mt-2 leading-none"
+							style={{ minHeight: profile.isDense ? 32 : 52 }}
 						>
-							{clampText(name, profile.isDense ? 12 : 18)}
+							<BitmapText
+								text={clampText(name, profile.isDense ? 12 : 18)}
+								fontData={fontData}
+								gridSize="8x16"
+								scale={profile.isDense ? 2 : 3}
+								gap={0}
+							/>
 						</div>
 						<div
-							className="mt-2 font-geneva9"
+							className="mt-2 font-geneva9 text-[#4b5563]"
 							style={{
-								fontSize: scaleText(20, profile, {
-									compactBase: 15,
-									denseBase: 11,
-									min: 10,
-									max: 20,
+								fontSize: scaleText(16, profile, {
+									compactBase: 13,
+									denseBase: 10,
+									min: 9,
+									max: 16,
 								}),
 							}}
 						>
@@ -179,13 +177,13 @@ export default function WhosThatPokemon({
 								Abilities
 							</span>
 							<span
-								className="mt-2 font-geneva9"
+								className="mt-2 font-geneva9 leading-tight"
 								style={{
-									fontSize: scaleText(22, profile, {
-										compactBase: 16,
-										denseBase: 12,
+									fontSize: scaleText(18, profile, {
+										compactBase: 14,
+										denseBase: 11,
 										min: 10,
-										max: 22,
+										max: 18,
 									}),
 								}}
 							>
@@ -195,13 +193,13 @@ export default function WhosThatPokemon({
 					</div>
 
 					<div
-						className="mt-auto flex items-center justify-between border-t border-black pt-3 font-geneva9"
+						className="mt-auto flex items-center justify-between border-t border-black pt-3 font-geneva9 text-[#4b5563]"
 						style={{
-							fontSize: scaleText(16, profile, {
-								compactBase: 12,
+							fontSize: scaleText(12, profile, {
+								compactBase: 11,
 								denseBase: 9,
 								min: 8,
-								max: 16,
+								max: 12,
 							}),
 						}}
 					>

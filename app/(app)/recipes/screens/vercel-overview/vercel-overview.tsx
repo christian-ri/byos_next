@@ -44,6 +44,12 @@ export default function VercelOverview({
 	const profile = getBitmapLayoutProfile(width, height);
 	const leftWidth = profile.isCompact ? 296 : 312;
 	const rightWidth = width - profile.padding * 2 - leftWidth - profile.gap;
+	const rowTitleSize = scaleText(17, profile, {
+		compactBase: 15,
+		denseBase: 13,
+		min: 12,
+		max: 17,
+	});
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
@@ -72,11 +78,11 @@ export default function VercelOverview({
 						<div
 							className="mt-2 font-geneva9 text-[#4b5563]"
 							style={{
-								fontSize: scaleText(16, profile, {
-									compactBase: 14,
-									denseBase: 12,
-									min: 11,
-									max: 16,
+								fontSize: scaleText(14, profile, {
+									compactBase: 13,
+									denseBase: 11,
+									min: 10,
+									max: 14,
 								}),
 							}}
 						>
@@ -111,7 +117,8 @@ export default function VercelOverview({
 									key={project.name}
 									className="flex items-center justify-between"
 									style={{
-										padding: "12px 0",
+										padding: "11px 0",
+										gap: 10,
 										borderBottom:
 											index === projects.length - 1
 												? "none"
@@ -121,16 +128,11 @@ export default function VercelOverview({
 									<div
 										className="font-blockkie leading-none"
 										style={{
-											fontSize: scaleText(18, profile, {
-												compactBase: 16,
-												denseBase: 14,
-												min: 13,
-												max: 18,
-											}),
-											maxWidth: leftWidth - 130,
+											fontSize: rowTitleSize,
+											maxWidth: leftWidth - 122,
 										}}
 									>
-										{clampText(project.name, 18)}
+										{clampText(project.name, 16)}
 									</div>
 									<StatusPill label={project.status} />
 								</div>
@@ -156,7 +158,8 @@ export default function VercelOverview({
 									key={`${deployment.name}-${deployment.target}-${index}`}
 									className="flex items-center justify-between"
 									style={{
-										padding: "12px 0",
+										padding: "11px 0",
+										gap: 10,
 										borderBottom:
 											index === deployments.length - 1
 												? "none"
@@ -165,23 +168,19 @@ export default function VercelOverview({
 								>
 									<div
 										className="flex flex-col"
-										style={{ maxWidth: rightWidth - 120 }}
+										style={{ maxWidth: rightWidth - 118, minWidth: 0 }}
 									>
 										<div
 											className="font-blockkie leading-none"
-											style={{
-												fontSize: scaleText(18, profile, {
-													compactBase: 16,
-													denseBase: 14,
-													min: 13,
-													max: 18,
-												}),
-											}}
+											style={{ fontSize: rowTitleSize }}
 										>
-											{clampText(deployment.name, 18)}
+											{clampText(deployment.name, 16)}
 										</div>
-										<div className="mt-2 font-geneva9 text-[12px] text-[#4b5563]">
-											{deployment.target}
+										<div
+											className="mt-2 font-geneva9 text-[#4b5563]"
+											style={{ fontSize: 11 }}
+										>
+											{clampText(deployment.target, 12)}
 										</div>
 									</div>
 									<StatusPill label={deployment.state} />
@@ -191,8 +190,11 @@ export default function VercelOverview({
 					</div>
 				</div>
 
-				<div className="mt-3 border-t border-black pt-3 font-geneva9 text-[11px] text-[#4b5563]">
-					{clampText(note || "", 120)}
+				<div
+					className="mt-3 border-t border-black pt-3 font-geneva9 text-[#4b5563]"
+					style={{ fontSize: 10 }}
+				>
+					{clampText(note || "", 96)}
 				</div>
 			</div>
 		</PreSatori>

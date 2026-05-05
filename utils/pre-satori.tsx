@@ -29,15 +29,79 @@ export const PreSatori: React.FC<PreSatoriProps> = ({
 }) => {
 	const rendererType = getRendererType();
 
+	const normalizeImageElement = (
+		child: React.ReactElement<
+			unknown,
+			string | React.JSXElementConstructor<unknown>
+		>,
+	): React.ReactElement<
+		unknown,
+		string | React.JSXElementConstructor<unknown>
+	> => {
+		const typedChild = child as React.ReactElement<{
+			className?: string;
+			style?: React.CSSProperties;
+			children?: React.ReactNode;
+			src?: string;
+			srcSet?: string;
+			alt?: string;
+			[key: string]: unknown;
+		}>;
+
+		if (typeof typedChild.type !== "string" || typedChild.type !== "picture") {
+			return child;
+		}
+
+		const pictureChildren = React.Children.toArray(
+			typedChild.props.children,
+		) as React.ReactElement[];
+		const sourceChild = pictureChildren.find(
+			(node) => React.isValidElement(node) && node.type === "source",
+		) as React.ReactElement<{ srcSet?: string }> | undefined;
+		const imgChild = pictureChildren.find(
+			(node) => React.isValidElement(node) && node.type === "img",
+		) as
+			| React.ReactElement<{
+					src?: string;
+					alt?: string;
+					className?: string;
+					style?: React.CSSProperties;
+					[key: string]: unknown;
+			  }>
+			| undefined;
+
+		const mergedClassName = cn(
+			typedChild.props.className,
+			imgChild?.props.className,
+		);
+		const mergedStyle = {
+			...typedChild.props.style,
+			...imgChild?.props.style,
+		};
+
+		return React.createElement("img", {
+			...imgChild?.props,
+			src: imgChild?.props.src || sourceChild?.props.srcSet || "",
+			alt: imgChild?.props.alt || "",
+			className: mergedClassName,
+			style: mergedStyle,
+		});
+	};
+
 	// Define a helper to recursively transform children.
 	const transform = (child: React.ReactNode): React.ReactNode => {
 		if (React.isValidElement(child)) {
+			if (typeof child.type === "string" && child.type === "source") {
+				return null;
+			}
+
+			const normalizedChild = normalizeImageElement(child);
 			const {
 				className,
 				style,
 				children: childChildren,
 				...restProps
-			} = child.props as {
+			} = normalizedChild.props as {
 				className?: string;
 				style?: React.CSSProperties;
 				children?: React.ReactNode;
@@ -46,9 +110,19 @@ export const PreSatori: React.FC<PreSatoriProps> = ({
 			const fontFamily = extractFontFamily(className);
 			const newStyle: React.CSSProperties = {
 				...style,
+				boxSizing: "border-box",
+				minWidth: style?.minWidth ?? 0,
+				minHeight: style?.minHeight ?? 0,
 				fontSmooth: "always",
 				...(fontFamily ? { fontFamily } : {}),
 			};
+
+			if (
+				typeof normalizedChild.type === "string" &&
+				normalizedChild.type === "img"
+			) {
+				newStyle.display = style?.display || "block";
+			}
 
 			// Special handling for display properties
 			if (rendererType === "satori") {
@@ -98,7 +172,7 @@ export const PreSatori: React.FC<PreSatoriProps> = ({
 				);
 			}
 
-			return React.cloneElement(child, newProps);
+			return React.cloneElement(normalizedChild, newProps);
 		}
 		return child;
 	};

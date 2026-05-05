@@ -288,8 +288,8 @@ function TemperatureChart({
 	profile: ReturnType<typeof getBitmapLayoutProfile>;
 	width: number;
 }) {
-	const chartWidth = Math.min(width, profile.isCompact ? 430 : 470);
-	const chartHeight = profile.isCompact ? 170 : 188;
+	const chartWidth = Math.min(width, profile.isCompact ? 404 : 446);
+	const chartHeight = profile.isCompact ? 156 : 172;
 	const paddingLeft = 18;
 	const paddingTop = 18;
 	const paddingBottom = 24;
@@ -338,13 +338,7 @@ function TemperatureChart({
 		});
 
 	return (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				gap: 6,
-			}}
-		>
+		<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
 			<div
 				style={{
 					position: "relative",
@@ -465,24 +459,6 @@ function TemperatureChart({
 						</text>
 					) : null}
 				</svg>
-
-				{points.map((point) => (
-					<div
-						key={`${point.timeLabel}-icon`}
-						style={{
-							position: "absolute",
-							left: point.x - 10,
-							top: Math.max(2, point.y - 34),
-							width: 20,
-							height: 20,
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-						}}
-					>
-						<WeatherIcon icon={point.icon} size={16} />
-					</div>
-				))}
 			</div>
 			<div className="font-geneva9 text-[11px]">
 				Temperatures span {spread}° across the next {hourly.length} hours.
@@ -516,7 +492,7 @@ export default function LpWeather({
 	const globalLow = Math.min(...days.map((day) => day.low));
 	const globalHigh = Math.max(...days.map((day) => day.high));
 	const forecastDays = days.slice(0, 6);
-	const rightColumnWidth = profile.isCompact ? 212 : 228;
+	const rightColumnWidth = profile.isCompact ? 188 : 206;
 	const leftColumnWidth =
 		width - profile.padding * 2 - rightColumnWidth - profile.gap;
 	const metricLabelSize = scaleText(11, profile, {
@@ -559,7 +535,7 @@ export default function LpWeather({
 							>
 								<WeatherIcon
 									icon={conditionIcon}
-									size={profile.isCompact ? 88 : 100}
+									size={profile.isCompact ? 78 : 90}
 								/>
 							</div>
 							<div className="flex items-start" style={{ gap: 14 }}>
@@ -575,7 +551,7 @@ export default function LpWeather({
 										text={`${currentTemp}°`}
 										fontData={fontData}
 										gridSize="8x16"
-										scale={profile.isCompact ? 5 : 6}
+										scale={profile.isCompact ? 4 : 5}
 										gap={0}
 										className="text-black"
 									/>
@@ -592,11 +568,11 @@ export default function LpWeather({
 											}),
 										}}
 									>
-										{condition}
+										{clampText(condition, 14)}
 									</div>
 									<div
 										className="mt-2 grid grid-cols-3 font-geneva9"
-										style={{ gap: 10 }}
+										style={{ gap: 8 }}
 									>
 										<div>
 											<div style={{ fontSize: metricLabelSize }}>Feels</div>
@@ -652,12 +628,12 @@ export default function LpWeather({
 							<div
 								key={day.label}
 								className="flex items-center justify-between"
-								style={{ minHeight: 42 }}
+								style={{ minHeight: 38 }}
 							>
 								<div
 									className="font-geneva9"
 									style={{
-										width: 76,
+										width: 68,
 										fontSize: scaleText(13, profile, {
 											compactBase: 12,
 											denseBase: 10,
@@ -692,15 +668,15 @@ export default function LpWeather({
 									style={{
 										display: "flex",
 										alignItems: "center",
-										gap: 6,
-										width: 136,
+										gap: 5,
+										width: 112,
 										justifyContent: "flex-end",
 									}}
 								>
-									<WeatherIcon icon={day.icon} size={20} />
+									<WeatherIcon icon={day.icon} size={16} />
 									<div
 										className="font-geneva9"
-										style={{ width: 28, fontSize: 18, textAlign: "right" }}
+										style={{ width: 22, fontSize: 16, textAlign: "right" }}
 									>
 										{day.low}°
 									</div>
@@ -709,12 +685,12 @@ export default function LpWeather({
 										high={day.high}
 										globalLow={globalLow}
 										globalHigh={globalHigh}
-										width={64}
-										height={18}
+										width={50}
+										height={16}
 									/>
 									<div
 										className="font-geneva9"
-										style={{ width: 32, fontSize: 18, textAlign: "right" }}
+										style={{ width: 24, fontSize: 16, textAlign: "right" }}
 									>
 										{day.high}°
 									</div>
@@ -733,19 +709,19 @@ export default function LpWeather({
 						<div className="font-blockkie text-[20px] leading-none">
 							{title}
 						</div>
-						<div className="font-geneva9 text-[12px]">
+						<div className="font-geneva9 text-[11px]">
 							{clampText(locationLabel, profile.isCompact ? 18 : 24)}
 						</div>
 					</div>
-					<div className="font-geneva9 text-[12px]">
+					<div className="font-geneva9 text-[11px]">
 						{clampText(
 							`Sunrise ${sunrise} · Sunset ${sunset} · Updated ${updatedAt}`,
-							profile.isCompact ? 34 : 52,
+							profile.isCompact ? 30 : 44,
 						)}
 					</div>
 				</div>
-				<div className="mt-1 font-geneva9 text-[10px]">
-					{clampText(note || "", profile.isDense ? 40 : 88)}
+				<div className="mt-1 font-geneva9 text-[9px]">
+					{clampText(note || "", profile.isDense ? 34 : 76)}
 				</div>
 			</div>
 		</PreSatori>

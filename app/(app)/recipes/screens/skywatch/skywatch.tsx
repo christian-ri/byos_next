@@ -63,8 +63,10 @@ function AirplaneMarker({
 				top: `${y * 100}%`,
 				transform: "translate(-50%, -50%)",
 				display: "flex",
+				flexDirection: "column",
 				alignItems: "center",
-				gap: 8,
+				gap: 4,
+				width: 118,
 			}}
 		>
 			<PlaneIcon heading={heading} brightness={brightness} size={38} />
@@ -72,7 +74,8 @@ function AirplaneMarker({
 				style={{
 					backgroundColor: "rgba(255,255,255,0.12)",
 					padding: "4px 6px",
-					minWidth: 112,
+					width: 118,
+					border: "1px solid rgba(255,255,255,0.18)",
 				}}
 			>
 				<div className="font-blockkie leading-none text-white text-[16px]">
@@ -98,7 +101,7 @@ export default function SkyWatch({
 	height = 480,
 }: SkyWatchRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const visibleAircraft = aircraft.slice(0, profile.isDense ? 6 : 10);
+	const visibleAircraft = aircraft.slice(0, profile.isDense ? 6 : 8);
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
@@ -110,71 +113,102 @@ export default function SkyWatch({
 					className="relative h-full w-full overflow-hidden rounded-xl"
 					style={{ backgroundColor: "#1d1d1d" }}
 				>
+					<svg
+						width="100%"
+						height="100%"
+						viewBox="0 0 760 420"
+						preserveAspectRatio="none"
+						aria-hidden="true"
+						focusable="false"
+						style={{ position: "absolute", inset: 0, opacity: 0.28 }}
+					>
+						{Array.from({ length: 12 }, (_, index) => (
+							<line
+								key={`h-${index}`}
+								x1="0"
+								y1={index * 36}
+								x2="760"
+								y2={index * 36}
+								stroke="#ffffff"
+								strokeWidth="1"
+								strokeDasharray="2 4"
+							/>
+						))}
+						{Array.from({ length: 12 }, (_, index) => (
+							<line
+								key={`v-${index}`}
+								x1={index * 64}
+								y1="0"
+								x2={index * 64}
+								y2="420"
+								stroke="#ffffff"
+								strokeWidth="1"
+								strokeDasharray="2 4"
+							/>
+						))}
+					</svg>
 					<div
 						style={{
 							position: "absolute",
-							inset: 0,
-							backgroundImage:
-								"linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)",
-							backgroundSize: "64px 64px",
-							opacity: 0.35,
+							right: 16,
+							top: 16,
+							borderRadius: 8,
+							backgroundColor: "#fff",
+							padding: "8px 12px",
+							color: "#000",
+							fontSize: 14,
 						}}
-					/>
-					<div
-						style={{
-							position: "absolute",
-							inset: 0,
-							backgroundImage:
-								"linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
-							backgroundSize: "64px 64px",
-							opacity: 0.35,
-						}}
-					/>
-					<div
-						style={{
-							position: "absolute",
-							inset: 0,
-							backgroundImage:
-								"radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08) 0 1px, transparent 1px)",
-							backgroundSize: "120px 120px",
-							opacity: 0.45,
-						}}
-					/>
-					<div
-						style={{
-							position: "absolute",
-							inset: 0,
-							backgroundImage:
-								"radial-gradient(circle at 80% 35%, rgba(255,255,255,0.08) 0 1px, transparent 1px)",
-							backgroundSize: "150px 150px",
-							opacity: 0.4,
-						}}
-					/>
-					<div
-						className="absolute right-4 top-4 rounded-lg bg-white px-3 py-2 text-black"
-						style={{ fontSize: 14 }}
 					>
 						airplanes.live
 					</div>
 					<div
-						className="absolute left-6 top-5 font-geneva9 uppercase"
-						style={{ letterSpacing: "0.22em", fontSize: 12, opacity: 0.7 }}
+						className="font-geneva9 uppercase"
+						style={{
+							position: "absolute",
+							left: 24,
+							top: 18,
+							letterSpacing: "0.22em",
+							fontSize: 12,
+							opacity: 0.7,
+						}}
 					>
 						live radar
 					</div>
 					<div
-						className="absolute left-[58%] top-[16%] font-geneva9 text-[14px]"
-						style={{ opacity: 0.75 }}
+						className="font-geneva9"
+						style={{
+							position: "absolute",
+							left: "57%",
+							top: "16%",
+							fontSize: 14,
+							opacity: 0.75,
+						}}
 					>
 						{radiusLabel}
 					</div>
 					<div
-						className="absolute left-[56%] top-[19%] h-7 w-7 rounded-full border border-white"
-						style={{ opacity: 0.8 }}
+						style={{
+							position: "absolute",
+							left: "56%",
+							top: "19%",
+							width: 28,
+							height: 28,
+							borderRadius: 999,
+							border: "1px solid #fff",
+							opacity: 0.8,
+						}}
 					/>
 					<div
-						className="absolute left-[56.9%] top-[19.8%] h-[10px] w-[10px] rounded-full bg-white"
-						style={{ opacity: 0.95 }}
+						style={{
+							position: "absolute",
+							left: "56.9%",
+							top: "19.8%",
+							width: 10,
+							height: 10,
+							borderRadius: 999,
+							backgroundColor: "#fff",
+							opacity: 0.95,
+						}}
 					/>
 
 					{visibleAircraft.map((flight) => (
@@ -191,9 +225,16 @@ export default function SkyWatch({
 					))}
 
 					<div
-						className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-5"
 						style={{
+							position: "absolute",
+							left: 0,
+							right: 0,
+							bottom: 0,
 							height: 56,
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between",
+							padding: "0 20px",
 							backgroundColor: "rgba(0,0,0,0.4)",
 							borderTop: "1px solid rgba(255,255,255,0.2)",
 						}}
@@ -223,8 +264,8 @@ export default function SkyWatch({
 						</div>
 					</div>
 				</div>
-				<div className="mt-2 px-1 font-geneva9 text-[11px] text-white">
-					{clampText(note || "", profile.isDense ? 52 : 100)}
+				<div className="mt-2 px-1 font-geneva9 text-[10px] text-white">
+					{clampText(note || "", profile.isDense ? 42 : 84)}
 				</div>
 			</div>
 		</PreSatori>

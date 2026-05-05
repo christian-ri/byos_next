@@ -107,41 +107,40 @@ export default async function Wikipedia({
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
-			<div className="flex flex-col w-full h-full bg-white">
+			<div className="flex flex-col w-full h-full bg-[#f3f1ee] border border-black">
 				<div className="flex-none p-4 border-b border-black">
-					<h1 className={` ${isHalfScreen ? "text-4xl" : "text-5xl"}`}>
+					<h1
+						className={`font-blockkie leading-none ${isHalfScreen ? "text-4xl" : "text-5xl"}`}
+					>
 						{safeTitle}
 					</h1>
 				</div>
-				<div className="flex flex-col flex-1 p-4 pb-0 sm:flex-row">
-					<div className="text-2xl flex flex-grow tracking-tight leading-none">
+				<div className="flex flex-col flex-1 p-4 pb-0 sm:flex-row" style={{ gap: 14 }}>
+					<div className="text-[22px] font-geneva9 flex flex-grow leading-tight">
 						{truncatedExtract}
 					</div>
 					{hasValidThumbnail && thumbnail?.source && !isHalfScreen && (
 						<div className="pt-8 sm:pt-0 sm:pr-4 w-full sm:w-[240px] items-center justify-center">
-							<picture>
-								{/* YOU CANNOT USE NEXTJS IMAGE COMPONENT HERE, BECAUSE SATORI DOES NOT SUPPORT IT */}
-								<source srcSet={thumbnail.source} type="image/webp" />
-								<img
-									src={thumbnail.source}
-									alt={safeTitle}
-									width={thumbnail.width || 240}
-									height={thumbnail.height || 200}
-									style={{
-										width: imageDimensions.width,
-										height: imageDimensions.height,
-										maxWidth: "240px",
-										maxHeight: "320px",
-										objectFit: "contain",
-										filter: "grayscale(100%) contrast(0.9) brightness(1.05)",
-									}}
-								/>
-							</picture>
+							<img
+								src={thumbnail.source}
+								alt={safeTitle}
+								width={thumbnail.width || 240}
+								height={thumbnail.height || 200}
+								style={{
+									width: imageDimensions.width,
+									height: imageDimensions.height,
+									maxWidth: "240px",
+									maxHeight: "320px",
+									objectFit: "contain",
+									filter: "grayscale(100%) contrast(0.9) brightness(1.05)",
+									display: "block",
+								}}
+							/>
 						</div>
 					)}
 				</div>
-				<div className="flex-none p-4 pt-2 flex flex-col">
-					<div className="text-base font-geneva9 flex justify-between w-full ">
+				<div className="flex-none p-4 pt-2 flex flex-col" style={{ gap: 8 }}>
+					<div className="text-[12px] font-geneva9 flex justify-between w-full text-[#4b5563]">
 						<span>{safeContentUrl}</span>
 						<span>
 							{safeDescription && safeDescription.length > 100
@@ -150,10 +149,16 @@ export default async function Wikipedia({
 						</span>
 					</div>
 
-					<div className="w-full flex flex-col sm:flex-row  sm:justify-between items-center text-2xl text-white p-2 rounded-xl bg-gray-500">
-						<span>Wikipedia • Random Article</span>
+					<div className="w-full flex flex-col sm:flex-row sm:justify-between items-center p-3 rounded-xl border border-black bg-white">
+						<span className="font-blockkie text-[20px] leading-none">
+							Wikipedia
+						</span>
 						<span>
-							{formattedDate && <span>Generated: {formattedDate}</span>}
+							{formattedDate && (
+								<span className="font-geneva9 text-[12px] text-[#4b5563]">
+									Generated: {formattedDate}
+								</span>
+							)}
 						</span>
 					</div>
 				</div>

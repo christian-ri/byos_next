@@ -158,15 +158,15 @@ function Header({
 					alignItems: "flex-end",
 					textAlign: "right",
 				}}
-				className="font-geneva9 leading-tight"
+				className="font-geneva9 leading-none"
 			>
 				<div
 					style={{
-						fontSize: scaleText(14, profile, {
-							compactBase: 12,
+						fontSize: scaleText(12, profile, {
+							compactBase: 11,
 							denseBase: 10,
-							min: 10,
-							max: 14,
+							min: 9,
+							max: 12,
 						}),
 					}}
 				>
@@ -175,11 +175,11 @@ function Header({
 				<div
 					className="mt-1"
 					style={{
-						fontSize: scaleText(14, profile, {
-							compactBase: 12,
+						fontSize: scaleText(12, profile, {
+							compactBase: 11,
 							denseBase: 10,
-							min: 10,
-							max: 14,
+							min: 9,
+							max: 12,
 						}),
 					}}
 				>

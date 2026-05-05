@@ -115,19 +115,18 @@ export default function ApplePhotos({
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div className="w-full h-full bg-black text-white relative overflow-hidden flex">
 				<picture className="absolute inset-0 w-full h-full">
-					<source srcSet={imageUrl} />
-					<img
-						src={imageUrl}
-						alt={caption || albumName}
-						width={width}
-						height={height}
-						className="w-full h-full"
-						style={{
-							objectFit: fitMode,
-							imageRendering: "pixelated",
-						}}
-					/>
-				</picture>
+				<img
+					src={imageUrl}
+					alt={caption || albumName}
+					width={width}
+					height={height}
+					className="w-full h-full absolute inset-0"
+					style={{
+						objectFit: fitMode,
+						imageRendering: "pixelated",
+						display: "block",
+					}}
+				/>
 
 				<div
 					className="absolute left-0 top-0"
