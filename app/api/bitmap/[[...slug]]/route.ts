@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import { cache } from "react";
 import NotFoundScreen from "@/app/(app)/recipes/screens/not-found/not-found";
 import { resolveScreenSlug } from "@/app/api/screen-resolution";
 import {
@@ -101,41 +100,39 @@ export async function GET(
 	}
 }
 
-const renderRecipeBitmap = cache(
-	async (
-		recipeId: string,
-		width: number,
-		height: number,
-		grayscaleLevels: number = 2,
-		userId: string | null = null,
-	) => {
-		const { config, Component, props, element } = await buildRecipeElement({
-			slug: recipeId,
-			userId,
+const renderRecipeBitmap = async (
+	recipeId: string,
+	width: number,
+	height: number,
+	grayscaleLevels: number = 2,
+	userId: string | null = null,
+) => {
+	const { config, Component, props, element } = await buildRecipeElement({
+		slug: recipeId,
+		userId,
+	});
+
+	const ComponentToRender =
+		Component ??
+		(() => {
+			return element;
 		});
 
-		const ComponentToRender =
-			Component ??
-			(() => {
-				return element;
-			});
+	const propsWithDimensions = addDimensionsToProps(props, width, height);
 
-		const propsWithDimensions = addDimensionsToProps(props, width, height);
+	const renders = await renderRecipeOutputs({
+		slug: recipeId,
+		Component: ComponentToRender,
+		props: propsWithDimensions,
+		config: config ?? null,
+		imageWidth: width,
+		imageHeight: height,
+		formats: ["bitmap"],
+		grayscale: grayscaleLevels,
+	});
 
-		const renders = await renderRecipeOutputs({
-			slug: recipeId,
-			Component: ComponentToRender,
-			props: propsWithDimensions,
-			config: config ?? null,
-			imageWidth: width,
-			imageHeight: height,
-			formats: ["bitmap"],
-			grayscale: grayscaleLevels,
-		});
-
-		return renders.bitmap ?? Buffer.from([]);
-	},
-);
+	return renders.bitmap ?? Buffer.from([]);
+};
 
 const renderFallbackBitmap = async ({
 	slug = "not-found",
