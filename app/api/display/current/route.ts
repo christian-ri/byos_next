@@ -5,6 +5,7 @@ import { logError, logInfo } from "@/lib/logger";
 import type { Device } from "@/lib/types";
 import {
 	appendImageCacheBust,
+	buildDisplayResponse,
 	parseRequestHeaders,
 	resolveDeviceDisplayTarget,
 } from "../utils";
@@ -79,19 +80,12 @@ export async function GET(request: Request) {
 			},
 		});
 
-		return NextResponse.json(
+		return buildDisplayResponse(
+			appendImageCacheBust(imageUrl, uniqueId, userId),
+			`${screenToDisplay}_${uniqueId}.bmp`,
+			refreshRate,
 			{
-				status: 200,
-				refresh_rate: refreshRate,
-				image_url: appendImageCacheBust(imageUrl, uniqueId, userId),
-				filename: `${screenToDisplay}_${uniqueId}.bmp`,
 				rendered_at: deviceData.last_update_time || new Date().toISOString(),
-			},
-			{
-				status: 200,
-				headers: {
-					"Cache-Control": "no-store, max-age=0",
-				},
 			},
 		);
 	} catch (error) {

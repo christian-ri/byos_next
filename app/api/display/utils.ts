@@ -677,11 +677,12 @@ export const buildDisplayResponse = (
 			status: 0,
 			image_url: imageUrl,
 			filename,
-			refresh_rate: refreshRate,
+			image_name: filename,
+			refresh_rate: String(refreshRate),
 			reset_firmware: false,
 			update_firmware: false,
 			firmware_url: null,
-			special_function: null,
+			special_function: "restart_playlist",
 			...extra,
 		},
 		{
@@ -729,11 +730,13 @@ export const buildErrorResponse = (
 		params.set("grayscale", String(options.grayscale));
 
 	const notFoundImageUrl = `${baseUrl}/not-found.bmp${params.size ? `?${params.toString()}` : ""}`;
+	const errorFilename = `not-found_${uniqueId}.bmp`;
 	return NextResponse.json(
 		{
 			status: 0,
 			image_url: notFoundImageUrl,
-			filename: `not-found_${uniqueId}.bmp`,
+			filename: errorFilename,
+			image_name: errorFilename,
 			refresh_rate: 60,
 			reset_firmware: false,
 			update_firmware: false,
