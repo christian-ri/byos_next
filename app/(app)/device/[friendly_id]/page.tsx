@@ -7,9 +7,6 @@ import { getCurrentUserId } from "@/lib/auth/get-user";
 import { getInitDataForUser } from "@/lib/getInitData";
 import { getDeviceStatus } from "@/utils/helpers";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 // Loading fallback for the device page
 const DevicePageSkeleton = () => (
 	<div className="space-y-6">
