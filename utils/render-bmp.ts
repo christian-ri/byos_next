@@ -1,5 +1,7 @@
 import sharp from "sharp";
 
+const GLOBAL_BITMAP_INVERT = process.env.TRMNL_BITMAP_INVERT === "true";
+
 /** Dithering method options */
 export enum DitheringMethod {
 	FLOYD_STEINBERG = "floyd-steinberg",
@@ -239,7 +241,7 @@ export interface RenderBmpOptions {
 export async function renderBmp(png: Buffer, options: RenderBmpOptions = {}) {
 	const {
 		ditheringMethod = DitheringMethod.FLOYD_STEINBERG,
-		inverted = false,
+		inverted = GLOBAL_BITMAP_INVERT,
 		grayscale = 2, // Default to 2 levels (black/white)
 	} = options;
 
