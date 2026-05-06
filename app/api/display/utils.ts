@@ -681,7 +681,7 @@ export const buildDisplayResponse = (
 			reset_firmware: false,
 			update_firmware: false,
 			firmware_url: null,
-			special_function: "restart_playlist",
+			special_function: null,
 			...extra,
 		},
 		{
@@ -738,7 +738,7 @@ export const buildErrorResponse = (
 			reset_firmware: false,
 			update_firmware: false,
 			firmware_url: null,
-			special_function: "restart_playlist",
+			special_function: null,
 			message,
 		},
 		{
