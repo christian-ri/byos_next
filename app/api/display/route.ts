@@ -198,6 +198,7 @@ export async function GET(request: Request) {
 			screen: screenToDisplay,
 			refreshRate,
 			displayMode: device.display_mode,
+			imageUrl: cacheBustedImageUrl,
 			matchedBy: deviceResolution.matchedBy,
 			debug: {
 				accessTokenPresent: Boolean(headers.apiKey),
@@ -221,6 +222,7 @@ export async function GET(request: Request) {
 				foundByMac: deviceResolution.foundByMac,
 				foundByFriendlyId: deviceResolution.foundByFriendlyId,
 				finalScreen: screenToDisplay,
+				imageUrl: cacheBustedImageUrl,
 				fallbackUsed,
 				fallbackReason,
 				model: headers.model,

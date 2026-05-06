@@ -146,10 +146,7 @@ export const parseRequestHeaders = (request: Request): RequestHeaders => {
 			]),
 		),
 		headerKeys: Array.from(headers.keys()).sort(),
-		hostUrl:
-			(headers.get("x-forwarded-proto") || "http") +
-			"://" +
-			(headers.get("x-forwarded-host") || headers.get("host") || "localhost"),
+		hostUrl: url.origin || "http://localhost:3000",
 	};
 };
 
