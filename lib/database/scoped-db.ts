@@ -40,18 +40,27 @@ export async function withUserScopeForUser<T>(
 ): Promise<T> {
 	// Use a dedicated connection to ensure role and session variable persist
 	return db.connection().execute(async (conn) => {
-		// Switch to non-superuser role so RLS policies are enforced
-		// (superusers bypass RLS even with FORCE ROW LEVEL SECURITY)
-		await sql`SET ROLE ${sql.ref(APP_ROLE)}`.execute(conn);
+		try {
+			// Switch to non-superuser role so RLS policies are enforced
+			// (superusers bypass RLS even with FORCE ROW LEVEL SECURITY)
+			await sql`SET ROLE ${sql.ref(APP_ROLE)}`.execute(conn);
 
-		// Set the user context for RLS
-		// Empty string when no user (auth disabled) = only access to unclaimed rows (user_id IS NULL)
-		// User ID when authenticated = access to own rows + unclaimed rows
-		await sql`SELECT set_config('app.current_user_id', ${userId ?? ""}, false)`.execute(
-			conn,
-		);
+			// Set the user context for RLS
+			// Empty string when no user (auth disabled) = only access to unclaimed rows (user_id IS NULL)
+			// User ID when authenticated = access to own rows + unclaimed rows
+			await sql`SELECT set_config('app.current_user_id', ${userId ?? ""}, false)`.execute(
+				conn,
+			);
 
-		return callback(conn);
+			return callback(conn);
+		} finally {
+			// Dedicated pooled connections must be cleaned up or a later public API query
+			// can inherit a stale role/current_user_id and see zero rows through RLS.
+			await sql`SELECT set_config('app.current_user_id', '', false)`.execute(
+				conn,
+			);
+			await sql`RESET ROLE`.execute(conn);
+		}
 	});
 }
 
@@ -74,15 +83,19 @@ export async function withUserScopeTransaction<T>(
 	const userId = await getCurrentUserId();
 
 	return db.transaction().execute(async (trx) => {
-		// Switch to non-superuser role so RLS policies are enforced
-		await sql`SET ROLE ${sql.ref(APP_ROLE)}`.execute(trx);
+		try {
+			// Switch to non-superuser role so RLS policies are enforced
+			await sql`SET ROLE ${sql.ref(APP_ROLE)}`.execute(trx);
 
-		// Set the user context for RLS within the transaction
-		// is_local=true works correctly within transaction context
-		await sql`SELECT set_config('app.current_user_id', ${userId ?? ""}, true)`.execute(
-			trx,
-		);
+			// Set the user context for RLS within the transaction
+			// is_local=true works correctly within transaction context
+			await sql`SELECT set_config('app.current_user_id', ${userId ?? ""}, true)`.execute(
+				trx,
+			);
 
-		return callback(trx);
+			return callback(trx);
+		} finally {
+			await sql`RESET ROLE`.execute(trx);
+		}
 	});
 }
