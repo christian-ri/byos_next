@@ -3,8 +3,12 @@ import { Suspense } from "react";
 import screens from "@/app/(app)/recipes/screens.json";
 import DevicePageClient from "@/components/device/device-page-client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getInitData } from "@/lib/getInitData";
+import { getCurrentUserId } from "@/lib/auth/get-user";
+import { getInitDataForUser } from "@/lib/getInitData";
 import { getDeviceStatus } from "@/utils/helpers";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // Loading fallback for the device page
 const DevicePageSkeleton = () => (
@@ -36,7 +40,9 @@ const DevicePageSkeleton = () => (
 
 // Device data component that uses centralized cached data
 const DeviceData = async ({ friendlyId }: { friendlyId: string }) => {
-	const { devices, playlists, playlistItems, mixups } = await getInitData();
+	const userId = await getCurrentUserId();
+	const { devices, playlists, playlistItems, mixups } =
+		await getInitDataForUser(userId);
 
 	// Find the specific device by friendly_id
 	const device = devices.find((d) => d.friendly_id === friendlyId);

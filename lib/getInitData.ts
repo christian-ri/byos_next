@@ -1,5 +1,6 @@
 import { cache } from "react";
-import { withUserScope } from "@/lib/database/scoped-db";
+import { getCurrentUserId } from "@/lib/auth/get-user";
+import { withUserScopeForUser } from "@/lib/database/scoped-db";
 import { getDbStatus } from "@/lib/database/utils";
 import type {
 	Device,
@@ -40,102 +41,94 @@ export type InitialData = {
  *
  * @returns Promise<InitialData> All the application's data
  */
-export const getInitData = cache(async (): Promise<InitialData> => {
-	const dbStatus = await getDbStatus();
+export const getInitDataForUser = cache(
+	async (userId: string | null): Promise<InitialData> => {
+		const dbStatus = await getDbStatus();
 
-	// Default empty values if DB is not ready
-	let devices: Device[] = [];
-	let systemLogs: SystemLog[] = [];
-	let uniqueSources: string[] = [];
-	let totalLogs = 0;
-	let playlists: Playlist[] = [];
-	let playlistItems: PlaylistItem[] = [];
-	let mixups: Mixup[] = [];
+		// Default empty values if DB is not ready
+		let devices: Device[] = [];
+		let systemLogs: SystemLog[] = [];
+		let uniqueSources: string[] = [];
+		let totalLogs = 0;
+		let playlists: Playlist[] = [];
+		let playlistItems: PlaylistItem[] = [];
+		let mixups: Mixup[] = [];
 
-	// Fetch data only if DB is ready
-	if (dbStatus.ready) {
-		try {
-			// Use withUserScope to set RLS context - database handles user filtering
-			const [
-				devicesResult,
-				playlistsResult,
-				playlistItemsResult,
-				mixupsResult,
-				logsResult,
-				sourcesResult,
-				logsCountResult,
-			] = await withUserScope((scopedDb) =>
-				Promise.all([
-					// Fetch devices (RLS filters by user)
-					scopedDb
-						.selectFrom("devices")
-						.selectAll()
-						.execute(),
-					// Fetch playlists (RLS filters by user)
-					scopedDb
-						.selectFrom("playlists")
-						.selectAll()
-						.execute(),
-					// Fetch playlist items
-					scopedDb
-						.selectFrom("playlist_items")
-						.selectAll()
-						.execute(),
-					// Fetch mixups (RLS filters by user)
-					scopedDb
-						.selectFrom("mixups")
-						.selectAll()
-						.orderBy("created_at", "desc")
-						.execute(),
-					// Fetch recent logs (no RLS - shared)
-					scopedDb
-						.selectFrom("system_logs")
-						.selectAll()
-						.orderBy("created_at", "desc")
-						.limit(50)
-						.execute(),
-					// Fetch unique sources for filters
-					scopedDb
-						.selectFrom("system_logs")
-						.select("source")
-						.distinct()
-						.orderBy("source")
-						.execute(),
-					// Get total logs count
-					scopedDb
-						.selectFrom("system_logs")
-						.select((eb) => eb.fn.countAll().as("count"))
-						.executeTakeFirst(),
-				]),
-			);
+		// Fetch data only if DB is ready
+		if (dbStatus.ready) {
+			try {
+				const [
+					devicesResult,
+					playlistsResult,
+					playlistItemsResult,
+					mixupsResult,
+					logsResult,
+					sourcesResult,
+					logsCountResult,
+				] = await withUserScopeForUser(userId, (scopedDb) =>
+					Promise.all([
+						scopedDb.selectFrom("devices").selectAll().execute(),
+						scopedDb.selectFrom("playlists").selectAll().execute(),
+						scopedDb.selectFrom("playlist_items").selectAll().execute(),
+						scopedDb
+							.selectFrom("mixups")
+							.selectAll()
+							.orderBy("created_at", "desc")
+							.execute(),
+						scopedDb
+							.selectFrom("system_logs")
+							.selectAll()
+							.orderBy("created_at", "desc")
+							.limit(50)
+							.execute(),
+						scopedDb
+							.selectFrom("system_logs")
+							.select("source")
+							.distinct()
+							.orderBy("source")
+							.execute(),
+						scopedDb
+							.selectFrom("system_logs")
+							.select((eb) => eb.fn.countAll().as("count"))
+							.executeTakeFirst(),
+					]),
+				);
 
-			devices = devicesResult as unknown as Device[];
-			playlists = playlistsResult as unknown as Playlist[];
-			playlistItems = playlistItemsResult as unknown as PlaylistItem[];
-			mixups = mixupsResult as unknown as Mixup[];
-			systemLogs = logsResult as unknown as SystemLog[];
-			uniqueSources = Array.from(
-				new Set(
-					sourcesResult.map((item) => item.source).filter(Boolean) as string[],
-				),
-			);
-			totalLogs = Number(logsCountResult?.count || 0);
-		} catch (error) {
-			console.error("Error fetching initial data:", error);
+				devices = devicesResult as unknown as Device[];
+				playlists = playlistsResult as unknown as Playlist[];
+				playlistItems = playlistItemsResult as unknown as PlaylistItem[];
+				mixups = mixupsResult as unknown as Mixup[];
+				systemLogs = logsResult as unknown as SystemLog[];
+				uniqueSources = Array.from(
+					new Set(
+						sourcesResult
+							.map((item) => item.source)
+							.filter(Boolean) as string[],
+					),
+				);
+				totalLogs = Number(logsCountResult?.count || 0);
+			} catch (error) {
+				console.error("Error fetching initial data:", error);
+			}
 		}
-	}
 
-	return {
-		devices,
-		playlists,
-		playlistItems,
-		mixups,
-		systemLogs,
-		uniqueSources,
-		totalLogs,
-		dbStatus,
-	};
-});
+		return {
+			devices,
+			playlists,
+			playlistItems,
+			mixups,
+			systemLogs,
+			uniqueSources,
+			totalLogs,
+			dbStatus,
+		};
+	},
+);
+
+export async function getInitData(): Promise<InitialData> {
+	const userId = await getCurrentUserId();
+	return getInitDataForUser(userId);
+}
 
 /**
  * Cached function to get just devices data.
@@ -145,7 +138,8 @@ export const getInitData = cache(async (): Promise<InitialData> => {
  */
 export const getDevices = cache(async (): Promise<Device[]> => {
 	// Re-use the full data fetch to maintain cache coherence
-	const data = await getInitData();
+	const userId = await getCurrentUserId();
+	const data = await getInitDataForUser(userId);
 	return data.devices;
 });
 

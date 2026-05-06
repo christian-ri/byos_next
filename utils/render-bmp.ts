@@ -326,7 +326,7 @@ export async function renderBmp(png: Buffer, options: RenderBmpOptions = {}) {
 		targetHeight,
 		ditheringMethod,
 		grayscale,
-		inverted,
+		grayscale === 2 ? false : inverted,
 	);
 
 	// Determine BMP format based on grayscale levels
@@ -363,16 +363,19 @@ export async function renderBmp(png: Buffer, options: RenderBmpOptions = {}) {
 	buffer.writeUInt32LE(numColors, 46); // Total Colors
 	buffer.writeUInt32LE(numColors, 50); // Important Colors
 
-	// Color Palette - generate gray shades (lightest to darkest)
-	// Index 0 = white (lightest), Index N-1 = black (darkest)
+	// Color Palette
 	const paletteOffset = fileHeaderSize + infoHeaderSize;
 	const paletteStep = 255 / (grayscale - 1);
-	for (let i = 0; i < grayscale; i++) {
-		// Generate from white (255) to black (0)
-		const grayValue = Math.round(255 - i * paletteStep);
-		// BMP palette format: BGR + reserved byte (0x00)
-		const paletteEntry = (grayValue << 16) | (grayValue << 8) | grayValue;
-		buffer.writeUInt32LE(paletteEntry, paletteOffset + i * 4);
+	if (grayscale === 2) {
+		buffer.writeUInt32LE(0x000000, paletteOffset);
+		buffer.writeUInt32LE(0xffffff, paletteOffset + 4);
+	} else {
+		// Index 0 = white (lightest), Index N-1 = black (darkest)
+		for (let i = 0; i < grayscale; i++) {
+			const grayValue = Math.round(255 - i * paletteStep);
+			const paletteEntry = (grayValue << 16) | (grayValue << 8) | grayValue;
+			buffer.writeUInt32LE(paletteEntry, paletteOffset + i * 4);
+		}
 	}
 
 	// Step 6: Generate the final bitmap
@@ -407,26 +410,26 @@ export async function renderBmp(png: Buffer, options: RenderBmpOptions = {}) {
 
 					if (gray < 10) {
 						// Pure black pixel
-						paletteIndex = 1;
+						paletteIndex = 0;
 					} else if (gray > 240) {
 						// Pure white pixel
-						paletteIndex = 0;
+						paletteIndex = 1;
 					} else if (isEdge[idx]) {
 						// On an edge (likely text) - round to black for better contrast
-						paletteIndex = gray < 128 ? 1 : 0;
+						paletteIndex = gray < 128 ? 0 : 1;
 					} else {
 						// Not on an edge (likely in an image) - use dithered result
-						paletteIndex = ditheredValue < 128 ? 1 : 0; // Values are either 0 or 255
+						paletteIndex = ditheredValue < 128 ? 0 : 1; // Values are either 0 or 255
 					}
 
 					// Invert if needed
 					if (inverted) {
-						paletteIndex = grayscale - 1 - paletteIndex;
+						paletteIndex = 1 - paletteIndex;
 					}
 
-					// For 1-bit, palette index 1 = black, index 0 = white
-					// Set bit to 1 if palette index is 1 (black)
-					if (paletteIndex === grayscale - 1) {
+					// For 1-bit, palette index 0 = black, index 1 = white
+					// Set bit to 1 if palette index is 1 (white)
+					if (paletteIndex === 1) {
 						byte |= 1 << (7 - bit);
 					}
 				}
