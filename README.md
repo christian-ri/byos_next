@@ -1,155 +1,284 @@
-# BYOS Next.js for TRMNL 🖥️
+# BYOS Next.js for TRMNL
 
 [![License](https://img.shields.io/github/license/usetrmnl/byos_next)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Integrated-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/usetrmnl/byos_next/pulls)
-[![GitHub Stars](https://img.shields.io/github/stars/usetrmnl/byos_next?style=social)](https://github.com/usetrmnl/byos_next/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/usetrmnl/byos_next?style=social)](https://github.com/usetrmnl/byos_next/network/members)
 
-## 🚀 Overview
-**BYOS (Build Your Own Server) Next.js** is a Next.js implementation that powers device management, playlist-driven content scheduling, and on-demand BMP generation for e-ink displays.
+This repository is a TRMNL BYOS fork built around:
+- reliable TRMNL DIY / ESP32 device handshakes
+- bitmap-first recipe rendering for real e-ink hardware
+- a larger local recipe gallery, including several TRMNL-inspired imports
+- stricter debugging and observability for `/api/setup`, `/api/display`, and `/api/log`
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fusetrmnl%2Fbyos_next&env=AUTH_ENABLED&envDefaults=%7B%22AUTH_ENABLED%22%3A%22false%22%7D&envDescription=User%20authentication%20is%20disabled.&envLink=https%3A%2F%2Fgithub.com%2Fusetrmnl%2Fbyos_next%3Ftab%3Dreadme-ov-file&project-name=byos-next&repository-name=byos_next&demo-title=BYOS%20NextJS&demo-description=BYOS%20(Build%20Your%20Own%20Server)%20Next.js%2C%20TRMNL%20server%20with%20local%20recipe%20rendering%20and%20cloud%20proxy%20support.&demo-url=https%3A%2F%2Fbyos-next-demo.vercel.app&demo-image=https%3A%2F%2Fusetrmnl.com%2Fimages%2Fbrand%2Ficons%2Ficon--brand.svg&products=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%2C%22group%22%3A%22postgres%22%7D%5D)
+## Overview
+**BYOS (Build Your Own Server) Next.js** is a Next.js implementation that powers:
+- device registration and identity management
+- playlist and single-screen display assignment
+- on-demand PNG/BMP rendering for TRMNL devices
+- a local recipe browser with browser preview vs. renderer preview
 
-### ✨ Features
-- Device management UI with MAC/API key registration, status tracking, and refresh scheduling.
-- Playlist-based screen rotation with time and weekday rules, custom durations, and per-device assignment.
-- On-demand screen rendering to 1-bit BMP via Takumi/Satori with caching and revalidation.
-- Postgres backed persistence for devices, logs, and playlists.
-- Recipes gallery to prototype screens and compare direct vs. bitmap rendering before pushing to hardware.
-- Tailwind v4 + TypeScript + Next.js 16 + React 19; Biome lint/format baseline.
-- Docker Compose for app + Postgres; deploy-ready Vercel button with Supabase/Neon integration.
+## What This Fork Adds
 
-## Table of Contents
-- [BYOS Next.js for TRMNL 🖥️](#byos-nextjs-for-trmnl-️)
-  - [🚀 Overview](#-overview)
-    - [✨ Features](#-features)
-  - [Table of Contents](#table-of-contents)
-  - [Highlights](#highlights)
-  - [Demo \& Screens](#demo--screens)
-  - [Quickstart](#quickstart)
-    - [Deploy to Vercel](#deploy-to-vercel)
-    - [Run with Docker Compose (app + Postgres)](#run-with-docker-compose-app--postgres)
-    - [Run Locally](#run-locally)
-  - [Environment](#environment)
-    - [Database Options](#database-options)
-  - [Project Structure](#project-structure)
-  - [Playlists](#playlists)
-  - [Recipes](#recipes)
-  - [Documentation](#documentation)
-  - [Roadmap](#roadmap)
-  - [Support \& Feedback](#support--feedback)
-  - [License](#license)
+### TRMNL DIY device fixes
+- Robust device matching order: `api_key` -> `mac_address` -> `friendly_id`
+- Header normalization for `Access-Token`, `ID`, `id`, and related variants
+- Safer `/api/display` lookup flow that does not try to recreate devices on every refresh
+- Improved `/api/setup` and `/api/log` consistency with the same device identity rules
+- Better debug logs for device resolution, fallbacks, and final screen selection
+- `not-found` fallback now shows the last refresh failure reason on-screen
 
-## Highlights
-- Dynamic BMP generation with Next.js 16, React 19, Tailwind CSS v4, and TypeScript.
-- Supabase-backed device management, logging, and playlist scheduling.
-- No-DB fallback mode for quickly previewing screens without a database.
-- Docker Compose support for local PostgreSQL.
-- Recipes gallery for rapid screen prototyping before deploying to devices.
-- Clean codebase with Biome linting and formatting.
+### Database and RLS hardening
+- Public device lookup is now isolated from stale pooled session scope
+- Scoped DB helpers reset `ROLE` and `app.current_user_id` after use
+- This prevents intermittent `Display device identity not found` regressions caused by connection reuse
 
-## Demo & Screens
-- Live demo: [https://byos-next-demo.vercel.app](https://byos-next-demo.vercel.app)
-- Overview UI: `public/byos-nextjs-overview.png`
-- Device UI: `public/byos-nextjs-device.png`
+### Renderer hardening
+- Recipes were adjusted to behave better under Takumi/Taffy-style layout constraints
+- `picture/source` trees are normalized for renderer compatibility
+- Shared render preprocessing now enforces safer sizing defaults for bitmap output
+- Many recipes were reworked to prefer explicit layout and bitmap-friendly typography
+
+### Calendar improvements
+- Apple, Google, and Outlook calendars use public ICS feeds
+- Better timezone handling for:
+  - IANA timezones
+  - Outlook / Windows timezone labels
+  - `X-WR-TIMEZONE` ICS fallbacks
+- Better day-window alignment so "today" is computed in the selected calendar timezone
+- More readable small text and stronger `Simple Text`-inspired typography
+
+## Features
+- Device management UI with MAC/API key registration, status tracking, screen assignment, and refresh scheduling
+- Playlist-based screen rotation with time and weekday rules
+- Single-screen fallback flow for debugging or simple TRMNL device setups
+- On-demand screen rendering to 1-bit BMP via Takumi/Satori
+- Postgres-backed persistence for devices, logs, playlists, mixups, and recipe configs
+- Recipe gallery to compare direct browser preview vs. renderer PNG/BMP output
+- Parameter-driven recipes, including booleans rendered as actual checkboxes in the recipe config UI
 
 ## Quickstart
 
 ### Deploy to Vercel
-1. Click the Vercel button above.
-2. Link a Supabase or Neon project when prompted.
-3. Deploy, then open the app and initialize tables.
-4. Point your TRMNL device at the deployed URL.
-5. Sync environment variables locally via `vercel link` and `vercel env pull` if you also develop on your machine.
+1. Create a Neon, Supabase, or PostgreSQL database.
+2. Deploy the app to Vercel.
+3. Configure the required environment variables.
+4. Open the app, initialize the tables, and configure a device.
+5. Point your TRMNL device to your deployed server URL.
 
-### Run with Docker Compose (app + Postgres)
-```bash
-export POSTGRES_PASSWORD=your_password
-docker-compose up -d
-# visit http://localhost:3000
-```
-
-### Run Locally
+### Run locally
 ```bash
 git clone https://github.com/usetrmnl/byos_next
 cd byos_next
 pnpm install
-```
-
-Start the dev server:
-```bash
 pnpm dev
 ```
 
-Format/lint:
+### Lint / typecheck
 ```bash
 pnpm lint
+pnpm exec tsc --noEmit
 ```
 
 ## Environment
-Create `.env.local` with the keys you need. Common variables:
+Common variables:
+
+```bash
+DATABASE_URL=
+POSTGRES_PASSWORD=
+AUTH_ENABLED=false
+REACT_RENDERER=takumi
 ```
-DATABASE_URL
-POSTGRES_PASSWORD
-```
 
-### Database Options
-- **Supabase or Neon:** run migrations in `migrations/` in order to create tables and playlist support.
-- **Docker/Postgres:** set `POSTGRES_PASSWORD`, run `docker-compose up -d`.
-- **No-DB mode:** run `pnpm dev` without DB env vars to preview screens only (device management disabled).
+Notes:
+- `AUTH_ENABLED=false` is useful for local BYOS-style setups.
+- `REACT_RENDERER` can be switched, but this fork has primarily been hardened around real Takumi bitmap output.
 
-## Project Structure
-- `app/` - Next.js routes and screens (including `/recipes`).
-- `components/` - UI components.
-- `migrations/` - SQL migrations for Postgres.
-- `public/` - Static assets and screenshots.
-- `scripts/`, `utils/`, `lib/` - helpers for rendering, caching, and device logic.
-- `docs/api.md` - HTTP API reference.
+## Project structure
+- `app/` - Next.js routes, API endpoints, and recipes
+- `app/api/setup` - TRMNL setup handshake endpoint
+- `app/api/display` - screen resolution and bitmap redirect endpoint
+- `app/api/log` - device log ingestion endpoint
+- `app/(app)/recipes/` - recipe gallery and recipe registry
+- `components/` - app and recipe configuration UI
+- `lib/database/` - DB access, RLS scoping, migrations, and SQL helpers
+- `utils/` - renderer, bitmap, image, and cache helpers
 
-## Playlists
-- Schedule screens by time and weekday with custom durations.
-- Assign playlists to devices to rotate content automatically.
-- Enable playlist mode per device in the UI.
+## Device flow
+
+### `/api/setup`
+- Registers or updates a device
+- Returns stable `api_key` and `friendly_id`
+- Updates MAC/API-key associations without unnecessary duplicates
+
+### `/api/display`
+- Resolves the device identity
+- Determines the correct screen or playlist item
+- Falls back more defensively when playlist or mixup config is broken
+- Emits structured logs showing:
+  - whether token/MAC/friendly ID were present
+  - which lookup path matched
+  - which screen was chosen
+  - whether a fallback was used
+
+### `/api/log`
+- Accepts TRMNL device logs
+- Reuses the same identity resolution logic as setup/display
+
+## Renderer notes
+The recipe page shows multiple render stages:
+- `Direct browser preview` is standard browser React/CSS output
+- `Renderer PNG` is the real server-side recipe render path
+- `BMP` is derived from that renderer output for the device
+
+If a recipe looks good in the browser but bad on-device, the problem is usually in renderer constraints, not in the browser preview.
 
 ## Recipes
-Visit `/recipes` to browse screens and compare direct vs. bitmap rendering. To add one:
-1. Create a folder under `app/recipes/screens`.
-2. Add your component and data fetching logic.
-3. Register it in `app/recipes/screens.json`.
+Visit `/recipes` to browse screens, configure params, and compare preview modes.
 
-See `docs/recipes.md` for more detail.
+### Core recipes
+- `simple-text` - base text recipe with crisp bitmap typography
+- `album` - photo plus clock
+- `apple-photos` - random iCloud shared album photo with clock and album metadata
+- `bitmap-patterns`
+- `wikipedia`
+- `bitcoin-price`
+- `weather`
+- `responsive-example`
 
-### Added TRMNL-style imports
-- `calendar-apple` and `calendar-google`: both use public ICS feeds in BYOS. Main params: `icsUrl`, `calendarName`, `headers`, `timezone`.
-- `parcel`: uses Parcel's external API. Main params: `apiKey`, `filterMode`, `style`.
-- `nasa-deep-space-network`: no setup required for preview; pulls live data from the community DSN endpoint.
-- `flightboard`: airport activity approximation around a selected airport. Main params: `airportCode`, `radiusKm`.
-- `whos-that-pokemon`: daily Pokemon screen using the community JSON feed. Main param: `dataUrl` if you want to override the source.
+### Calendar recipes
+- `calendar-apple`
+- `calendar-google`
+- `calendar-outlook`
 
-### Setup notes
-- Apple Calendar and Google Calendar are implemented as ICS imports instead of OAuth, which keeps them simple and BYOS-compatible.
-- Several of these recipes include fallback/sample data so they still render in `/recipes` even when live credentials or feeds are missing.
-- `trmnl_preview` is not included as a recipe because it is a local plugin development server, not a screen recipe. If needed, it should be added as a separate dev workflow/tooling step.
+Common calendar params:
+- `icsUrl`
+- `calendarName`
+- `headers`
+- `timezone`
+- `eventLayout`
+- `timeFormat`
+- `includeDescription`
+- `includeEventTime`
+- `firstDay`
+- `ignoredPhrases`
+- `maxEventsPerDay`
+
+### TRMNL-inspired and imported recipes
+- `parcel` - package tracking via Parcel external API
+- `nasa-deep-space-network` - live NASA DSN traffic
+- `flightboard` - airport activity board near an airport code
+- `whos-that-pokemon`
+- `skywatch` - local air traffic radar style screen
+- `lp-weather` - editorial weather screen inspired by lucaspimentel's plugin
+- `f1-race-standings` - next race + driver standings
+- `f1-weekend-teams` - weekend schedule + constructor standings
+- `nasa-image-of-the-day`
+- `vercel-overview`
+- `pollen-air-quality`
+
+### Recipe-specific setup notes
+
+#### `apple-photos`
+- Uses a public iCloud Shared Album URL
+- Supports:
+  - `sharedAlbumUrl`
+  - `albumName`
+  - `timezone`
+  - `showCaption`
+  - `showTimestamp`
+  - `fitMode`
+
+#### `flightboard`
+- Uses airport-centric live state vector data
+- Supports:
+  - `airportCode`
+  - `radiusKm`
+
+#### `skywatch`
+- Uses map-centered live air-traffic data
+- Supports:
+  - `latitude`
+  - `longitude`
+  - `radiusKm`
+
+#### `lp-weather`
+- Uses Open-Meteo forecast data
+- Supports:
+  - `location`
+  - `units`
+
+#### `f1-race-standings`
+- Uses OpenF1
+- Focused on readable driver standings and next-race information
+
+#### `f1-weekend-teams`
+- Uses OpenF1
+- Splits constructor standings and weekend schedule out into a separate screen for readability
+
+#### `nasa-image-of-the-day`
+- Uses NASA APOD
+- Optional `apiKey`
+- Includes a safe fallback when NASA returns unsupported media
+
+#### `vercel-overview`
+- Uses the Vercel REST API
+- Supports:
+  - `apiToken`
+  - `teamId`
+  - `projectLimit`
+  - `deploymentLimit`
+
+#### `pollen-air-quality`
+- Uses Open-Meteo Air Quality
+- Defaults to `State College, PA`
+- Supports either:
+  - `location`
+  - or `latitude` + `longitude`
+- Supports checkbox toggles for:
+  - `showUsAqi`
+  - `showPm25`
+  - `showPm10`
+  - `showNo2`
+  - `showO3`
+  - `showCo`
+  - `showSo2`
+  - `showUvIndex`
+  - `showPollen`
+
+## Recipe development
+To add a recipe:
+1. Create a folder under `app/(app)/recipes/screens/`
+2. Add your component and optional `getData.ts`
+3. Register it in `app/(app)/recipes/screens.json`
+4. Test both:
+   - browser preview
+   - renderer PNG / bitmap output
+
+For this fork, recipe work should be validated against the renderer path, not just the browser preview.
 
 ## Documentation
-- API endpoints and payloads: `docs/api.md`
-- Recipes reference: `app/recipes/README.md`
-- Contributing guide: `CONTRIBUTING.md`
+- API reference: `docs/api.md`
+- Recipe registry: `app/(app)/recipes/screens.json`
+- Device and renderer logic:
+  - `app/api/display/`
+  - `app/api/setup/`
+  - `app/api/log/`
+  - `utils/pre-satori.tsx`
 
-## Roadmap
-- Better recipe management system
-- Compatibility with TRMNL recipes
+## Notes on divergence from upstream
+Compared with the upstream `usetrmnl/byos_next` project, this fork currently differs in these major areas:
+- many additional local recipes
+- more aggressive renderer hardening
+- stronger TRMNL DIY device matching and debugging
+- ICS-based calendar imports for Apple, Google, and Outlook
+- expanded parameter UI including boolean checkbox support
+- more opinionated bitmap-readability adjustments across recipes
 
-## Support & Feedback
-- GitHub Issues: https://github.com/usetrmnl/byos_next/issues
-- Discussions: https://github.com/usetrmnl/byos_next/discussions
-- Email: manglekuo@gmail.com
-- TRMNL Discord: reply to the maintainer thread.
+## Support
+- Upstream project: https://github.com/usetrmnl/byos_next
+- This fork's customizations are centered on personal BYOS/TRMNL device usage and recipe development
 
 ## License
-MIT - see `LICENSE`.
+MIT - see `LICENSE`
