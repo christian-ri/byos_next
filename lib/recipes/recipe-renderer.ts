@@ -277,28 +277,31 @@ export const renderRecipeOutputs = cache(
 		const results = getDefaultRenderResults();
 		const imageOptions = getRecipeImageOptions(config, imageWidth, imageHeight);
 		const rendererType = getRendererType();
+		const element = createElement(Component, props);
+
+		const renderRendererPng = async () => {
+			return rendererType === "satori"
+				? renderWithSatori(element, imageOptions.width, imageOptions.height)
+				: renderWithTakumi(element, imageOptions.width, imageOptions.height);
+		};
 
 		const tasks: Array<
 			Promise<{ key: keyof RenderResults; value: Buffer | null }>
 		> = [];
 
+		const rendererPngPromise =
+			formats.includes("bitmap") || formats.includes("png")
+				? renderRendererPng()
+				: null;
+
 		if (formats.includes("bitmap")) {
 			tasks.push(
 				(async () => {
 					try {
-						const element = createElement(Component, props);
-						const png =
-							rendererType === "satori"
-								? await renderWithSatori(
-										element,
-										imageOptions.width,
-										imageOptions.height,
-									)
-								: await renderWithTakumi(
-										element,
-										imageOptions.width,
-										imageOptions.height,
-									);
+						const png = await rendererPngPromise;
+						if (!png) {
+							throw new Error("Renderer PNG buffer was not created");
+						}
 						const buffer = await renderBmp(png, {
 							ditheringMethod: DitheringMethod.FLOYD_STEINBERG,
 							width: imageWidth,
@@ -318,19 +321,7 @@ export const renderRecipeOutputs = cache(
 			tasks.push(
 				(async () => {
 					try {
-						const element = createElement(Component, props);
-						const pngBuffer =
-							rendererType === "satori"
-								? await renderWithSatori(
-										element,
-										imageOptions.width,
-										imageOptions.height,
-									)
-								: await renderWithTakumi(
-										element,
-										imageOptions.width,
-										imageOptions.height,
-									);
+						const pngBuffer = await rendererPngPromise;
 						return { key: "png", value: pngBuffer };
 					} catch (error) {
 						logger.error(`Error generating PNG for ${slug}:`, error);

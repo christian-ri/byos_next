@@ -1,4 +1,11 @@
 import {
+	EInkCard,
+	META_TEXT,
+	ReadableText,
+	SafeTitle,
+	TITLE_TEXT,
+} from "@/app/(app)/recipes/screens/_shared/eink";
+import {
 	clampText,
 	getBitmapLayoutProfile,
 	scaleText,
@@ -20,13 +27,13 @@ function ClockIcon({ size = 18 }: { size?: number }) {
 				cy="12"
 				r="8.5"
 				fill="none"
-				stroke="#fff"
+				stroke="#111"
 				strokeWidth="2"
 			/>
 			<path
 				d="M12 7.5v5l3.5 2"
 				fill="none"
-				stroke="#fff"
+				stroke="#111"
 				strokeWidth="2"
 				strokeLinecap="round"
 				strokeLinejoin="round"
@@ -51,7 +58,7 @@ function AlbumIcon({ size = 18 }: { size?: number }) {
 				height="10"
 				rx="1.5"
 				fill="none"
-				stroke="#fff"
+				stroke="#111"
 				strokeWidth="2"
 			/>
 			<rect
@@ -61,7 +68,7 @@ function AlbumIcon({ size = 18 }: { size?: number }) {
 				height="10"
 				rx="1.5"
 				fill="none"
-				stroke="#fff"
+				stroke="#111"
 				strokeWidth="2"
 				opacity="0.75"
 			/>
@@ -85,35 +92,35 @@ export default function ApplePhotos({
 	height = 480,
 }: ApplePhotosRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const subtitleSize = scaleText(16, profile, {
-		compactBase: 14,
-		denseBase: 11,
-		min: 10,
-		max: 16,
+	const titleSize = scaleText(TITLE_TEXT, profile, {
+		compactBase: 28,
+		denseBase: 24,
+		min: 28,
+		max: 36,
 	});
-	const metaSize = scaleText(14, profile, {
-		compactBase: 12,
-		denseBase: 10,
-		min: 9,
-		max: 14,
+	const albumSize = scaleText(18, profile, {
+		compactBase: 17,
+		denseBase: 16,
+		min: 16,
+		max: 18,
+	});
+	const metaSize = scaleText(META_TEXT, profile, {
+		compactBase: 16,
+		denseBase: 14,
+		min: 14,
+		max: 16,
 	});
 	const overlayPadding = profile.isDense ? 10 : 16;
 	const timeSize = scaleText(28, profile, {
 		compactBase: 24,
-		denseBase: 18,
-		min: 16,
-		max: 28,
-	});
-	const hudSubtitleSize = scaleText(15, profile, {
-		compactBase: 13,
-		denseBase: 10,
-		min: 9,
-		max: 15,
+		denseBase: 22,
+		min: 24,
+		max: 30,
 	});
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
-			<div className="w-full h-full bg-black text-white relative overflow-hidden flex">
+			<div className="w-full h-full bg-white text-black relative overflow-hidden flex">
 				{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 				<img
 					src={imageUrl}
@@ -131,30 +138,22 @@ export default function ApplePhotos({
 					className="absolute left-0 top-0"
 					style={{ padding: overlayPadding }}
 				>
-					<div
-						className="rounded-xl px-4 py-3 flex flex-col"
-						style={{ backgroundColor: "rgba(0, 0, 0, 0.58)" }}
+					<EInkCard
+						padding={16}
+						radius={16}
+						style={{
+							display: "flex",
+							flexDirection: "column",
+							gap: 8,
+							width: profile.isCompact ? 250 : 300,
+						}}
 					>
-						<span
-							className="font-blockkie leading-none"
-							style={{
-								fontSize: scaleText(22, profile, {
-									compactBase: 18,
-									denseBase: 15,
-									min: 13,
-									max: 22,
-								}),
-							}}
-						>
-							{title}
-						</span>
-						<span
-							className="mt-1 text-gray-200 font-geneva9"
-							style={{ fontSize: subtitleSize }}
-						>
-							{clampText(albumName, profile.isDense ? 20 : 30)}
-						</span>
-					</div>
+						<ReadableText size={16}>{title}</ReadableText>
+						<SafeTitle size={titleSize} lines={2}>
+							{clampText(albumName, profile.isDense ? 24 : 36)}
+						</SafeTitle>
+						<ReadableText size={albumSize}>Shared Album</ReadableText>
+					</EInkCard>
 				</div>
 
 				{showTimestamp ? (
@@ -162,12 +161,9 @@ export default function ApplePhotos({
 						className="absolute left-0 bottom-0"
 						style={{ padding: overlayPadding }}
 					>
-						<div
-							className="rounded-xl px-4 py-3"
-							style={{ backgroundColor: "rgba(0, 0, 0, 0.62)" }}
-						>
+						<EInkCard padding={16} radius={16}>
 							<div className="flex items-center gap-3">
-								<ClockIcon size={profile.isDense ? 16 : 18} />
+								<ClockIcon size={20} />
 								<div className="flex flex-col">
 									{currentTime ? (
 										<div
@@ -178,14 +174,14 @@ export default function ApplePhotos({
 										</div>
 									) : null}
 									<div
-										className="mt-1 font-geneva9 leading-none text-gray-200"
-										style={{ fontSize: hudSubtitleSize }}
+										className="mt-1 font-geneva9 leading-none"
+										style={{ fontSize: metaSize }}
 									>
 										{[timeZoneLabel, updatedAt].filter(Boolean).join(" · ")}
 									</div>
 								</div>
 							</div>
-						</div>
+						</EInkCard>
 					</div>
 				) : null}
 
@@ -193,32 +189,34 @@ export default function ApplePhotos({
 					className="absolute right-0 bottom-0"
 					style={{ padding: overlayPadding }}
 				>
-					<div
-						className="rounded-xl px-4 py-3"
-						style={{ backgroundColor: "rgba(0, 0, 0, 0.62)" }}
+					<EInkCard
+						padding={16}
+						radius={16}
+						style={{
+							width: profile.isCompact ? 280 : 320,
+						}}
 					>
 						<div className="flex items-center gap-3">
-							<AlbumIcon size={profile.isDense ? 16 : 18} />
-							<div className="flex flex-col items-end text-right">
+							<AlbumIcon size={20} />
+							<div
+								className="flex flex-col items-end text-right"
+								style={{ width: "100%" }}
+							>
 								{note ? (
-									<div
-										className="font-geneva9 leading-none text-gray-100"
-										style={{ fontSize: subtitleSize }}
-									>
-										{clampText(note, profile.isDense ? 24 : 34)}
-									</div>
+									<ReadableText size={16} align="right">
+										{clampText(note, profile.isDense ? 28 : 40)}
+									</ReadableText>
 								) : null}
 								{showCaption && caption.trim() ? (
-									<div
-										className="mt-1 font-geneva9 leading-none text-gray-300"
-										style={{ fontSize: metaSize }}
-									>
-										{clampText(caption, profile.isDense ? 26 : 42)}
+									<div className="mt-1">
+										<ReadableText size={metaSize} align="right">
+											{clampText(caption, profile.isDense ? 28 : 44)}
+										</ReadableText>
 									</div>
 								) : null}
 							</div>
 						</div>
-					</div>
+					</EInkCard>
 				</div>
 			</div>
 		</PreSatori>

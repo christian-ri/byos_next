@@ -69,6 +69,8 @@ type HourPoint = {
 export type LpWeatherRecipeData = {
 	title: string;
 	locationLabel: string;
+	temperatureUnit: "C" | "F";
+	windUnit: "km/h" | "mph";
 	currentTemp: number;
 	feelsLike: number;
 	condition: string;
@@ -258,6 +260,8 @@ export default async function getData(
 		return {
 			title: "LP Weather",
 			locationLabel: location.name,
+			temperatureUnit: units === "imperial" ? "F" : "C",
+			windUnit: units === "imperial" ? "mph" : "km/h",
 			currentTemp: Math.round(forecast.current?.temperature_2m || 0),
 			feelsLike: Math.round(forecast.current?.apparent_temperature || 0),
 			condition: weatherLabel(forecast.current?.weather_code),
@@ -279,6 +283,8 @@ export default async function getData(
 		return {
 			title: "LP Weather",
 			locationLabel: "Boston, United States",
+			temperatureUnit: units === "imperial" ? "F" : "C",
+			windUnit: units === "imperial" ? "mph" : "km/h",
 			currentTemp: 48,
 			feelsLike: 38,
 			condition: "Overcast",

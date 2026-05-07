@@ -811,6 +811,12 @@
 		"hasDataFetch": true,
 		"props": {},
 		"params": {
+			"location": {
+				"type": "string",
+				"label": "Location",
+				"description": "City or region name for the radar center. Used when latitude/longitude are left empty.",
+				"default": "New York"
+			},
 			"latitude": {
 				"type": "number",
 				"label": "Latitude",
