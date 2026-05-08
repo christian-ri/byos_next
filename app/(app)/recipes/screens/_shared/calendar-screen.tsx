@@ -23,6 +23,10 @@ const MONTH_OVERVIEW_WEEKDAYS = {
 	0: ["SO", "MO", "DI", "MI", "DO", "FR", "SA"],
 	1: ["MO", "DI", "MI", "DO", "FR", "SA", "SO"],
 } as const;
+const TIMELINE_START_HOUR = 6;
+const TIMELINE_END_HOUR = 22;
+const TIMELINE_TOTAL_MINUTES = (TIMELINE_END_HOUR - TIMELINE_START_HOUR) * 60;
+const GERMAN_WEEKDAY_LABELS = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"];
 
 function eventTimeLabel(event: CalendarDayEvent) {
 	if (event.allDay) return "All day";
@@ -451,6 +455,441 @@ function DayCountMarker({ eventCount }: { eventCount: number }) {
 	);
 }
 
+function parseIsoDate(isoDate: string) {
+	return new Date(`${isoDate}T12:00:00`);
+}
+
+function zonedClockLabel(timeZone: string) {
+	return new Intl.DateTimeFormat("de-DE", {
+		timeZone,
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).format(new Date());
+}
+
+function zonedCurrentMinute(timeZone: string) {
+	const parts = new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).formatToParts(new Date());
+
+	const values = parts.reduce<Record<string, string>>((acc, part) => {
+		if (part.type !== "literal") {
+			acc[part.type] = part.value;
+		}
+		return acc;
+	}, {});
+
+	return Number(values.hour || "0") * 60 + Number(values.minute || "0");
+}
+
+function weekRangeLabel(weekDays: CalendarDay[]) {
+	const firstDay = weekDays[0];
+	const lastDay = weekDays.at(-1);
+
+	if (!firstDay || !lastDay) {
+		return "";
+	}
+
+	const firstDate = parseIsoDate(firstDay.isoDate);
+	const lastDate = parseIsoDate(lastDay.isoDate);
+
+	if (firstDate.getFullYear() === lastDate.getFullYear()) {
+		if (firstDate.getMonth() === lastDate.getMonth()) {
+			return `${new Intl.DateTimeFormat("de-DE", {
+				day: "numeric",
+			}).format(firstDate)}. – ${new Intl.DateTimeFormat("de-DE", {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+			}).format(lastDate)}`;
+		}
+
+		return `${new Intl.DateTimeFormat("de-DE", {
+			day: "numeric",
+			month: "short",
+		}).format(firstDate)} – ${new Intl.DateTimeFormat("de-DE", {
+			day: "numeric",
+			month: "long",
+			year: "numeric",
+		}).format(lastDate)}`;
+	}
+
+	return `${new Intl.DateTimeFormat("de-DE", {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	}).format(firstDate)} – ${new Intl.DateTimeFormat("de-DE", {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	}).format(lastDate)}`;
+}
+
+function isoWeekNumber(isoDate: string) {
+	const date = parseIsoDate(isoDate);
+	const day = date.getDay() || 7;
+	date.setDate(date.getDate() + 4 - day);
+	const yearStart = new Date(date.getFullYear(), 0, 1);
+	return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+function timelineMinuteToOffset(minute: number, bodyHeight: number) {
+	return (
+		((minute - TIMELINE_START_HOUR * 60) / TIMELINE_TOTAL_MINUTES) * bodyHeight
+	);
+}
+
+function visibleTimedEvents(day: CalendarDay) {
+	return day.events.filter((event) => {
+		if (event.allDay || event.multiDay) {
+			return false;
+		}
+		if (event.startMinute === null || event.endMinute === null) {
+			return false;
+		}
+		return (
+			event.endMinute > TIMELINE_START_HOUR * 60 &&
+			event.startMinute < TIMELINE_END_HOUR * 60
+		);
+	});
+}
+
+function eventLanes(events: CalendarDayEvent[]) {
+	const placements = events
+		.map((event) => ({
+			event,
+			start: Math.max(event.startMinute || 0, TIMELINE_START_HOUR * 60),
+			end: Math.min(
+				event.endMinute || TIMELINE_END_HOUR * 60,
+				TIMELINE_END_HOUR * 60,
+			),
+		}))
+		.sort((a, b) => (a.start === b.start ? a.end - b.end : a.start - b.start));
+
+	const laneEnds: number[] = [];
+	let laneCount = 0;
+
+	return placements.map((placement) => {
+		let lane = laneEnds.findIndex((end) => end <= placement.start);
+		if (lane === -1) {
+			lane = laneEnds.length;
+			laneEnds.push(placement.end);
+		} else {
+			laneEnds[lane] = placement.end;
+		}
+
+		laneCount = Math.max(laneCount, lane + 1);
+
+		return {
+			...placement,
+			lane,
+			get laneCount() {
+				return laneCount;
+			},
+		};
+	});
+}
+
+function TimelineEventBlocks({
+	day,
+	bodyHeight,
+}: {
+	day: CalendarDay;
+	bodyHeight: number;
+}) {
+	const placements = eventLanes(visibleTimedEvents(day));
+
+	return (
+		<>
+			{placements.map(({ event, start, end, lane, laneCount }) => {
+				const top = timelineMinuteToOffset(start, bodyHeight);
+				const bottom = timelineMinuteToOffset(end, bodyHeight);
+				const height = Math.max(14, bottom - top);
+				const gap = 4;
+				const widthPercent = 100 / laneCount;
+				const leftPercent = lane * widthPercent;
+
+				return (
+					<div
+						key={event.id}
+						style={{
+							position: "absolute",
+							top,
+							left: `calc(${leftPercent}% + ${gap}px)`,
+							width: `calc(${widthPercent}% - ${gap * 2}px)`,
+							height,
+							backgroundColor: "#d9d9d9",
+							border: "2px solid #111",
+							boxSizing: "border-box",
+						}}
+					/>
+				);
+			})}
+		</>
+	);
+}
+
+function WeekTimeline({
+	providerLabel,
+	timeZone,
+	weekDays,
+}: {
+	providerLabel: string;
+	timeZone: string;
+	weekDays: CalendarDay[];
+}) {
+	const clockLabel = zonedClockLabel(timeZone);
+	const weekNumber = weekDays[0] ? isoWeekNumber(weekDays[0].isoDate) : null;
+	const rangeLabel = weekRangeLabel(weekDays);
+	const currentMinute = zonedCurrentMinute(timeZone);
+	const showCurrentMarker =
+		currentMinute >= TIMELINE_START_HOUR * 60 &&
+		currentMinute <= TIMELINE_END_HOUR * 60;
+	const bodyHeight = 284;
+	const markerTop = showCurrentMarker
+		? timelineMinuteToOffset(currentMinute, bodyHeight)
+		: 0;
+	const timeLabels = Array.from(
+		{ length: TIMELINE_END_HOUR - TIMELINE_START_HOUR + 1 },
+		(_, index) => TIMELINE_START_HOUR + index,
+	);
+
+	return (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				flex: 1,
+				border: "2px solid #111",
+				padding: 12,
+				backgroundColor: "#fff",
+				boxSizing: "border-box",
+				gap: 12,
+			}}
+		>
+			<div
+				style={{
+					display: "grid",
+					gridTemplateColumns: "1.3fr 1fr 1.3fr",
+					alignItems: "center",
+					columnGap: 12,
+					paddingBottom: 10,
+					borderBottom: "2px solid #111",
+				}}
+			>
+				<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+					<div
+						style={{
+							width: 28,
+							height: 28,
+							border: "3px solid #111",
+							boxSizing: "border-box",
+						}}
+					/>
+					<SafeTitle size={28} lines={1}>
+						{`${providerLabel.toUpperCase()} KALENDER`}
+					</SafeTitle>
+				</div>
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						gap: 4,
+					}}
+				>
+					<ReadableText size={42} weight={700} style={{ lineHeight: 1 }}>
+						{clockLabel}
+					</ReadableText>
+					<ReadableText size={16} weight={700}>
+						{`Aktualisiert: ${clockLabel}`}
+					</ReadableText>
+				</div>
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "flex-end",
+						gap: 4,
+					}}
+				>
+					<SafeTitle size={26} lines={1}>
+						{weekNumber ? `KW ${weekNumber}` : ""}
+					</SafeTitle>
+					<ReadableText size={16} weight={700}>
+						{rangeLabel}
+					</ReadableText>
+				</div>
+			</div>
+			<div
+				style={{ display: "grid", gridTemplateColumns: "66px repeat(7, 1fr)" }}
+			>
+				<div />
+				{weekDays.slice(0, 7).map((day) => {
+					const dateLabel = `${day.isoDate.slice(8, 10)}.${day.isoDate.slice(
+						5,
+						7,
+					)}.`;
+
+					return (
+						<div
+							key={`header-${day.isoDate}`}
+							style={{
+								height: 64,
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+								justifyContent: "center",
+								gap: 4,
+								borderLeft: "2px solid #111",
+								borderTop: "2px solid #111",
+								borderRight: "2px solid #111",
+								backgroundColor: day.isToday ? "#111" : "#fff",
+								color: day.isToday ? "#fff" : "#111",
+							}}
+						>
+							<ReadableText
+								size={20}
+								weight={700}
+								color={day.isToday ? "#fff" : "#111"}
+							>
+								{GERMAN_WEEKDAY_LABELS[parseIsoDate(day.isoDate).getDay()]}
+							</ReadableText>
+							<ReadableText
+								size={15}
+								weight={700}
+								color={day.isToday ? "#fff" : "#111"}
+							>
+								{dateLabel}
+							</ReadableText>
+							<div
+								style={{
+									transform: "scale(0.8)",
+									transformOrigin: "center",
+								}}
+							>
+								<DayCountMarker eventCount={day.eventCount} />
+							</div>
+						</div>
+					);
+				})}
+			</div>
+			<div
+				style={{ display: "grid", gridTemplateColumns: "66px 1fr", flex: 1 }}
+			>
+				<div
+					style={{
+						position: "relative",
+						height: bodyHeight,
+						borderLeft: "2px solid #111",
+						borderBottom: "2px solid #111",
+						borderTop: "2px solid #111",
+						backgroundColor: "#fff",
+					}}
+				>
+					{timeLabels.map((hour) => {
+						const top =
+							hour === TIMELINE_END_HOUR
+								? bodyHeight - 24
+								: timelineMinuteToOffset(hour * 60, bodyHeight) + 6;
+						return (
+							<ReadableText
+								key={`label-${hour}`}
+								size={14}
+								weight={hour * 60 === currentMinute ? 700 : 600}
+								style={{
+									position: "absolute",
+									top,
+									left: 8,
+									lineHeight: 1,
+								}}
+							>
+								{`${hour.toString().padStart(2, "0")}:00`}
+							</ReadableText>
+						);
+					})}
+					{showCurrentMarker ? (
+						<ReadableText
+							size={14}
+							weight={700}
+							style={{
+								position: "absolute",
+								top: Math.max(0, markerTop - 8),
+								left: 8,
+								lineHeight: 1,
+								backgroundColor: "#fff",
+							}}
+						>
+							{clockLabel}
+						</ReadableText>
+					) : null}
+				</div>
+				<div
+					style={{
+						position: "relative",
+						height: bodyHeight,
+						display: "grid",
+						gridTemplateColumns: "repeat(7, 1fr)",
+						borderTop: "2px solid #111",
+						borderRight: "2px solid #111",
+						borderBottom: "2px solid #111",
+						backgroundColor: "#fff",
+					}}
+				>
+					{timeLabels.map((hour) => {
+						const top = timelineMinuteToOffset(hour * 60, bodyHeight);
+						return (
+							<div
+								key={`hour-line-${hour}`}
+								style={{
+									position: "absolute",
+									top,
+									left: 0,
+									right: 0,
+									borderTop:
+										hour === TIMELINE_START_HOUR
+											? "none"
+											: "1px dashed #b9b9b9",
+								}}
+							/>
+						);
+					})}
+					{showCurrentMarker ? (
+						<div
+							style={{
+								position: "absolute",
+								top: markerTop,
+								left: 0,
+								right: 0,
+								borderTop: "3px solid #111",
+								zIndex: 3,
+							}}
+						/>
+					) : null}
+					{weekDays.slice(0, 7).map((day) => (
+						<div
+							key={`column-${day.isoDate}`}
+							style={{
+								position: "relative",
+								height: bodyHeight,
+								borderLeft: day.isToday ? "3px solid #111" : "2px solid #111",
+								backgroundColor: day.isToday ? "#f2f2f2" : "#fff",
+								boxSizing: "border-box",
+							}}
+						>
+							<TimelineEventBlocks day={day} bodyHeight={bodyHeight} />
+						</div>
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
+
 function MonthOverviewCell({ day }: { day: CalendarDay }) {
 	const dayColor = day.isCurrentMonth ? "#111" : "#9a9a9a";
 
@@ -663,6 +1102,12 @@ export default function CalendarScreen({
 						firstDay={firstDay}
 						monthLabel={monthLabel}
 						monthWeeks={monthWeeks}
+					/>
+				) : eventLayout === "week-timeline" && weekDays.length > 0 ? (
+					<WeekTimeline
+						providerLabel={providerLabel}
+						timeZone={timeZone}
+						weekDays={weekDays}
 					/>
 				) : (
 					<>

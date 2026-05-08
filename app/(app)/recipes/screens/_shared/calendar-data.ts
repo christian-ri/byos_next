@@ -9,6 +9,7 @@ export type CalendarLayout =
 	| "default"
 	| "two-day"
 	| "week"
+	| "week-timeline"
 	| "month"
 	| "month-overview";
 
@@ -24,10 +25,15 @@ export type CalendarDayEvent = {
 	continuesBefore: boolean;
 	continuesAfter: boolean;
 	timeLabel: string;
+	startDateTime: string;
+	endDateTime: string;
+	startMinute: number | null;
+	endMinute: number | null;
 };
 
 export type CalendarDay = {
 	key: string;
+	isoDate: string;
 	label: string;
 	shortLabel: string;
 	dayNumber: string;
@@ -144,6 +150,11 @@ function normalizeLayout(value?: string): CalendarLayout {
 			return "two-day";
 		case "week":
 			return "week";
+		case "week-timeline":
+		case "week_timeline":
+		case "timeline-week":
+		case "week-grid":
+			return "week-timeline";
 		case "month-overview":
 		case "month_overview":
 		case "monthoverview":
@@ -203,6 +214,13 @@ function dayKey(date: Date, timeZone: string) {
 	);
 }
 
+function isoDayKey(date: Date, timeZone: string) {
+	const values = zonedDateBits(date, timeZone);
+	return `${values.year.toString().padStart(4, "0")}-${values.month
+		.toString()
+		.padStart(2, "0")}-${values.day.toString().padStart(2, "0")}`;
+}
+
 function weekdayShort(date: Date, timeZone: string) {
 	return formatDateTime(
 		date,
@@ -255,6 +273,27 @@ function formatClock(date: Date, timeZone: string, timeFormat: "12h" | "24h") {
 		},
 		timeZone,
 	);
+}
+
+function zonedTimeParts(date: Date, timeZone: string) {
+	const parts = new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).formatToParts(date);
+
+	const values = parts.reduce<Record<string, string>>((acc, part) => {
+		if (part.type !== "literal") {
+			acc[part.type] = part.value;
+		}
+		return acc;
+	}, {});
+
+	return {
+		hour: Number(values.hour || "0"),
+		minute: Number(values.minute || "0"),
+	};
 }
 
 function startOfDay(date: Date) {
@@ -846,6 +885,11 @@ function buildEventForDay(
 	options: BuildDayOptions,
 ): CalendarDayEvent {
 	const dayStartKey = dayKey(dayDate, options.timeZone);
+	const dayStart = zonedStartOfDayUtc(dayDate, options.timeZone);
+	const nextDayStart = zonedStartOfDayUtc(
+		addZonedDays(dayDate, 1, options.timeZone),
+		options.timeZone,
+	);
 	const inclusiveEnd = eventEndInclusive(event);
 	const startsToday = dayKey(event.start, options.timeZone) === dayStartKey;
 	const endsToday = dayKey(inclusiveEnd, options.timeZone) === dayStartKey;
@@ -870,6 +914,29 @@ function buildEventForDay(
 		}
 	}
 
+	let startMinute: number | null = null;
+	let endMinute: number | null = null;
+
+	if (!event.allDay) {
+		const segmentStart =
+			event.start > dayStart ? event.start : new Date(dayStart.getTime());
+		const segmentEnd =
+			event.end < nextDayStart
+				? event.end
+				: new Date(nextDayStart.getTime() - 1);
+		const segmentStartParts = zonedTimeParts(segmentStart, options.timeZone);
+		const segmentEndParts = zonedTimeParts(segmentEnd, options.timeZone);
+
+		startMinute = segmentStartParts.hour * 60 + segmentStartParts.minute;
+		endMinute = segmentEndParts.hour * 60 + segmentEndParts.minute;
+
+		if (event.end >= nextDayStart) {
+			endMinute = 24 * 60;
+		} else if (event.end > segmentStart && endMinute <= startMinute) {
+			endMinute = Math.min(24 * 60, startMinute + 15);
+		}
+	}
+
 	return {
 		id: event.id,
 		summary: event.summary,
@@ -882,6 +949,10 @@ function buildEventForDay(
 		continuesBefore,
 		continuesAfter,
 		timeLabel,
+		startDateTime: event.start.toISOString(),
+		endDateTime: event.end.toISOString(),
+		startMinute,
+		endMinute,
 	};
 }
 
@@ -907,6 +978,7 @@ function buildDay(
 
 	return {
 		key: dayKey(dayDate, options.timeZone),
+		isoDate: isoDayKey(dayDate, options.timeZone),
 		label: shortDateLabel(dayDate, options.timeZone),
 		shortLabel: weekdayShort(dayDate, options.timeZone),
 		dayNumber: dayNumber(dayDate, options.timeZone),
@@ -979,8 +1051,9 @@ function buildCalendarData({
 		}),
 	);
 
+	const weekStart = startOfWeek(today, firstDay);
 	const weekDays = Array.from({ length: 7 }, (_, index) =>
-		buildDay(addZonedDays(today, index, timeZone), rawEvents, {
+		buildDay(addZonedDays(weekStart, index, timeZone), rawEvents, {
 			timeZone,
 			timeFormat,
 			includeEventTime,

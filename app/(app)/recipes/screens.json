@@ -671,6 +671,7 @@
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
 					{ "label": "Week", "value": "week" },
+					{ "label": "Week Timeline", "value": "week-timeline" },
 					{ "label": "Month", "value": "month" },
 					{ "label": "Month Overview", "value": "month-overview" }
 				]
@@ -1215,6 +1216,7 @@
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
 					{ "label": "Week", "value": "week" },
+					{ "label": "Week Timeline", "value": "week-timeline" },
 					{ "label": "Month", "value": "month" },
 					{ "label": "Month Overview", "value": "month-overview" }
 				]
@@ -1759,6 +1761,7 @@
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
 					{ "label": "Week", "value": "week" },
+					{ "label": "Week Timeline", "value": "week-timeline" },
 					{ "label": "Month", "value": "month" },
 					{ "label": "Month Overview", "value": "month-overview" }
 				]
