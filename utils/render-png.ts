@@ -86,47 +86,45 @@ export async function renderPng(bmp: Buffer) {
 	}
 
 	// should be smaller than input
-	deflate(uncompressedBuffer, { level: 9 }, (error, result) => {
-		if (error) {
-			console.warn(`deflate error ${error}`);
-			return;
-		}
-		// create the PNG in memory
-		const iDATChunkDataSize = result.byteLength;
-		console.warn(`idat sizer ${iDATChunkDataSize}`);
-		const pngSize = 8 + 25 + chunkSize(iDATChunkDataSize) + 12;
-		var buf = Buffer.alloc(pngSize);
+	return await new Promise<Buffer>((resolve, reject) => {
+		deflate(uncompressedBuffer, { level: 9 }, (error, result) => {
+			if (error) {
+				reject(error);
+				return;
+			}
 
-		//  signature
-		PNG_SIGNATURE.copy(buf, 0);
+			const iDATChunkDataSize = result.byteLength;
+			const pngSize = 8 + 25 + chunkSize(iDATChunkDataSize) + 12;
+			const buf = Buffer.alloc(pngSize);
 
-		// iHDR
-		CHUNK_iHDR.copy(buf, 8); // 25 bytes
-		buf.writeUInt32BE(width, 16); // patch width
-		buf.writeUInt32BE(height, 20); // patch height
-		const crc = crc32(buf.subarray(12, 29));
-		buf.writeUInt32BE(crc, 29);
+			PNG_SIGNATURE.copy(buf, 0);
 
-		let offset = 33;
+			CHUNK_iHDR.copy(buf, 8);
+			buf.writeUInt32BE(width, 16);
+			buf.writeUInt32BE(absHeight, 20);
+			const crc = crc32(buf.subarray(12, 29));
+			buf.writeUInt32BE(crc, 29);
 
-		// IDAT
-		offset = beginWriteChunk(buf, offset, TYPE_IDAT, iDATChunkDataSize);
-		result.copy(buf, offset);
-		offset = endWriteChunk(buf, offset, iDATChunkDataSize);
+			let offset = 33;
+			offset = beginWriteChunk(buf, offset, TYPE_IDAT, iDATChunkDataSize);
+			result.copy(buf, offset);
+			offset = endWriteChunk(buf, offset, iDATChunkDataSize);
 
-		// IEND
-		CHUNK_IEND.copy(buf, 8 + 25 + chunkSize(iDATChunkDataSize));
+			CHUNK_IEND.copy(buf, 8 + 25 + chunkSize(iDATChunkDataSize));
 
-		if (DEBUG) {
-			const pngDestination = "/tmp/toto.png";
-			fs.writeFile(pngDestination, buf, (err) => {
-				if (err)
-					console.warn(
-						`could no write PNG to ${pngDestination} because of ${err}`,
-					);
-			});
-		}
-		return buf;
+			if (DEBUG) {
+				const pngDestination = "/tmp/toto.png";
+				fs.writeFile(pngDestination, buf, (err) => {
+					if (err) {
+						console.warn(
+							`could no write PNG to ${pngDestination} because of ${err}`,
+						);
+					}
+				});
+			}
+
+			resolve(buf);
+		});
 	});
 }
 

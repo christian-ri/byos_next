@@ -4,11 +4,14 @@ import type {
 	CalendarRecipeData,
 } from "@/app/(app)/recipes/screens/_shared/calendar-data";
 import {
-	type BitmapLayoutProfile,
-	clampText,
-	getBitmapLayoutProfile,
-	scaleText,
-} from "@/app/(app)/recipes/screens/_shared/responsive-layout";
+	BORDER_WIDTH,
+	EInkCard,
+	META_TEXT,
+	MetaText,
+	ReadableText,
+	SafeTitle,
+} from "@/app/(app)/recipes/screens/_shared/eink";
+import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
 
 type Props = CalendarRecipeData & {
@@ -16,280 +19,321 @@ type Props = CalendarRecipeData & {
 	height?: number;
 };
 
-type BoxStyle = {
-	position: "absolute";
-	left: number;
-	top: number;
-	width: number;
-	height?: number;
-};
-
-function eventLabel(event: CalendarDayEvent, includeEventTime: boolean) {
-	if (!includeEventTime || !event.timeLabel) return event.summary;
-	return `${event.summary} (${event.timeLabel})`;
-}
-
-function getPanelTop(profile: BitmapLayoutProfile) {
-	return Math.max(
-		74,
-		profile.padding +
-			scaleText(60, profile, {
-				compactBase: 66,
-				denseBase: 58,
-				min: 58,
-				max: 74,
-			}),
-	);
-}
-
-function EventLine({
-	event,
-	includeEventTime,
-	left,
-	top,
-	width,
-	fontSize,
-	maxChars,
-}: {
-	event: CalendarDayEvent;
-	includeEventTime: boolean;
-	left: number;
-	top: number;
-	width: number;
-	fontSize: number;
-	maxChars: number;
-}) {
-	const label = clampText(eventLabel(event, includeEventTime), maxChars);
-	const isBadge = event.allDay || event.multiDay;
-	const style: BoxStyle = {
-		position: "absolute",
-		left,
-		top,
-		width,
-	};
-
-	return (
-		<div
-			style={{
-				...style,
-				display: "flex",
-				alignItems: "center",
-				padding: isBadge ? "3px 6px" : "0px",
-				borderRadius: isBadge ? "4px" : "0px",
-				backgroundColor: isBadge ? "#000" : "transparent",
-				color: isBadge ? "#fff" : "#000",
-				overflow: "hidden",
-			}}
-			className="font-geneva9 leading-none"
-		>
-			<span style={{ fontSize, maxWidth: width }}>{label}</span>
-		</div>
-	);
+function eventTimeLabel(event: CalendarDayEvent) {
+	if (event.allDay) return "All day";
+	if (event.multiDay && !event.timeLabel) return "Multi-day";
+	return event.timeLabel || "TBA";
 }
 
 function Header({
+	providerLabel,
 	title,
 	subtitle,
 	timeZone,
 	updatedAt,
-	width,
-	profile,
 }: {
+	providerLabel: string;
 	title: string;
 	subtitle: string;
 	timeZone: string;
 	updatedAt: string;
-	width: number;
-	profile: BitmapLayoutProfile;
 }) {
-	const headerTop = profile.padding - 2;
-	const leftWidth = Math.max(180, width - (profile.isDense ? 160 : 260));
-	const metaWidth = profile.isDense ? 152 : 220;
+	const mainTitle = subtitle?.trim() || title;
+	const provider = title?.trim() || `${providerLabel} Calendar`;
 
 	return (
-		<>
+		<div
+			style={{
+				display: "flex",
+				justifyContent: "space-between",
+				alignItems: "flex-start",
+				gap: 16,
+			}}
+		>
 			<div
-				style={{
-					position: "absolute",
-					left: profile.padding + 10,
-					top: headerTop,
-					width: leftWidth,
-					display: "flex",
-					flexDirection: "column",
-				}}
+				style={{ display: "flex", flexDirection: "column", gap: 8, width: 470 }}
 			>
-				<div
-					className="font-blockkie leading-none"
-					style={{
-						fontSize: scaleText(34, profile, {
-							compactBase: 28,
-							denseBase: 21,
-							min: 18,
-							max: 34,
-						}),
-					}}
-				>
-					{title}
-				</div>
-				<div
-					className="mt-2 font-geneva9 leading-none"
-					style={{
-						color: "#4b5563",
-						fontSize: scaleText(17, profile, {
-							compactBase: 15,
-							denseBase: 12,
-							min: 11,
-							max: 17,
-						}),
-					}}
-				>
-					{clampText(subtitle, profile.isDense ? 24 : 42)}
-				</div>
+				<MetaText>{provider}</MetaText>
+				<SafeTitle size={32} lines={2}>
+					{mainTitle}
+				</SafeTitle>
 			</div>
 			<div
 				style={{
-					position: "absolute",
-					right: profile.padding + 10,
-					top: headerTop + 2,
-					width: metaWidth,
-					color: "#4b5563",
+					width: 240,
 					display: "flex",
 					flexDirection: "column",
 					alignItems: "flex-end",
 					textAlign: "right",
+					gap: 6,
 				}}
-				className="font-geneva9 leading-none"
 			>
-				<div
-					style={{
-						fontSize: scaleText(12, profile, {
-							compactBase: 11,
-							denseBase: 10,
-							min: 9,
-							max: 12,
-						}),
-					}}
-				>
-					{clampText(timeZone, profile.isDense ? 22 : 30)}
-				</div>
-				<div
-					className="mt-1"
-					style={{
-						fontSize: scaleText(12, profile, {
-							compactBase: 11,
-							denseBase: 10,
-							min: 9,
-							max: 12,
-						}),
-					}}
-				>
-					{updatedAt}
-				</div>
+				<MetaText align="right">{timeZone}</MetaText>
+				<MetaText align="right">Updated {updatedAt}</MetaText>
 			</div>
-		</>
+		</div>
 	);
 }
 
-function PanelHeader({
-	label,
-	note,
-	width,
-	profile,
+function DayHeader({ day }: { day: CalendarDay }) {
+	return (
+		<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+			<ReadableText size={18} weight={700}>
+				{day.label}
+			</ReadableText>
+			<MetaText>{day.shortLabel}</MetaText>
+		</div>
+	);
+}
+
+function EventList({
+	events,
+	maxEvents,
+	cardWidth,
+	compact = false,
 }: {
-	label: string;
-	note?: string;
-	width: number;
-	profile: BitmapLayoutProfile;
+	events: CalendarDayEvent[];
+	maxEvents: number;
+	cardWidth: number;
+	compact?: boolean;
 }) {
-	const panelTop = getPanelTop(profile);
+	const visibleEvents = events.slice(0, maxEvents);
+	const remaining = Math.max(0, events.length - visibleEvents.length);
 
 	return (
-		<>
-			<div
-				style={{
-					position: "absolute",
-					left: profile.padding + 18,
-					top: panelTop + 14,
-					width: Math.max(120, width * 0.28),
-					display: "flex",
-				}}
-				className="font-blockkie leading-none"
-			>
-				<span
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: 10,
+				width: "100%",
+			}}
+		>
+			{visibleEvents.map((event) => (
+				<EInkCard
+					key={event.id}
+					padding={compact ? 10 : 12}
+					radius={compact ? 12 : 14}
 					style={{
-						fontSize: scaleText(20, profile, {
-							compactBase: 16,
-							denseBase: 13,
-							min: 11,
-							max: 20,
-						}),
-					}}
-				>
-					{label}
-				</span>
-			</div>
-			{note ? (
-				<div
-					style={{
-						position: "absolute",
-						right: profile.padding + 18,
-						top: panelTop + 12,
-						width: Math.min(profile.isDense ? 168 : 340, width * 0.46),
-						backgroundColor: "#dbe8ff",
-						borderRadius: "16px",
-						padding: profile.isDense ? "4px 8px" : "6px 12px",
+						width: cardWidth,
+						minHeight: compact ? 64 : 74,
 						display: "flex",
-						alignItems: "center",
+						flexDirection: "column",
 						justifyContent: "center",
+						gap: compact ? 6 : 8,
+						flexShrink: 0,
 					}}
-					className="text-center font-geneva9 leading-none text-[#4f79d8]"
 				>
-					<span
+					<ReadableText
+						size={compact ? 15 : 16}
+						weight={700}
+						style={{ lineHeight: 1 }}
+					>
+						{eventTimeLabel(event)}
+					</ReadableText>
+					<ReadableText
+						size={compact ? 18 : 20}
+						style={{ lineHeight: compact ? 1.04 : 1.08 }}
+					>
+						{event.summary}
+					</ReadableText>
+				</EInkCard>
+			))}
+			{remaining > 0 ? (
+				<ReadableText size={18} weight={700}>
+					+{remaining} more
+				</ReadableText>
+			) : null}
+		</div>
+	);
+}
+
+function DefaultView({ defaultDays }: { defaultDays: CalendarDay[] }) {
+	const columnWidth = 244;
+	const cardWidth = 234;
+	return (
+		<div
+			style={{
+				display: "flex",
+				gap: 10,
+				alignItems: "stretch",
+				justifyContent: "space-between",
+			}}
+		>
+			{defaultDays.map((day, index) => (
+				<div
+					key={day.key}
+					style={{
+						width: columnWidth,
+						display: "flex",
+						flexDirection: "column",
+						gap: 14,
+						paddingRight: index < defaultDays.length - 1 ? 10 : 0,
+						borderRight:
+							index < defaultDays.length - 1 ? "2px solid #111" : "none",
+						boxSizing: "border-box",
+					}}
+				>
+					<DayHeader day={day} />
+					<EventList
+						events={day.events}
+						maxEvents={day.events.length}
+						cardWidth={cardWidth}
+					/>
+				</div>
+			))}
+		</div>
+	);
+}
+
+function TwoDayView({ defaultDays }: { defaultDays: CalendarDay[] }) {
+	const twoDays = defaultDays.slice(0, 2);
+	const cardWidth = 372;
+
+	return (
+		<div
+			style={{
+				display: "flex",
+				gap: 16,
+				alignItems: "stretch",
+				justifyContent: "space-between",
+			}}
+		>
+			{twoDays.map((day) => (
+				<div
+					key={day.key}
+					style={{
+						width: 372,
+						display: "flex",
+						flexDirection: "column",
+						gap: 16,
+						boxSizing: "border-box",
+					}}
+				>
+					<div
 						style={{
-							fontSize: scaleText(11, profile, {
-								compactBase: 11,
-								denseBase: 9,
-								min: 9,
-								max: 12,
-							}),
+							display: "flex",
+							flexDirection: "column",
+							gap: 4,
+							paddingBottom: 8,
+							borderBottom: "2px solid #111",
 						}}
 					>
-						{clampText(note, profile.isDense ? 28 : 54)}
-					</span>
+						<ReadableText size={22} weight={700}>
+							{day.label}
+						</ReadableText>
+						<MetaText size={16}>{day.shortLabel}</MetaText>
+					</div>
+					<EventList
+						events={day.events}
+						maxEvents={day.events.length}
+						cardWidth={cardWidth}
+						compact={true}
+					/>
 				</div>
+			))}
+		</div>
+	);
+}
+
+function WeekView({ weekDays }: { weekDays: CalendarDay[] }) {
+	const cardWidth = 90;
+	return (
+		<div
+			style={{
+				display: "flex",
+				gap: 8,
+			}}
+		>
+			{weekDays.slice(0, 7).map((day) => (
+				<div
+					key={day.key}
+					style={{
+						width: 96,
+						minHeight: 286,
+						display: "flex",
+						flexDirection: "column",
+						gap: 12,
+						paddingRight: 6,
+						borderRight: "2px solid #111",
+					}}
+				>
+					<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+						<ReadableText size={16} weight={700}>
+							{day.shortLabel}
+						</ReadableText>
+						<MetaText>{day.dayNumber}</MetaText>
+					</div>
+					<EventList
+						events={day.events}
+						maxEvents={day.events.length}
+						cardWidth={cardWidth}
+					/>
+				</div>
+			))}
+		</div>
+	);
+}
+
+function MonthCell({ day }: { day: CalendarDay }) {
+	const firstEvent = day.events[0];
+	const remaining = Math.max(0, day.events.length - (firstEvent ? 1 : 0));
+
+	return (
+		<div
+			style={{
+				border: `${BORDER_WIDTH}px solid ${day.isCurrentMonth ? "#111" : "#d4d4d4"}`,
+				padding: 8,
+				minHeight: 88,
+				backgroundColor: day.isToday ? "#111" : "#fff",
+				color: day.isToday ? "#fff" : day.isCurrentMonth ? "#111" : "#7a7a7a",
+				display: "flex",
+				flexDirection: "column",
+				gap: 6,
+				boxSizing: "border-box",
+			}}
+		>
+			<ReadableText
+				size={16}
+				weight={700}
+				color={day.isToday ? "#fff" : day.isCurrentMonth ? "#111" : "#7a7a7a"}
+			>
+				{day.dayNumber}
+			</ReadableText>
+			{firstEvent ? (
+				<>
+					<ReadableText
+						size={14}
+						weight={700}
+						color={day.isToday ? "#fff" : "#111"}
+					>
+						{eventTimeLabel(firstEvent)}
+					</ReadableText>
+					<ReadableText size={14} color={day.isToday ? "#fff" : "#111"}>
+						{firstEvent.summary}
+					</ReadableText>
+				</>
 			) : null}
-		</>
+			{remaining > 0 ? (
+				<ReadableText
+					size={14}
+					weight={700}
+					color={day.isToday ? "#fff" : "#111"}
+				>
+					+{remaining} more
+				</ReadableText>
+			) : null}
+		</div>
 	);
 }
 
 function MonthView({
-	monthWeeks,
 	monthLabel,
-	note,
-	includeEventTime,
-	width,
-	height,
-	profile,
+	monthWeeks,
 }: {
-	monthWeeks: CalendarDay[][];
 	monthLabel: string;
-	note?: string;
-	includeEventTime: boolean;
-	width: number;
-	height: number;
-	profile: BitmapLayoutProfile;
+	monthWeeks: CalendarDay[][];
 }) {
-	const panelTop = getPanelTop(profile);
-	const panelLeft = profile.padding;
-	const panelWidth = width - profile.padding * 2;
-	const panelHeight = height - panelTop - profile.padding;
-	const contentTop = panelTop + (profile.isDense ? 44 : 56);
-	const dayHeaderHeight = profile.isDense ? 20 : 24;
-	const gridTop = contentTop + dayHeaderHeight;
-	const gridHeight = panelTop + panelHeight - gridTop;
-	const colWidth = panelWidth / 7;
-	const rowHeight = gridHeight / Math.max(1, monthWeeks.length);
-	const eventLineHeight = profile.isDense ? 14 : 16;
 	const weekdayHeader = monthWeeks[0]?.map((day) => day.shortLabel) || [
 		"Sun",
 		"Mon",
@@ -301,450 +345,55 @@ function MonthView({
 	];
 
 	return (
-		<>
-			<PanelHeader
-				label={monthLabel}
-				note={note}
-				width={width}
-				profile={profile}
-			/>
-			{weekdayHeader.map((label, index) => (
-				<div
-					key={label}
-					style={{
-						position: "absolute",
-						left: panelLeft + index * colWidth,
-						top: contentTop + 5,
-						width: colWidth,
-						display: "flex",
-						justifyContent: "center",
-					}}
-					className="font-blockkie leading-none"
-				>
-					<span
-						style={{
-							fontSize: scaleText(12, profile, {
-								compactBase: 11,
-								denseBase: 9,
-								min: 9,
-								max: 12,
-							}),
-						}}
-					>
-						{label}
-					</span>
+		<EInkCard
+			padding={14}
+			radius={18}
+			style={{ display: "flex", flexDirection: "column", gap: 12 }}
+		>
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+				}}
+			>
+				<SafeTitle size={30} lines={2}>
+					{monthLabel}
+				</SafeTitle>
+				<MetaText>{monthWeeks.length} weeks</MetaText>
+			</div>
+			<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+				<div style={{ display: "flex", gap: 6 }}>
+					{weekdayHeader.map((label) => (
+						<div key={label} style={{ width: 96, textAlign: "center" }}>
+							<ReadableText size={14} weight={700}>
+								{label}
+							</ReadableText>
+						</div>
+					))}
 				</div>
-			))}
-			{monthWeeks.map((week, weekIndex) =>
-				week.map((day, dayIndex) => {
-					const left = panelLeft + dayIndex * colWidth;
-					const top = gridTop + weekIndex * rowHeight;
-					const textColor = day.isCurrentMonth ? "#000" : "#9ca3af";
-					const visibleEvents = day.events.slice(0, profile.isDense ? 1 : 2);
-
-					return (
-						<div key={`${weekIndex}-${day.key}`}>
-							<div
-								style={{
-									position: "absolute",
-									left,
-									top,
-									width: colWidth,
-									height: rowHeight,
-									borderRight: "1px solid #000",
-									borderBottom: "1px dashed #000",
-								}}
-							/>
-							<div
-								style={{
-									position: "absolute",
-									left: left + colWidth - 26,
-									top: top + 8,
-									width: 20,
-									color: textColor,
-									textAlign: "right",
-								}}
-								className="font-blockkie leading-none"
-							>
-								<span
-									style={{
-										fontSize: scaleText(12, profile, {
-											compactBase: 11,
-											denseBase: 9,
-											min: 9,
-											max: 12,
-										}),
-									}}
-								>
-									{day.dayNumber}
-								</span>
-							</div>
-							{visibleEvents.map((event, eventIndex) => (
-								<EventLine
-									key={`${day.key}-${event.id}`}
-									event={event}
-									includeEventTime={includeEventTime}
-									left={left + 7}
-									top={top + 28 + eventIndex * eventLineHeight}
-									width={colWidth - 14}
-									fontSize={scaleText(10, profile, {
-										compactBase: 11,
-										denseBase: 10,
-										min: 9,
-										max: 12,
-									})}
-									maxChars={profile.isDense ? 9 : 12}
-								/>
-							))}
-						</div>
-					);
-				}),
-			)}
-		</>
-	);
-}
-
-function VerticalRule({
-	left,
-	top,
-	height,
-}: {
-	left: number;
-	top: number;
-	height: number;
-}) {
-	return (
-		<div
-			style={{
-				position: "absolute",
-				left,
-				top,
-				width: 1,
-				height,
-				backgroundColor: "#000",
-			}}
-		/>
-	);
-}
-
-function HorizontalDashRule({
-	left,
-	top,
-	width,
-}: {
-	left: number;
-	top: number;
-	width: number;
-}) {
-	const segmentWidth = 7;
-	const gapWidth = 5;
-	const segmentCount = Math.max(
-		1,
-		Math.floor(width / (segmentWidth + gapWidth)),
-	);
-
-	return (
-		<>
-			{Array.from({ length: segmentCount }).map((_, index) => (
-				<div
-					key={`dash-${index}`}
-					style={{
-						position: "absolute",
-						left: left + index * (segmentWidth + gapWidth),
-						top,
-						width: segmentWidth,
-						height: 1,
-						backgroundColor: "#000",
-					}}
-				/>
-			))}
-		</>
-	);
-}
-
-function WeekView({
-	weekDays,
-	note,
-	includeEventTime,
-	width,
-	height,
-	profile,
-}: {
-	weekDays: CalendarDay[];
-	note?: string;
-	includeEventTime: boolean;
-	width: number;
-	height: number;
-	profile: BitmapLayoutProfile;
-}) {
-	const panelTop = getPanelTop(profile);
-	const panelLeft = profile.padding;
-	const panelWidth = width - profile.padding * 2;
-	const panelHeight = height - panelTop - profile.padding;
-	const contentTop = panelTop + (profile.isDense ? 44 : 56);
-	const colWidth = panelWidth / 7;
-
-	return (
-		<>
-			<PanelHeader
-				label="This Week"
-				note={note}
-				width={width}
-				profile={profile}
-			/>
-			{weekDays.map((day, dayIndex) => {
-				const left = panelLeft + dayIndex * colWidth;
-				const maxEvents = day.events.slice(0, profile.isDense ? 3 : 4);
-				const eventTop = contentTop + (profile.isDense ? 54 : 62);
-				const eventSpacing = profile.isDense ? 18 : 22;
-
-				return (
-					<div key={day.key}>
-						<VerticalRule
-							left={left + colWidth}
-							top={contentTop}
-							height={panelTop + panelHeight - contentTop}
-						/>
-						{dayIndex === 0 ? (
-							<HorizontalDashRule
-								left={panelLeft}
-								top={contentTop}
-								width={panelWidth}
-							/>
-						) : null}
-						<div
-							style={{
-								position: "absolute",
-								left,
-								top: contentTop + 12,
-								width: colWidth,
-								display: "flex",
-								flexDirection: "column",
-								alignItems: "center",
-							}}
-							className="text-center leading-none"
-						>
-							<div
-								className="font-blockkie leading-none"
-								style={{
-									fontSize: scaleText(13, profile, {
-										compactBase: 12,
-										denseBase: 10,
-										min: 10,
-										max: 13,
-									}),
-								}}
-							>
-								{day.shortLabel}
-							</div>
-							<div
-								className="mt-1 font-geneva9"
-								style={{
-									fontSize: scaleText(12, profile, {
-										compactBase: 11,
-										denseBase: 9,
-										min: 9,
-										max: 12,
-									}),
-								}}
-							>
-								{day.label}
-							</div>
-						</div>
-						{maxEvents.length > 0 ? (
-							maxEvents.map((event, eventIndex) => (
-								<EventLine
-									key={`${day.key}-${event.id}`}
-									event={event}
-									includeEventTime={includeEventTime}
-									left={left + 8}
-									top={eventTop + eventIndex * eventSpacing}
-									width={colWidth - 16}
-									fontSize={scaleText(13, profile, {
-										compactBase: 13,
-										denseBase: 11,
-										min: 10,
-										max: 15,
-									})}
-									maxChars={profile.isDense ? 11 : 16}
-								/>
-							))
-						) : (
-							<div
-								style={{
-									position: "absolute",
-									left: left + 10,
-									top: eventTop,
-									width: colWidth - 20,
-									color: "#9ca3af",
-								}}
-								className="font-geneva9 leading-none"
-							>
-								<span
-									style={{
-										fontSize: scaleText(10, profile, {
-											compactBase: 10,
-											denseBase: 9,
-											min: 9,
-											max: 11,
-										}),
-									}}
-								>
-									-
-								</span>
-							</div>
-						)}
-					</div>
-				);
-			})}
-		</>
-	);
-}
-
-function DefaultView({
-	defaultDays,
-	note,
-	includeDescription,
-	includeEventTime,
-	width,
-	height,
-	profile,
-}: {
-	defaultDays: CalendarDay[];
-	note?: string;
-	includeDescription: boolean;
-	includeEventTime: boolean;
-	width: number;
-	height: number;
-	profile: BitmapLayoutProfile;
-}) {
-	const panelTop = getPanelTop(profile);
-	const panelLeft = profile.padding;
-	const panelWidth = width - profile.padding * 2;
-	const panelHeight = height - panelTop - profile.padding;
-	const contentTop = panelTop + (profile.isDense ? 44 : 56);
-	const colWidth = panelWidth / 3;
-
-	return (
-		<>
-			<PanelHeader
-				label="Upcoming"
-				note={note}
-				width={width}
-				profile={profile}
-			/>
-			{defaultDays.map((day, dayIndex) => {
-				const left = panelLeft + dayIndex * colWidth;
-				return (
-					<div key={day.key}>
-						<VerticalRule
-							left={left + colWidth}
-							top={contentTop}
-							height={panelTop + panelHeight - contentTop}
-						/>
-						{dayIndex === 0 ? (
-							<HorizontalDashRule
-								left={panelLeft}
-								top={contentTop}
-								width={panelWidth}
-							/>
-						) : null}
-						<div
-							style={{
-								position: "absolute",
-								left: left + 14,
-								top: contentTop + 16,
-								width: colWidth - 28,
-								display: "flex",
-								flexDirection: "column",
-							}}
-							className="font-geneva9 leading-tight"
-						>
-							<div
-								className="font-blockkie leading-none"
-								style={{
-									fontSize: scaleText(16, profile, {
-										compactBase: 15,
-										denseBase: 12,
-										min: 11,
-										max: 17,
-									}),
-								}}
-							>
-								{day.shortLabel}
-							</div>
-							<div
-								style={{
-									fontSize: scaleText(13, profile, {
-										compactBase: 12,
-										denseBase: 10,
-										min: 10,
-										max: 14,
-									}),
-								}}
-							>
-								{day.label}
-							</div>
-						</div>
-						{day.events.slice(0, 5).map((event, eventIndex) => (
-							<div key={`${day.key}-${event.id}`}>
-								<EventLine
-									event={event}
-									includeEventTime={includeEventTime}
-									left={left + 14}
-									top={contentTop + 68 + eventIndex * 34}
-									width={colWidth - 28}
-									fontSize={scaleText(15, profile, {
-										compactBase: 15,
-										denseBase: 13,
-										min: 11,
-										max: 17,
-									})}
-									maxChars={profile.isDense ? 18 : 28}
-								/>
-								{includeDescription && event.description ? (
-									<div
-										style={{
-											position: "absolute",
-											left: left + 14,
-											top: contentTop + 84 + eventIndex * 34,
-											width: colWidth - 28,
-											color: "#6b7280",
-										}}
-										className="font-geneva9 leading-none"
-									>
-										<span
-											style={{
-												fontSize: scaleText(10, profile, {
-													compactBase: 11,
-													denseBase: 10,
-													min: 10,
-													max: 12,
-												}),
-											}}
-										>
-											{clampText(event.description, profile.isDense ? 22 : 34)}
-										</span>
-									</div>
-								) : null}
+				{monthWeeks.map((week, index) => (
+					<div key={`week-${index}`} style={{ display: "flex", gap: 6 }}>
+						{week.map((day) => (
+							<div key={day.key} style={{ width: 96 }}>
+								<MonthCell day={day} />
 							</div>
 						))}
 					</div>
-				);
-			})}
-		</>
+				))}
+			</div>
+		</EInkCard>
 	);
 }
 
 export default function CalendarScreen({
+	providerLabel = "Calendar",
 	title = "Calendar",
 	subtitle = "Personal Calendar",
 	timeZone = "America/New_York",
 	updatedAt = "",
 	note,
 	eventLayout = "month",
-	includeDescription = true,
-	includeEventTime = true,
 	defaultDays = [],
 	weekDays = [],
 	monthWeeks = [],
@@ -753,65 +402,41 @@ export default function CalendarScreen({
 	height = 480,
 }: Props) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const isMonth = eventLayout === "month";
-	const isWeek = eventLayout === "week";
-	const panelTop = getPanelTop(profile);
-	const panelWidth = width - profile.padding * 2;
-	const panelHeight = height - panelTop - profile.padding;
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
-			<div className="relative h-full w-full overflow-hidden bg-[#efefed] text-black">
+			<div
+				style={{
+					width: "100%",
+					height: "100%",
+					backgroundColor: "#f3f1ee",
+					padding: profile.padding,
+					display: "flex",
+					flexDirection: "column",
+					gap: 14,
+				}}
+			>
 				<Header
+					providerLabel={providerLabel}
 					title={title}
 					subtitle={subtitle}
 					timeZone={timeZone}
 					updatedAt={updatedAt}
-					width={width}
-					profile={profile}
 				/>
-				<div
-					style={{
-						position: "absolute",
-						left: profile.padding,
-						top: panelTop,
-						width: panelWidth,
-						height: panelHeight,
-						backgroundColor: "#fff",
-						border: "1px solid #d1d5db",
-						borderRadius: `${profile.panelRadius}px`,
-					}}
-				/>
-				{isMonth ? (
-					<MonthView
-						monthWeeks={monthWeeks}
-						monthLabel={monthLabel}
-						note={note}
-						includeEventTime={includeEventTime}
-						width={width}
-						height={height}
-						profile={profile}
-					/>
-				) : isWeek ? (
-					<WeekView
-						weekDays={weekDays}
-						note={note}
-						includeEventTime={includeEventTime}
-						width={width}
-						height={height}
-						profile={profile}
-					/>
+				{eventLayout === "month" && monthWeeks.length > 0 ? (
+					<MonthView monthLabel={monthLabel} monthWeeks={monthWeeks} />
+				) : eventLayout === "two-day" ? (
+					<TwoDayView defaultDays={defaultDays} />
+				) : eventLayout === "week" ? (
+					<WeekView weekDays={weekDays} />
 				) : (
-					<DefaultView
-						defaultDays={defaultDays}
-						note={note}
-						includeDescription={includeDescription}
-						includeEventTime={includeEventTime}
-						width={width}
-						height={height}
-						profile={profile}
-					/>
+					<DefaultView defaultDays={defaultDays} />
 				)}
+				{note ? (
+					<div style={{ marginTop: "auto" }}>
+						<MetaText size={META_TEXT}>{note}</MetaText>
+					</div>
+				) : null}
 			</div>
 		</PreSatori>
 	);

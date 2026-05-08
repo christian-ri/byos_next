@@ -188,7 +188,6 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 							(a, b) =>
 								(a.position_current || 999) - (b.position_current || 999),
 						)
-						.slice(0, 5)
 						.map((entry) => ({
 							position: entry.position_current || 0,
 							team: entry.team_name,
@@ -209,7 +208,6 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 
 						return [...teamTotals.entries()]
 							.sort((a, b) => b[1] - a[1])
-							.slice(0, 5)
 							.map(([team, points], index) => ({
 								position: index + 1,
 								team,
@@ -317,6 +315,14 @@ export default async function getData(): Promise<F1RaceStandingsRecipeData> {
 				{ position: 1, team: "Mercedes", points: 135, teamBadge: "M" },
 				{ position: 2, team: "Ferrari", points: 90, teamBadge: "F" },
 				{ position: 3, team: "McLaren", points: 46, teamBadge: "Mc" },
+				{ position: 4, team: "Red Bull Racing", points: 41, teamBadge: "RB" },
+				{ position: 5, team: "Alpine", points: 28, teamBadge: "A" },
+				{ position: 6, team: "Aston Martin", points: 24, teamBadge: "AM" },
+				{ position: 7, team: "Williams", points: 19, teamBadge: "W" },
+				{ position: 8, team: "Racing Bulls", points: 16, teamBadge: "RB" },
+				{ position: 9, team: "Haas", points: 13, teamBadge: "H" },
+				{ position: 10, team: "Audi", points: 9, teamBadge: "Au" },
+				{ position: 11, team: "Cadillac", points: 3, teamBadge: "Ca" },
 			],
 			updatedAt: formatUpdatedAt(new Date()),
 			note: "Live F1 fetch failed, so this preview is showing sample standings.",

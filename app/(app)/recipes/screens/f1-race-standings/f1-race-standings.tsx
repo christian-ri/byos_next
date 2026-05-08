@@ -1,19 +1,42 @@
 import {
-	clampText,
-	getBitmapLayoutProfile,
-	scaleText,
-} from "@/app/(app)/recipes/screens/_shared/responsive-layout";
+	EInkCard,
+	META_TEXT,
+	MetaText,
+	ReadableText,
+	SafeTitle,
+} from "@/app/(app)/recipes/screens/_shared/eink";
+import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import fontData from "@/components/bitmap-font/bitmap-font.json";
 import { BitmapText } from "@/components/bitmap-font/bitmap-text";
 import { PreSatori } from "@/utils/pre-satori";
 import type { F1RaceStandingsRecipeData } from "./getData";
 
-function compactDriverName(name: string) {
-	const parts = name.trim().split(/\s+/).filter(Boolean);
-	if (parts.length <= 2) {
-		return name;
+function splitHeadline(value: string) {
+	const words = value.trim().split(/\s+/).filter(Boolean);
+	if (words.length <= 2) {
+		return [value];
 	}
-	return `${parts[0]} ${parts[parts.length - 1]}`;
+
+	if (words.length === 3) {
+		return [words[0], words.slice(1).join(" ")];
+	}
+
+	let bestIndex = 1;
+	let bestDelta = Number.POSITIVE_INFINITY;
+	for (let index = 1; index < words.length; index += 1) {
+		const left = words.slice(0, index).join(" ");
+		const right = words.slice(index).join(" ");
+		const delta = Math.abs(left.length - right.length);
+		if (delta < bestDelta) {
+			bestDelta = delta;
+			bestIndex = index;
+		}
+	}
+
+	return [
+		words.slice(0, bestIndex).join(" "),
+		words.slice(bestIndex).join(" "),
+	];
 }
 
 export default function F1RaceStandings({
@@ -23,216 +46,207 @@ export default function F1RaceStandings({
 	nextRaceRound,
 	nextRaceTrackImageUrl,
 	driverStandings,
-	updatedAt,
 	note,
 	width = 800,
 	height = 480,
 }: F1RaceStandingsRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const leftWidth = profile.isCompact ? 220 : 232;
-	const rightWidth = width - profile.padding * 2 - leftWidth - profile.gap;
-	const rowNameSize = scaleText(18, profile, {
-		compactBase: 16,
-		denseBase: 14,
-		min: 13,
-		max: 18,
-	});
+	const leftWidth = 286;
+	const raceNameLines = splitHeadline(nextRaceName);
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div
-				className="flex h-full w-full border border-black bg-[#f3f1ee]"
-				style={{ padding: profile.padding, gap: profile.gap }}
+				style={{
+					width: "100%",
+					height: "100%",
+					backgroundColor: "#f3f1ee",
+					padding: profile.padding,
+					display: "flex",
+					gap: 14,
+				}}
 			>
 				<div
-					className="flex h-full flex-col rounded-2xl bg-white"
 					style={{
 						width: leftWidth,
-						border: "1px solid #111",
-						padding: 16,
-						flexShrink: 0,
+						display: "flex",
+						flexDirection: "column",
+						gap: 14,
 					}}
 				>
-					<div
-						className="font-geneva9 uppercase"
+					<EInkCard
+						padding={14}
+						radius={18}
 						style={{
-							fontSize: 12,
-							letterSpacing: "0.18em",
-							borderBottom: "1px solid #111",
-							paddingBottom: 8,
-							color: "#111",
+							height: 198,
+							flexShrink: 0,
+							display: "flex",
+							flexDirection: "column",
+							gap: 10,
 						}}
 					>
-						Next Race
-					</div>
-
-					<div
-						className="mt-4 flex items-center justify-center"
-						style={{ minHeight: 156 }}
-					>
-						{nextRaceTrackImageUrl ? (
-							// biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs
-							<img
-								src={nextRaceTrackImageUrl}
-								alt={nextRaceName}
-								style={{
-									width: "100%",
-									maxWidth: 180,
-									maxHeight: 132,
-									objectFit: "contain",
-								}}
-							/>
-						) : (
-							<div
-								className="flex items-center justify-center rounded-2xl border border-black"
-								style={{ width: 180, height: 124 }}
-							>
-								<span className="font-blockkie text-[24px]">F1</span>
-							</div>
-						)}
-					</div>
-
-					<div
-						className="mt-3 leading-none"
-						style={{
-							minHeight: 56,
-						}}
-					>
-						<BitmapText
-							text={clampText(nextRaceName, 18)}
-							fontData={fontData}
-							gridSize="8x16"
-							scale={profile.isCompact ? 2 : 3}
-							gap={0}
-						/>
-					</div>
-
-					<div className="mt-5 flex gap-6">
-						<div className="font-geneva9">
-							<div className="text-[12px] text-[#6b7280]">Race Date</div>
-							<div className="mt-1 font-blockkie text-[18px] leading-none">
-								{nextRaceDate}
-							</div>
+						<MetaText>F1 Driver Standings</MetaText>
+						<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+							{raceNameLines.map((line) => (
+								<BitmapText
+									key={line}
+									text={line}
+									fontData={fontData}
+									gridSize="7x8"
+									scale={1.7}
+									gap={0}
+								/>
+							))}
 						</div>
-						<div className="font-geneva9">
-							<div className="text-[12px] text-[#6b7280]">Round</div>
-							<div className="mt-1 font-blockkie text-[18px] leading-none">
+						<div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+							<ReadableText size={16} weight={700}>
 								{nextRaceRound}
-							</div>
+							</ReadableText>
+							<MetaText size={15}>{nextRaceDate}</MetaText>
 						</div>
-					</div>
-				</div>
+					</EInkCard>
 
-				<div
-					className="flex h-full flex-col rounded-2xl bg-white"
-					style={{
-						width: rightWidth,
-						border: "1px solid #111",
-						padding: 16,
-						overflow: "hidden",
-					}}
-				>
-					<div className="flex items-end justify-between">
-						<div
-							className="font-blockkie leading-none"
-							style={{
-								fontSize: scaleText(24, profile, {
-									compactBase: 20,
-									denseBase: 18,
-									min: 16,
-									max: 24,
-								}),
-							}}
-						>
-							Driver Standings {seasonLabel.replace(" season", "")}
-						</div>
-						<div className="font-geneva9 text-[12px] text-[#4b5563]">
-							Updated {updatedAt}
-						</div>
-					</div>
-
-					<div className="mt-3 flex flex-1 flex-col">
-						{driverStandings.map((driver, index) => (
+					<EInkCard padding={14} radius={18} style={{ flex: 1 }}>
+						{nextRaceTrackImageUrl ? (
 							<div
-								key={`${driver.position}-${driver.name}`}
-								className="flex items-center justify-between"
 								style={{
-									padding: "10px 0",
-									borderBottom:
-										index === driverStandings.length - 1
-											? "none"
-											: "1px solid #d9d9d9",
-									gap: 12,
+									display: "flex",
+									flexDirection: "column",
+									gap: 6,
+									height: "100%",
 								}}
 							>
 								<div
-									className="flex items-center"
-									style={{ gap: 12, flex: 1, minWidth: 0 }}
-								>
-									<div
-										className="font-blockkie leading-none"
-										style={{ width: 22, fontSize: 18, flexShrink: 0 }}
-									>
-										{driver.position}
-									</div>
-									<div
-										className="overflow-hidden rounded-full border border-[#d1d5db] bg-[#efefef]"
-										style={{ width: 42, height: 42, flexShrink: 0 }}
-									>
-										{driver.headshotUrl ? (
-											// biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs
-											<img
-												src={driver.headshotUrl}
-												alt={driver.name}
-												style={{
-													width: "100%",
-													height: "100%",
-													objectFit: "cover",
-												}}
-											/>
-										) : (
-											<div className="flex h-full w-full items-center justify-center font-geneva9 text-[11px]">
-												{driver.teamBadge}
-											</div>
-										)}
-									</div>
-									<div
-										className="flex flex-col"
-										style={{ flex: 1, minWidth: 0, maxWidth: rightWidth - 150 }}
-									>
-										<div
-											className="font-blockkie leading-none"
-											style={{ fontSize: rowNameSize }}
-										>
-											{clampText(compactDriverName(driver.name), 15)}
-										</div>
-										<div
-											className="mt-1 font-geneva9 text-[#4b5563]"
-											style={{ fontSize: 12 }}
-										>
-											{clampText(driver.team, 14)}
-										</div>
-									</div>
-								</div>
-								<div
-									className="font-blockkie leading-none"
 									style={{
-										width: 52,
-										fontSize: 22,
-										textAlign: "right",
-										flexShrink: 0,
+										flex: 1,
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										padding: 0,
 									}}
 								>
-									{driver.points}
+									{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
+									<img
+										src={nextRaceTrackImageUrl}
+										alt={nextRaceName}
+										style={{
+											width: "100%",
+											height: "100%",
+											objectFit: "contain",
+											display: "block",
+										}}
+									/>
+								</div>
+								{note ? (
+									<MetaText size={14} style={{ lineHeight: 1.05 }}>
+										{note}
+									</MetaText>
+								) : null}
+							</div>
+						) : (
+							<div
+								style={{ display: "flex", flexDirection: "column", gap: 10 }}
+							>
+								<ReadableText size={20}>{nextRaceName}</ReadableText>
+								{note ? <MetaText size={META_TEXT}>{note}</MetaText> : null}
+							</div>
+						)}
+					</EInkCard>
+				</div>
+
+				<EInkCard
+					padding={16}
+					radius={18}
+					style={{
+						flex: 1,
+						display: "flex",
+						flexDirection: "column",
+						gap: 10,
+					}}
+				>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "flex-end",
+						}}
+					>
+						<SafeTitle size={28} lines={2}>
+							Top Drivers
+						</SafeTitle>
+						<MetaText>{seasonLabel.replace(" season", "")}</MetaText>
+					</div>
+					<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+						{driverStandings.map((driver) => (
+							<div
+								key={`${driver.position}-${driver.name}`}
+								style={{
+									display: "flex",
+									alignItems: "center",
+									gap: 12,
+									border: "2px solid #111",
+									padding: "10px 12px",
+									minHeight: 58,
+								}}
+							>
+								<div
+									className="font-blockkie"
+									style={{ fontSize: 22, width: 24 }}
+								>
+									{driver.position}
+								</div>
+								<div
+									style={{
+										width: 42,
+										height: 42,
+										borderRadius: 21,
+										border: "2px solid #111",
+										overflow: "hidden",
+										flexShrink: 0,
+										backgroundColor: "#fff",
+									}}
+								>
+									{driver.headshotUrl ? (
+										/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */
+										<img
+											src={driver.headshotUrl}
+											alt={driver.name}
+											style={{
+												width: "100%",
+												height: "100%",
+												objectFit: "cover",
+												display: "block",
+											}}
+										/>
+									) : null}
+								</div>
+								<div
+									style={{
+										flex: 1,
+										display: "flex",
+										flexDirection: "column",
+										gap: 4,
+										minWidth: 0,
+									}}
+								>
+									<ReadableText size={20} weight={700}>
+										{driver.name}
+									</ReadableText>
+									<MetaText>{driver.team}</MetaText>
+								</div>
+								<div style={{ textAlign: "right", minWidth: 54 }}>
+									<div
+										className="font-blockkie"
+										style={{ fontSize: 24, lineHeight: 1 }}
+									>
+										{driver.points}
+									</div>
+									<MetaText>pts</MetaText>
 								</div>
 							</div>
 						))}
 					</div>
-
-					<div className="mt-3 font-geneva9 text-[11px] text-[#4b5563]">
-						{clampText(note || "Driver standings via OpenF1.", 92)}
-					</div>
-				</div>
+				</EInkCard>
 			</div>
 		</PreSatori>
 	);

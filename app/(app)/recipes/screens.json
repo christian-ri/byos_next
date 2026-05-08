@@ -302,10 +302,16 @@
 				"default": "America/New_York"
 			},
 			"eventLayout": {
-				"type": "string",
+				"type": "select",
 				"label": "Layout",
-				"description": "Use default, week, or month.",
-				"default": "month"
+				"description": "Choose the calendar layout.",
+				"default": "month",
+				"options": [
+					{ "label": "Default (3 Days)", "value": "default" },
+					{ "label": "Two Days", "value": "two-day" },
+					{ "label": "Week", "value": "week" },
+					{ "label": "Month", "value": "month" }
+				]
 			},
 			"timeFormat": {
 				"type": "string",
@@ -406,10 +412,16 @@
 				"default": "America/New_York"
 			},
 			"eventLayout": {
-				"type": "string",
+				"type": "select",
 				"label": "Layout",
-				"description": "Use default, week, or month.",
-				"default": "month"
+				"description": "Choose the calendar layout.",
+				"default": "month",
+				"options": [
+					{ "label": "Default (3 Days)", "value": "default" },
+					{ "label": "Two Days", "value": "two-day" },
+					{ "label": "Week", "value": "week" },
+					{ "label": "Month", "value": "month" }
+				]
 			},
 			"timeFormat": {
 				"type": "string",
@@ -510,10 +522,16 @@
 				"default": "America/New_York"
 			},
 			"eventLayout": {
-				"type": "string",
+				"type": "select",
 				"label": "Layout",
-				"description": "Use default, week, or month.",
-				"default": "month"
+				"description": "Choose the calendar layout.",
+				"default": "month",
+				"options": [
+					{ "label": "Default (3 Days)", "value": "default" },
+					{ "label": "Two Days", "value": "two-day" },
+					{ "label": "Week", "value": "week" },
+					{ "label": "Month", "value": "month" }
+				]
 			},
 			"timeFormat": {
 				"type": "string",
@@ -811,6 +829,12 @@
 		"hasDataFetch": true,
 		"props": {},
 		"params": {
+			"location": {
+				"type": "string",
+				"label": "Location",
+				"description": "City or region name for the radar center. Used when latitude/longitude are left empty.",
+				"default": "New York"
+			},
 			"latitude": {
 				"type": "number",
 				"label": "Latitude",
@@ -950,7 +974,7 @@
 		"published": true,
 		"createdAt": "2026-05-03T00:00:00Z",
 		"updatedAt": "2026-05-03T00:00:00Z",
-		"description": "Projects and recent deployments from the Vercel REST API.",
+		"description": "Non-interactive 800x480 eInk dashboard for Vercel projects, deployments, and current production health.",
 		"componentPath": "./screens/vercel-overview",
 		"hasDataFetch": true,
 		"props": {},
@@ -958,29 +982,87 @@
 			"apiToken": {
 				"type": "string",
 				"label": "Vercel API Token",
-				"description": "Personal or team-scoped Vercel access token.",
+				"description": "Personal or team-scoped Vercel access token. Leave blank to use VERCEL_TOKEN from the environment.",
 				"default": ""
 			},
 			"teamId": {
 				"type": "string",
 				"label": "Team ID",
-				"description": "Optional team ID if you want to read team resources.",
+				"description": "Optional team ID if you want to read team resources. Leave blank for the personal account or VERCEL_TEAM_ID.",
 				"default": ""
-			},
-			"projectLimit": {
-				"type": "number",
-				"label": "Projects",
-				"description": "How many projects to show.",
-				"default": 4
-			},
-			"deploymentLimit": {
-				"type": "number",
-				"label": "Deployments",
-				"description": "How many deployments to show.",
-				"default": 4
 			}
 		},
-		"tags": ["vercel", "deployments", "projects", "api"],
+		"tags": ["vercel", "deployments", "projects", "dashboard", "api"],
+		"author": {
+			"name": "BYOS",
+			"github": "christian-ri"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"github-monitor": {
+		"title": "GitHub Monitor",
+		"published": true,
+		"createdAt": "2026-05-07T00:00:00Z",
+		"updatedAt": "2026-05-07T00:00:00Z",
+		"description": "Black-and-white GitHub monitoring dashboard for repositories, pull requests, issues, workflows, and security alerts.",
+		"componentPath": "./screens/github-monitor",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"githubToken": {
+				"type": "string",
+				"label": "GitHub Token",
+				"description": "Required for live data. Leave blank to use GITHUB_TOKEN from the environment or mock preview data.",
+				"default": ""
+			},
+			"owner": {
+				"type": "string",
+				"label": "Owner",
+				"description": "GitHub user or organization name.",
+				"default": "christian-ri"
+			},
+			"repositories": {
+				"type": "string",
+				"label": "Repositories",
+				"description": "Optional comma-separated repo list. Leave blank to auto-load visible repositories for the owner.",
+				"default": ""
+			},
+			"includePrivateRepos": {
+				"type": "boolean",
+				"label": "Include Private Repos",
+				"description": "Defaults to true when the token can access private repositories.",
+				"default": true
+			},
+			"staleDays": {
+				"type": "number",
+				"label": "Stale Days",
+				"description": "Threshold for stale pull requests, issues, and commits.",
+				"default": 14
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Timezone",
+				"description": "IANA timezone for the dashboard clock.",
+				"default": "Europe/Berlin"
+			},
+			"maxRepos": {
+				"type": "number",
+				"label": "Max Repos",
+				"description": "Maximum number of repositories to analyze.",
+				"default": 6
+			},
+			"maxWorkflowRuns": {
+				"type": "number",
+				"label": "Max Workflow Runs",
+				"description": "Maximum number of workflow rows to render.",
+				"default": 5
+			}
+		},
+		"tags": ["github", "dashboard", "workflows", "issues", "security", "api"],
 		"author": {
 			"name": "BYOS",
 			"github": "christian-ri"

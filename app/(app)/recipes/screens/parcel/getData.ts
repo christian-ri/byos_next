@@ -161,14 +161,17 @@ export default async function getData(
 
 		if (!data.success || !data.deliveries) {
 			return {
-				...buildFallback(data.error_message || "Parcel API returned no deliveries."),
+				...buildFallback(
+					data.error_message || "Parcel API returned no deliveries.",
+				),
 				error: data.error_message,
 			};
 		}
 
 		return {
 			filterMode:
-				filterMode.charAt(0).toUpperCase() + filterMode.slice(1).replaceAll("_", " "),
+				filterMode.charAt(0).toUpperCase() +
+				filterMode.slice(1).replaceAll("_", " "),
 			style: style.charAt(0).toUpperCase() + style.slice(1),
 			updatedAt: formatUpdatedAt(new Date()),
 			deliveries: data.deliveries.slice(0, 6).map((delivery) => ({

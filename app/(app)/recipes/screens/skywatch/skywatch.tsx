@@ -1,92 +1,72 @@
 import {
-	clampText,
-	getBitmapLayoutProfile,
-	scaleText,
-} from "@/app/(app)/recipes/screens/_shared/responsive-layout";
+	MetaText,
+	ReadableText,
+	SafeTitle,
+} from "@/app/(app)/recipes/screens/_shared/eink";
+import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
 import type { SkyWatchRecipeData } from "./getData";
 
-function PlaneIcon({
-	heading,
-	brightness,
-	size = 28,
+function AircraftCard({
+	flight,
 }: {
-	heading: number;
-	brightness: number;
-	size?: number;
-}) {
-	return (
-		<svg
-			viewBox="0 0 64 64"
-			width={size}
-			height={size}
-			aria-hidden="true"
-			focusable="false"
-			style={{
-				transform: `rotate(${heading}deg)`,
-				opacity: brightness,
-			}}
-		>
-			<path
-				d="M31 3L38 24L55 31L38 36L43 60L32 49L21 60L26 36L9 31L26 24L31 3Z"
-				fill="#fff"
-				stroke="#fff"
-				strokeWidth="2"
-				strokeLinejoin="round"
-			/>
-		</svg>
-	);
-}
-
-function AirplaneMarker({
-	x,
-	y,
-	heading,
-	brightness,
-	label,
-	meta,
-	detail,
-}: {
-	x: number;
-	y: number;
-	heading: number;
-	brightness: number;
-	label: string;
-	meta: string;
-	detail: string;
+	flight: SkyWatchRecipeData["aircraft"][number];
 }) {
 	return (
 		<div
 			style={{
-				position: "absolute",
-				left: `${x * 100}%`,
-				top: `${y * 100}%`,
-				transform: "translate(-50%, -50%)",
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				gap: 4,
-				width: 118,
+				borderBottom: "2px solid rgba(255,255,255,0.18)",
+				paddingBottom: 10,
 			}}
 		>
-			<PlaneIcon heading={heading} brightness={brightness} size={38} />
-			<div
-				style={{
-					backgroundColor: "rgba(255,255,255,0.12)",
-					padding: "4px 6px",
-					width: 118,
-					border: "1px solid rgba(255,255,255,0.18)",
-				}}
-			>
-				<div className="font-blockkie leading-none text-white text-[16px]">
-					{label}
-				</div>
-				<div className="mt-1 font-geneva9 text-[11px] leading-tight text-white">
-					<div>{meta}</div>
-					<div>{detail}</div>
+			<div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+				<PlaneIcon heading={flight.heading} size={28} color="#fff" />
+				<div
+					style={{
+						flex: 1,
+						minWidth: 0,
+						display: "flex",
+						flexDirection: "column",
+						gap: 2,
+					}}
+				>
+					<ReadableText size={16} weight={700} color="#fff">
+						{flight.callsign}
+					</ReadableText>
+					<MetaText color="#d4d4d4">{flight.aircraftType}</MetaText>
+					<MetaText color="#d4d4d4">
+						{flight.altitudeLabel} · {flight.speedLabel}
+					</MetaText>
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function PlaneIcon({
+	heading = 0,
+	size = 28,
+	color = "#fff",
+}: {
+	heading?: number;
+	size?: number;
+	color?: string;
+}) {
+	return (
+		<svg
+			viewBox="0 0 238.45445 228.24998"
+			width={size}
+			height={size}
+			aria-hidden="true"
+			focusable="false"
+			style={{ transform: `rotate(${heading + 45}deg)` }}
+		>
+			<path
+				fill={color}
+				fillRule="evenodd"
+				d="M194.67321 0 70.641958 53.625c-10.38227-6.92107-34.20058-21.27539-38.90545-23.44898-39.4400301-18.22079-36.9454001 14.73107-20.34925 24.6052 4.53917 2.70065 27.72352 17.17823 43.47345 26.37502l17.90625 133.9375 22.21875 13.15625 11.531252-120.9375 71.53125 36.6875 3.84375 39.21875 14.53125 8.625 11.09375-42.40625.125.0625 30.8125-31.53125-14.875-8-35.625 16.90625-68.28125-42.4375L217.36071 12.25 194.67321 0z"
+			/>
+		</svg>
 	);
 }
 
@@ -101,172 +81,130 @@ export default function SkyWatch({
 	height = 480,
 }: SkyWatchRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const visibleAircraft = aircraft.slice(0, profile.isDense ? 6 : 8);
+	const visibleAircraft = aircraft.slice(0, 2);
+	const primaryLocation = locationLabel.split(",")[0]?.trim() || locationLabel;
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div
-				className="h-full w-full overflow-hidden rounded-2xl border border-black bg-[#141414] text-white"
-				style={{ padding: profile.padding }}
+				style={{
+					width: "100%",
+					height: "100%",
+					backgroundColor: "#111",
+					padding: profile.padding,
+					position: "relative",
+					overflow: "hidden",
+				}}
 			>
-				<div
-					className="relative h-full w-full overflow-hidden rounded-xl"
-					style={{ backgroundColor: "#1d1d1d" }}
+				<svg
+					width="100%"
+					height="100%"
+					viewBox="0 0 760 440"
+					aria-hidden="true"
+					focusable="false"
 				>
-					<svg
-						width="100%"
-						height="100%"
-						viewBox="0 0 760 420"
-						preserveAspectRatio="none"
-						aria-hidden="true"
-						focusable="false"
-						style={{ position: "absolute", inset: 0, opacity: 0.28 }}
-					>
-						{Array.from({ length: 12 }, (_, index) => (
-							<line
-								key={`h-${index}`}
-								x1="0"
-								y1={index * 36}
-								x2="760"
-								y2={index * 36}
-								stroke="#ffffff"
-								strokeWidth="1"
-								strokeDasharray="2 4"
-							/>
-						))}
-						{Array.from({ length: 12 }, (_, index) => (
-							<line
-								key={`v-${index}`}
-								x1={index * 64}
-								y1="0"
-								x2={index * 64}
-								y2="420"
-								stroke="#ffffff"
-								strokeWidth="1"
-								strokeDasharray="2 4"
-							/>
-						))}
-					</svg>
-					<div
-						style={{
-							position: "absolute",
-							right: 16,
-							top: 16,
-							borderRadius: 8,
-							backgroundColor: "#fff",
-							padding: "8px 12px",
-							color: "#000",
-							fontSize: 14,
-						}}
-					>
-						airplanes.live
-					</div>
-					<div
-						className="font-geneva9 uppercase"
-						style={{
-							position: "absolute",
-							left: 24,
-							top: 18,
-							letterSpacing: "0.22em",
-							fontSize: 12,
-							opacity: 0.7,
-						}}
-					>
-						live radar
-					</div>
-					<div
-						className="font-geneva9"
-						style={{
-							position: "absolute",
-							left: "57%",
-							top: "16%",
-							fontSize: 14,
-							opacity: 0.75,
-						}}
-					>
-						{radiusLabel}
-					</div>
-					<div
-						style={{
-							position: "absolute",
-							left: "56%",
-							top: "19%",
-							width: 28,
-							height: 28,
-							borderRadius: 999,
-							border: "1px solid #fff",
-							opacity: 0.8,
-						}}
-					/>
-					<div
-						style={{
-							position: "absolute",
-							left: "56.9%",
-							top: "19.8%",
-							width: 10,
-							height: 10,
-							borderRadius: 999,
-							backgroundColor: "#fff",
-							opacity: 0.95,
-						}}
-					/>
-
-					{visibleAircraft.map((flight) => (
-						<AirplaneMarker
-							key={flight.id}
-							x={flight.x}
-							y={flight.y}
-							heading={flight.heading}
-							brightness={flight.brightness}
-							label={clampText(flight.callsign, 10)}
-							meta={clampText(flight.aircraftType, 28)}
-							detail={`${flight.altitudeLabel} · ${flight.speedLabel}`}
+					{[64, 132, 198].map((radius) => (
+						<circle
+							key={radius}
+							cx="530"
+							cy="220"
+							r={radius}
+							fill="none"
+							stroke="#fff"
+							strokeWidth="2"
+							opacity="0.16"
 						/>
 					))}
-
-					<div
-						style={{
-							position: "absolute",
-							left: 0,
-							right: 0,
-							bottom: 0,
-							height: 56,
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "space-between",
-							padding: "0 20px",
-							backgroundColor: "rgba(0,0,0,0.4)",
-							borderTop: "1px solid rgba(255,255,255,0.2)",
-						}}
+					<line
+						x1="530"
+						y1="0"
+						x2="530"
+						y2="440"
+						stroke="#fff"
+						strokeWidth="2"
+						opacity="0.08"
+					/>
+					<line
+						x1="332"
+						y1="220"
+						x2="760"
+						y2="220"
+						stroke="#fff"
+						strokeWidth="2"
+						opacity="0.08"
+					/>
+				</svg>
+				<div style={{ position: "absolute", left: 28, top: 24, width: 250 }}>
+					<MetaText color="#cfcfcf">{title}</MetaText>
+					<SafeTitle
+						size={28}
+						lines={2}
+						style={{ color: "#fff", marginTop: 10 }}
 					>
-						<div className="flex items-center gap-3">
-							<PlaneIcon heading={35} brightness={1} size={24} />
-							<div className="font-blockkie leading-none">
-								<span
-									style={{
-										fontSize: scaleText(26, profile, {
-											compactBase: 20,
-											denseBase: 18,
-											min: 16,
-											max: 26,
-										}),
-									}}
-								>
-									{title}
-								</span>
-							</div>
-						</div>
-						<div className="text-right font-geneva9 text-[16px]">
-							<div>{locationLabel}</div>
-							<div className="mt-1 text-[13px] opacity-80">
-								Updated {updatedAt}
-							</div>
-						</div>
+						{primaryLocation}
+					</SafeTitle>
+					<ReadableText
+						size={18}
+						weight={700}
+						color="#fff"
+						style={{ marginTop: 12 }}
+					>
+						{radiusLabel}
+					</ReadableText>
+					<MetaText color="#cfcfcf" style={{ marginTop: 8 }}>
+						Updated {updatedAt}
+					</MetaText>
+				</div>
+				<div
+					style={{
+						position: "absolute",
+						left: 28,
+						width: 332,
+						bottom: 26,
+						padding: 16,
+						border: "2px solid rgba(255,255,255,0.25)",
+						backgroundColor: "rgba(0,0,0,0.32)",
+					}}
+				>
+					<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+						{visibleAircraft.map((flight) => (
+							<AircraftCard key={flight.id} flight={flight} />
+						))}
 					</div>
 				</div>
-				<div className="mt-2 px-1 font-geneva9 text-[10px] text-white">
-					{clampText(note || "", profile.isDense ? 42 : 84)}
-				</div>
+				<div
+					style={{
+						position: "absolute",
+						left: 518,
+						top: 208,
+						width: 24,
+						height: 24,
+						borderRadius: 12,
+						backgroundColor: "#fff",
+					}}
+				/>
+				{visibleAircraft.map((flight, index) => (
+					<div
+						key={`marker-${flight.id}`}
+						style={{
+							position: "absolute",
+							left: `${index === 0 ? 50 : 56}%`,
+							top: `${index === 0 ? 34 : 52}%`,
+							transform: "translate(-50%, -50%)",
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "center",
+							gap: 6,
+						}}
+					>
+						<PlaneIcon heading={flight.heading} size={34} color="#fff" />
+					</div>
+				))}
+				{note ? (
+					<div style={{ position: "absolute", left: 28, right: 28, bottom: 8 }}>
+						<MetaText color="#bfbfbf">{note}</MetaText>
+					</div>
+				) : null}
 			</div>
 		</PreSatori>
 	);

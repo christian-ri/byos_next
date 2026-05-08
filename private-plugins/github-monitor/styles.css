@@ -1,0 +1,228 @@
+.github-monitor {
+	width: 800px;
+	height: 480px;
+	box-sizing: border-box;
+	padding: 14px;
+	background: #f4f2ef;
+	color: #000;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.github-monitor * {
+	box-sizing: border-box;
+}
+
+.gh-header {
+	height: 54px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-bottom: 8px;
+	border-bottom: 2px solid #000;
+}
+
+.gh-brand {
+	width: 230px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 34px;
+	font-weight: 800;
+	line-height: 1;
+}
+
+.gh-brand-logo {
+	width: 28px;
+	height: 28px;
+	fill: #000;
+	flex: 0 0 auto;
+}
+
+.gh-clock {
+	width: 240px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+}
+
+.gh-clock-time {
+	font-size: 40px;
+	font-weight: 800;
+	line-height: 0.95;
+}
+
+.gh-clock-label {
+	font-size: 18px;
+	line-height: 1;
+	color: #444;
+}
+
+.gh-status {
+	width: 230px;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 10px;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.gh-status-dot {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: 2px solid #000;
+	background: #fff;
+}
+
+.gh-status-warning .gh-status-dot {
+	background: #777;
+}
+
+.gh-status-error .gh-status-dot {
+	background: #000;
+}
+
+.gh-kpis,
+.gh-main,
+.gh-footer {
+	display: flex;
+	gap: 8px;
+}
+
+.gh-card,
+.gh-panel,
+.gh-footer-card {
+	border: 2px solid #000;
+	border-radius: 6px;
+	background: #fff;
+}
+
+.gh-card {
+	width: 122px;
+	height: 92px;
+	padding: 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.gh-card-label,
+.gh-footer-label {
+	font-size: 16px;
+	font-weight: 700;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.gh-card-value {
+	font-size: 40px;
+	font-weight: 800;
+	line-height: 0.9;
+}
+
+.gh-card-secondary,
+.gh-footer-secondary {
+	font-size: 16px;
+	line-height: 1;
+	color: #444;
+}
+
+.gh-main-left {
+	width: 474px;
+	height: 204px;
+	padding: 10px;
+}
+
+.gh-main-right {
+	width: 290px;
+	height: 204px;
+	padding: 10px;
+}
+
+.gh-panel-title {
+	font-size: 22px;
+	font-weight: 800;
+	line-height: 1;
+	text-transform: uppercase;
+	margin-bottom: 8px;
+}
+
+.gh-table-head,
+.gh-table-row {
+	display: flex;
+	align-items: center;
+}
+
+.gh-table-head {
+	padding-bottom: 6px;
+	border-bottom: 2px solid #000;
+}
+
+.gh-table-row {
+	height: 24px;
+	border-bottom: 1px solid #bdbdbd;
+	font-size: 18px;
+	line-height: 1;
+}
+
+.gh-table-row:last-child {
+	border-bottom: none;
+}
+
+.gh-main-right .gh-table-row {
+	height: 20px;
+}
+
+.gh-head-cell {
+	font-size: 16px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.gh-repo {
+	font-weight: 700;
+}
+
+.w-repo { width: 106px; }
+.w-workflow { width: 104px; }
+.w-status { width: 64px; }
+.w-branch { width: 72px; }
+.w-duration { width: 66px; }
+.w-age { width: 34px; }
+
+.w-health-repo { width: 106px; }
+.w-health-small { width: 34px; }
+.w-health-issues { width: 42px; }
+.w-health-last { width: 48px; }
+.w-health-status { width: 40px; }
+
+.gh-footer-card {
+	height: 78px;
+	padding: 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.gh-footer-card:nth-child(1),
+.gh-footer-card:nth-child(2),
+.gh-footer-card:nth-child(3),
+.gh-footer-card:nth-child(4) {
+	width: 149px;
+}
+
+.gh-footer-card:nth-child(5) {
+	width: 148px;
+}
+
+.gh-footer-value {
+	font-size: 34px;
+	font-weight: 800;
+	line-height: 0.9;
+}

@@ -1,7 +1,4 @@
-import {
-	formatDateTime,
-	formatUpdatedAt,
-} from "@/app/(app)/recipes/screens/_shared/fetch-utils";
+import { formatDateTime } from "@/app/(app)/recipes/screens/_shared/fetch-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -278,13 +275,23 @@ function buildFallbackData(
 		albumName: String(params?.albumName || "Shared Album").trim(),
 		imageUrl: SAMPLE_IMAGE_URL,
 		caption: "",
-		updatedAt: formatUpdatedAt(now, timeZone),
+		updatedAt: formatDateTime(
+			now,
+			{
+				month: "short",
+				day: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+				hour12: false,
+			},
+			timeZone,
+		),
 		currentTime: formatDateTime(
 			now,
 			{
 				hour: "2-digit",
 				minute: "2-digit",
-				hour12: true,
+				hour12: false,
 			},
 			timeZone,
 		),
@@ -354,13 +361,23 @@ export default async function getData(
 			albumName: String(params?.albumName || "Shared Album").trim(),
 			imageUrl,
 			caption: photo.caption || "",
-			updatedAt: formatUpdatedAt(now, timeZone),
+			updatedAt: formatDateTime(
+				now,
+				{
+					month: "short",
+					day: "numeric",
+					hour: "2-digit",
+					minute: "2-digit",
+					hour12: false,
+				},
+				timeZone,
+			),
 			currentTime: formatDateTime(
 				now,
 				{
 					hour: "2-digit",
 					minute: "2-digit",
-					hour12: true,
+					hour12: false,
 				},
 				timeZone,
 			),

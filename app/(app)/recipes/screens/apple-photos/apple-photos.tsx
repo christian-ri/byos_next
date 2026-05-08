@@ -1,4 +1,11 @@
 import {
+	EInkCard,
+	META_TEXT,
+	ReadableText,
+	SafeTitle,
+	TITLE_TEXT,
+} from "@/app/(app)/recipes/screens/_shared/eink";
+import {
 	clampText,
 	getBitmapLayoutProfile,
 	scaleText,
@@ -6,7 +13,13 @@ import {
 import { PreSatori } from "@/utils/pre-satori";
 import type { ApplePhotosRecipeData } from "./getData";
 
-function ClockIcon({ size = 18 }: { size?: number }) {
+function ClockIcon({
+	size = 18,
+	color = "#111",
+}: {
+	size?: number;
+	color?: string;
+}) {
 	return (
 		<svg
 			viewBox="0 0 24 24"
@@ -20,13 +33,13 @@ function ClockIcon({ size = 18 }: { size?: number }) {
 				cy="12"
 				r="8.5"
 				fill="none"
-				stroke="#fff"
+				stroke={color}
 				strokeWidth="2"
 			/>
 			<path
 				d="M12 7.5v5l3.5 2"
 				fill="none"
-				stroke="#fff"
+				stroke={color}
 				strokeWidth="2"
 				strokeLinecap="round"
 				strokeLinejoin="round"
@@ -35,7 +48,13 @@ function ClockIcon({ size = 18 }: { size?: number }) {
 	);
 }
 
-function AlbumIcon({ size = 18 }: { size?: number }) {
+function AlbumIcon({
+	size = 18,
+	color = "#111",
+}: {
+	size?: number;
+	color?: string;
+}) {
 	return (
 		<svg
 			viewBox="0 0 24 24"
@@ -51,7 +70,7 @@ function AlbumIcon({ size = 18 }: { size?: number }) {
 				height="10"
 				rx="1.5"
 				fill="none"
-				stroke="#fff"
+				stroke={color}
 				strokeWidth="2"
 			/>
 			<rect
@@ -61,7 +80,7 @@ function AlbumIcon({ size = 18 }: { size?: number }) {
 				height="10"
 				rx="1.5"
 				fill="none"
-				stroke="#fff"
+				stroke={color}
 				strokeWidth="2"
 				opacity="0.75"
 			/>
@@ -71,9 +90,8 @@ function AlbumIcon({ size = 18 }: { size?: number }) {
 
 export default function ApplePhotos({
 	title = "Apple Photos",
-	albumName = "Shared Album",
 	imageUrl = "https://byos-nextjs.vercel.app/album/london.png",
-	caption = "Shared album preview",
+	caption = "",
 	updatedAt = "",
 	currentTime = "",
 	timeZoneLabel = "",
@@ -85,39 +103,28 @@ export default function ApplePhotos({
 	height = 480,
 }: ApplePhotosRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const subtitleSize = scaleText(16, profile, {
-		compactBase: 14,
-		denseBase: 11,
-		min: 10,
+	const metaSize = scaleText(META_TEXT, profile, {
+		compactBase: 16,
+		denseBase: 14,
+		min: 14,
 		max: 16,
-	});
-	const metaSize = scaleText(14, profile, {
-		compactBase: 12,
-		denseBase: 10,
-		min: 9,
-		max: 14,
 	});
 	const overlayPadding = profile.isDense ? 10 : 16;
 	const timeSize = scaleText(28, profile, {
 		compactBase: 24,
-		denseBase: 18,
-		min: 16,
-		max: 28,
+		denseBase: 22,
+		min: 24,
+		max: 30,
 	});
-	const hudSubtitleSize = scaleText(15, profile, {
-		compactBase: 13,
-		denseBase: 10,
-		min: 9,
-		max: 15,
-	});
+	const overlayBackground = "rgba(17, 17, 17, 0.78)";
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
-			<div className="w-full h-full bg-black text-white relative overflow-hidden flex">
+			<div className="w-full h-full bg-black text-black relative overflow-hidden flex">
 				{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 				<img
 					src={imageUrl}
-					alt={caption || albumName}
+					alt={caption || title}
 					width={width}
 					height={height}
 					className="w-full h-full absolute inset-0"
@@ -127,59 +134,39 @@ export default function ApplePhotos({
 						display: "block",
 					}}
 				/>
-				<div
-					className="absolute left-0 top-0"
-					style={{ padding: overlayPadding }}
-				>
-					<div
-						className="rounded-xl px-4 py-3 flex flex-col"
-						style={{ backgroundColor: "rgba(0, 0, 0, 0.58)" }}
-					>
-						<span
-							className="font-blockkie leading-none"
-							style={{
-								fontSize: scaleText(22, profile, {
-									compactBase: 18,
-									denseBase: 15,
-									min: 13,
-									max: 22,
-								}),
-							}}
-						>
-							{title}
-						</span>
-						<span
-							className="mt-1 text-gray-200 font-geneva9"
-							style={{ fontSize: subtitleSize }}
-						>
-							{clampText(albumName, profile.isDense ? 20 : 30)}
-						</span>
-					</div>
-				</div>
-
 				{showTimestamp ? (
 					<div
 						className="absolute left-0 bottom-0"
 						style={{ padding: overlayPadding }}
 					>
 						<div
-							className="rounded-xl px-4 py-3"
-							style={{ backgroundColor: "rgba(0, 0, 0, 0.62)" }}
+							style={{
+								border: "2px solid #111",
+								borderRadius: 16,
+								backgroundColor: overlayBackground,
+								color: "#fff",
+								padding: profile.isDense ? 12 : 14,
+								minWidth: profile.isCompact ? 196 : 210,
+								maxWidth: profile.isCompact ? 220 : 236,
+							}}
 						>
-							<div className="flex items-center gap-3">
-								<ClockIcon size={profile.isDense ? 16 : 18} />
+							<div className="flex items-start gap-3">
+								<ClockIcon size={20} color="#fff" />
 								<div className="flex flex-col">
+									<ReadableText size={16} color="#fff">
+										{title}
+									</ReadableText>
 									{currentTime ? (
 										<div
 											className="font-blockkie leading-none"
-											style={{ fontSize: timeSize }}
+											style={{ fontSize: timeSize, color: "#fff" }}
 										>
 											{currentTime}
 										</div>
 									) : null}
 									<div
-										className="mt-1 font-geneva9 leading-none text-gray-200"
-										style={{ fontSize: hudSubtitleSize }}
+										className="mt-1 font-geneva9 leading-none"
+										style={{ fontSize: metaSize, color: "#fff" }}
 									>
 										{[timeZoneLabel, updatedAt].filter(Boolean).join(" · ")}
 									</div>
@@ -194,26 +181,32 @@ export default function ApplePhotos({
 					style={{ padding: overlayPadding }}
 				>
 					<div
-						className="rounded-xl px-4 py-3"
-						style={{ backgroundColor: "rgba(0, 0, 0, 0.62)" }}
+						style={{
+							border: "2px solid #111",
+							borderRadius: 16,
+							backgroundColor: overlayBackground,
+							color: "#fff",
+							padding: profile.isDense ? 12 : 14,
+							minWidth: profile.isCompact ? 208 : 232,
+							maxWidth: profile.isCompact ? 236 : 272,
+						}}
 					>
 						<div className="flex items-center gap-3">
-							<AlbumIcon size={profile.isDense ? 16 : 18} />
-							<div className="flex flex-col items-end text-right">
+							<AlbumIcon size={20} color="#fff" />
+							<div
+								className="flex flex-col items-end text-right"
+								style={{ width: "100%" }}
+							>
 								{note ? (
-									<div
-										className="font-geneva9 leading-none text-gray-100"
-										style={{ fontSize: subtitleSize }}
-									>
-										{clampText(note, profile.isDense ? 24 : 34)}
-									</div>
+									<ReadableText size={16} align="right" color="#fff">
+										{clampText(note, profile.isDense ? 24 : 32)}
+									</ReadableText>
 								) : null}
 								{showCaption && caption.trim() ? (
-									<div
-										className="mt-1 font-geneva9 leading-none text-gray-300"
-										style={{ fontSize: metaSize }}
-									>
-										{clampText(caption, profile.isDense ? 26 : 42)}
+									<div className="mt-1">
+										<ReadableText size={metaSize} align="right" color="#fff">
+											{clampText(caption, profile.isDense ? 22 : 30)}
+										</ReadableText>
 									</div>
 								) : null}
 							</div>

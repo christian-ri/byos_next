@@ -51,7 +51,11 @@ const TEAM_BADGE_BY_NAME: Record<string, string> = {
 	alpine: "A",
 	audi: "Au",
 	"audi revolut f1 team": "Au",
+	"stake f1 team kick sauber": "Au",
+	"sauber motorsport": "Au",
+	sauber: "Au",
 	"aston martin": "AM",
+	"aston martin aramco": "AM",
 	cadillac: "Ca",
 	"cadillac formula 1 team": "Ca",
 	ferrari: "F",
@@ -59,7 +63,10 @@ const TEAM_BADGE_BY_NAME: Record<string, string> = {
 	mclaren: "Mc",
 	mercedes: "M",
 	"racing bulls": "RB",
+	"visa cash app racing bulls": "RB",
+	rb: "RB",
 	"red bull racing": "RB",
+	oracle: "RB",
 	williams: "W",
 };
 

@@ -1,0 +1,128 @@
+{
+	"generatedAt": "2026-05-07T10:45:00.000Z",
+	"status": {
+		"label": "Warnung",
+		"level": "warning"
+	},
+	"metrics": {
+		"repositories": 6,
+		"openPullRequests": 11,
+		"openIssues": 37,
+		"actionsSuccessRate7d": 94,
+		"securityAlerts": 6,
+		"criticalSecurityAlerts": 1,
+		"latestCommitAge": "2h"
+	},
+	"workflowRuns": [
+		{
+			"repository": "portfolio",
+			"workflow": "CI",
+			"status": "OK",
+			"branch": "main",
+			"duration": "2m 34s",
+			"age": "1h"
+		},
+		{
+			"repository": "landing-page",
+			"workflow": "Deploy",
+			"status": "OK",
+			"branch": "main",
+			"duration": "3m 12s",
+			"age": "1h"
+		},
+		{
+			"repository": "api",
+			"workflow": "CI",
+			"status": "RUN",
+			"branch": "main",
+			"duration": null,
+			"age": "48m"
+		},
+		{
+			"repository": "blog",
+			"workflow": "CI",
+			"status": "FAIL",
+			"branch": "main",
+			"duration": "2m 10s",
+			"age": "2h"
+		},
+		{
+			"repository": "ui-components",
+			"workflow": "Tests",
+			"status": "OK",
+			"branch": "develop",
+			"duration": "4m 32s",
+			"age": "3h"
+		}
+	],
+	"repositoryHealth": [
+		{
+			"repository": "portfolio",
+			"openPullRequests": 1,
+			"openIssues": 3,
+			"latestCommitAge": "2h",
+			"status": "OK"
+		},
+		{
+			"repository": "landing-page",
+			"openPullRequests": 2,
+			"openIssues": 4,
+			"latestCommitAge": "5h",
+			"status": "OK"
+		},
+		{
+			"repository": "api",
+			"openPullRequests": 0,
+			"openIssues": 2,
+			"latestCommitAge": "3h",
+			"status": "FAIL"
+		},
+		{
+			"repository": "blog",
+			"openPullRequests": 1,
+			"openIssues": 5,
+			"latestCommitAge": "1d",
+			"status": "WARN"
+		},
+		{
+			"repository": "ui-components",
+			"openPullRequests": 3,
+			"openIssues": 6,
+			"latestCommitAge": "1d",
+			"status": "WARN"
+		},
+		{
+			"repository": "design-system",
+			"openPullRequests": 0,
+			"openIssues": 1,
+			"latestCommitAge": "2d",
+			"status": "OK"
+		}
+	],
+	"footer": {
+		"activeBranches": 12,
+		"releases30d": 3,
+		"latestRelease": "portfolio v1.4.2",
+		"contributors": 6,
+		"commits7d": 42,
+		"secretScanningAlerts": 0
+	},
+	"meta": {
+		"owner": "christian-ri",
+		"timezone": "Europe/Berlin",
+		"currentTime": "12:45",
+		"updatedLabel": "Update: 12:45",
+		"selectedRepositories": [
+			"portfolio",
+			"landing-page",
+			"api",
+			"blog",
+			"ui-components",
+			"design-system"
+		],
+		"staleDays": 14,
+		"maxWorkflowRuns": 5,
+		"source": "mock",
+		"note": "Mock preview data"
+	}
+}

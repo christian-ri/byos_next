@@ -6,9 +6,20 @@ import {
 export const dynamic = "force-dynamic";
 
 type SkyWatchParams = {
+	location?: string;
 	latitude?: string | number;
 	longitude?: string | number;
 	radiusKm?: string | number;
+};
+
+type GeocodingResponse = {
+	results?: Array<{
+		name: string;
+		country?: string;
+		timezone?: string;
+		latitude: number;
+		longitude: number;
+	}>;
 };
 
 type AirplanesLiveAircraft = {
@@ -55,6 +66,7 @@ export type SkyWatchRecipeData = {
 const DEFAULT_LAT = 50.8503;
 const DEFAULT_LON = 4.3517;
 const DEFAULT_RADIUS_KM = 90;
+const DEFAULT_LOCATION = "Brussels";
 
 function clamp(value: number, min: number, max: number) {
 	return Math.min(max, Math.max(min, value));
@@ -71,10 +83,13 @@ function formatAltitude(value?: number | string) {
 	return `${Math.round(numeric / 100) / 10}k ft`;
 }
 
-function buildFallback(note?: string): SkyWatchRecipeData {
+function buildFallback(
+	locationLabel: string,
+	note?: string,
+): SkyWatchRecipeData {
 	return {
 		title: "SkyWatch",
-		locationLabel: "Brussels",
+		locationLabel,
 		radiusLabel: "50 nm",
 		updatedAt: formatUpdatedAt(new Date()),
 		note,
@@ -131,11 +146,63 @@ function buildFallback(note?: string): SkyWatchRecipeData {
 	};
 }
 
+async function resolveLocation(params?: SkyWatchParams) {
+	const query = String(params?.location || "").trim();
+	if (query) {
+		const geo = await fetchJsonWithTimeout<GeocodingResponse>(
+			`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`,
+			{ headers: { Accept: "application/json" } },
+			8000,
+		).catch(() => null);
+
+		const first = geo?.results?.[0];
+		if (first) {
+			return {
+				latitude: first.latitude,
+				longitude: first.longitude,
+				name: `${first.name}${first.country ? `, ${first.country}` : ""}`,
+			};
+		}
+	}
+
+	const latitude = Number(params?.latitude);
+	const longitude = Number(params?.longitude);
+	if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+		return {
+			latitude,
+			longitude,
+			name: `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`,
+		};
+	}
+
+	const geo = await fetchJsonWithTimeout<GeocodingResponse>(
+		`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(DEFAULT_LOCATION)}&count=1&language=en&format=json`,
+		{ headers: { Accept: "application/json" } },
+		8000,
+	).catch(() => null);
+
+	const first = geo?.results?.[0];
+	if (!first) {
+		return {
+			latitude: DEFAULT_LAT,
+			longitude: DEFAULT_LON,
+			name: DEFAULT_LOCATION,
+		};
+	}
+
+	return {
+		latitude: first.latitude,
+		longitude: first.longitude,
+		name: `${first.name}${first.country ? `, ${first.country}` : ""}`,
+	};
+}
+
 export default async function getData(
 	params?: SkyWatchParams,
 ): Promise<SkyWatchRecipeData> {
-	const latitude = Number(params?.latitude ?? DEFAULT_LAT);
-	const longitude = Number(params?.longitude ?? DEFAULT_LON);
+	const location = await resolveLocation(params);
+	const latitude = location.latitude;
+	const longitude = location.longitude;
 	const radiusKm = clamp(
 		Number(params?.radiusKm ?? DEFAULT_RADIUS_KM),
 		20,
@@ -183,12 +250,15 @@ export default async function getData(
 				}) || [];
 
 		if (aircraft.length === 0) {
-			return buildFallback("No live aircraft returned for this area.");
+			return buildFallback(
+				location.name,
+				"No live aircraft returned for this area.",
+			);
 		}
 
 		return {
 			title: "SkyWatch",
-			locationLabel: `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`,
+			locationLabel: location.name,
 			radiusLabel: `${radiusNm} nm`,
 			updatedAt: formatUpdatedAt(new Date()),
 			note: "Aircraft via airplanes.live public point feed.",
@@ -197,6 +267,7 @@ export default async function getData(
 	} catch (error) {
 		console.error("Error loading SkyWatch data:", error);
 		return buildFallback(
+			location.name,
 			"Live aircraft fetch failed, so this preview is showing sample traffic.",
 		);
 	}

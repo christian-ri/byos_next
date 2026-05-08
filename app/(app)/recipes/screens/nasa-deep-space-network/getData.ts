@@ -75,11 +75,15 @@ const FALLBACK_STATIONS: DsnStationSummary[] = [
 function summarizeSignals(craft: DsnCraft) {
 	const downlink = craft.signals
 		?.filter((signal) => signal.dir === "down")
-		.map((signal) => `${signal.band || "?"} ${signal.data_rate || signal.power || ""}`.trim())
+		.map((signal) =>
+			`${signal.band || "?"} ${signal.data_rate || signal.power || ""}`.trim(),
+		)
 		.join(", ");
 	const uplink = craft.signals
 		?.filter((signal) => signal.dir === "up")
-		.map((signal) => `${signal.band || "?"} ${signal.power || signal.data_rate || ""}`.trim())
+		.map((signal) =>
+			`${signal.band || "?"} ${signal.power || signal.data_rate || ""}`.trim(),
+		)
 		.join(", ");
 
 	return {

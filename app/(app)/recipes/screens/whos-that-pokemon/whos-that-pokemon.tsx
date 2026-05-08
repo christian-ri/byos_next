@@ -1,12 +1,25 @@
 import {
-	clampText,
-	getBitmapLayoutProfile,
-	scaleText,
-} from "@/app/(app)/recipes/screens/_shared/responsive-layout";
-import fontData from "@/components/bitmap-font/bitmap-font.json";
-import { BitmapText } from "@/components/bitmap-font/bitmap-text";
+	EInkCard,
+	MetaText,
+	ReadableText,
+	SafeTitle,
+} from "@/app/(app)/recipes/screens/_shared/eink";
+import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
 import type { PokemonRecipeData } from "./getData";
+
+function StatCard({ label, value }: { label: string; value: string }) {
+	return (
+		<EInkCard padding={14} radius={14}>
+			<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+				<MetaText>{label}</MetaText>
+				<ReadableText size={32} weight={700}>
+					{value}
+				</ReadableText>
+			</div>
+		</EInkCard>
+	);
+}
 
 export default function WhosThatPokemon({
 	name,
@@ -19,201 +32,88 @@ export default function WhosThatPokemon({
 	updatedAt,
 	note,
 	width = 800,
-	height: screenHeight = 480,
+	height = 480,
 }: PokemonRecipeData & { width?: number; height?: number }) {
-	const profile = getBitmapLayoutProfile(width, screenHeight);
-	const isPortrait = profile.isPortrait;
-	const statsColumns = profile.isDense ? 1 : 2;
-	const artworkWidth = isPortrait
-		? "100%"
-		: profile.isDense
-			? "220px"
-			: "280px";
+	const profile = getBitmapLayoutProfile(width, height);
 
 	return (
-		<PreSatori useDoubling={true} width={width} height={screenHeight}>
+		<PreSatori useDoubling={true} width={width} height={height}>
 			<div
-				className={`flex h-full w-full border border-black bg-white ${isPortrait ? "flex-col" : "flex-row"}`}
-				style={{ padding: profile.padding, gap: profile.gap }}
+				style={{
+					width: "100%",
+					height: "100%",
+					backgroundColor: "#f3f1ee",
+					padding: profile.padding,
+					display: "flex",
+					gap: 14,
+				}}
 			>
-				<div
-					className="flex items-center justify-center overflow-hidden rounded-2xl border border-black bg-gray-100"
+				<EInkCard
+					padding={16}
+					radius={18}
 					style={{
-						width: artworkWidth,
-						height: isPortrait ? 170 : "100%",
-						minHeight: isPortrait ? 170 : 0,
+						width: 300,
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
 					}}
 				>
 					{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 					<img
 						src={artwork}
 						alt={name}
-						width={300}
-						height={300}
-						className="h-full w-full object-contain"
+						width={260}
+						height={260}
 						style={{
-							filter: "grayscale(100%) contrast(1.05)",
+							width: 260,
+							height: 260,
+							objectFit: "contain",
 							display: "block",
 						}}
 					/>
-				</div>
+				</EInkCard>
 
-				<div className="flex flex-1 flex-col">
-					<div className="border-b border-black pb-4">
-						<div
-							className="font-geneva9 uppercase tracking-[0.3em]"
-							style={{
-								fontSize: scaleText(18, profile, {
-									compactBase: 14,
-									denseBase: 11,
-									min: 10,
-									max: 18,
-								}),
-							}}
-						>
-							Who's That Pokemon
+				<div
+					style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}
+				>
+					<EInkCard padding={16} radius={18}>
+						<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+							<MetaText>WHO'S THAT POKEMON</MetaText>
+							<SafeTitle size={34} lines={2}>
+								{name}
+							</SafeTitle>
+							<ReadableText size={18}>{types}</ReadableText>
+							<MetaText>{species}</MetaText>
 						</div>
-						<div
-							className="mt-2 leading-none"
-							style={{ minHeight: profile.isDense ? 32 : 52 }}
-						>
-							<BitmapText
-								text={clampText(name, profile.isDense ? 12 : 18)}
-								fontData={fontData}
-								gridSize="8x16"
-								scale={profile.isDense ? 2 : 3}
-								gap={0}
-							/>
-						</div>
-						<div
-							className="mt-2 font-geneva9 text-[#4b5563]"
-							style={{
-								fontSize: scaleText(16, profile, {
-									compactBase: 13,
-									denseBase: 10,
-									min: 9,
-									max: 16,
-								}),
-							}}
-						>
-							{clampText(`${types} • ${species}`, profile.isDense ? 28 : 46)}
-						</div>
-					</div>
+					</EInkCard>
 
 					<div
-						className="grid py-4"
 						style={{
-							gap: profile.gap,
-							gridTemplateColumns: `repeat(${statsColumns}, minmax(0, 1fr))`,
+							display: "grid",
+							gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+							gap: 12,
 						}}
 					>
-						<div className="flex flex-col rounded-xl border border-black p-3">
-							<span
-								className="font-geneva9 uppercase tracking-[0.2em]"
-								style={{
-									fontSize: scaleText(16, profile, {
-										compactBase: 12,
-										denseBase: 10,
-										min: 9,
-										max: 16,
-									}),
-								}}
-							>
-								Height
-							</span>
-							<span
-								className="mt-1 font-blockkie leading-none"
-								style={{
-									fontSize: scaleText(30, profile, {
-										compactBase: 22,
-										denseBase: 16,
-										min: 14,
-										max: 30,
-									}),
-								}}
-							>
-								{pokemonHeight}
-							</span>
-						</div>
-						<div className="flex flex-col rounded-xl border border-black p-3">
-							<span
-								className="font-geneva9 uppercase tracking-[0.2em]"
-								style={{
-									fontSize: scaleText(16, profile, {
-										compactBase: 12,
-										denseBase: 10,
-										min: 9,
-										max: 16,
-									}),
-								}}
-							>
-								Weight
-							</span>
-							<span
-								className="mt-1 font-blockkie leading-none"
-								style={{
-									fontSize: scaleText(30, profile, {
-										compactBase: 22,
-										denseBase: 16,
-										min: 14,
-										max: 30,
-									}),
-								}}
-							>
-								{weight}
-							</span>
-						</div>
-						<div
-							className="flex flex-col rounded-xl border border-black p-3"
-							style={{ gridColumn: statsColumns === 1 ? "auto" : "1 / -1" }}
-						>
-							<span
-								className="font-geneva9 uppercase tracking-[0.2em]"
-								style={{
-									fontSize: scaleText(16, profile, {
-										compactBase: 12,
-										denseBase: 10,
-										min: 9,
-										max: 16,
-									}),
-								}}
-							>
-								Abilities
-							</span>
-							<span
-								className="mt-2 font-geneva9 leading-tight"
-								style={{
-									fontSize: scaleText(18, profile, {
-										compactBase: 14,
-										denseBase: 11,
-										min: 10,
-										max: 18,
-									}),
-								}}
-							>
-								{clampText(abilities, profile.isDense ? 36 : 64)}
-							</span>
-						</div>
+						<StatCard label="Height" value={pokemonHeight} />
+						<StatCard label="Weight" value={weight} />
 					</div>
 
+					<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
+						<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+							<MetaText>Abilities</MetaText>
+							<ReadableText size={20}>{abilities}</ReadableText>
+						</div>
+					</EInkCard>
+
 					<div
-						className="mt-auto flex items-center justify-between border-t border-black pt-3 font-geneva9 text-[#4b5563]"
 						style={{
-							fontSize: scaleText(12, profile, {
-								compactBase: 11,
-								denseBase: 9,
-								min: 8,
-								max: 12,
-							}),
+							display: "flex",
+							justifyContent: "space-between",
+							gap: 12,
 						}}
 					>
-						<span>
-							{clampText(
-								note || "Daily Pokemon import.",
-								profile.isDense ? 26 : 48,
-							)}
-						</span>
-						{!profile.isDense ? <span>Updated {updatedAt}</span> : null}
+						<MetaText>{note || "Daily Pokemon import."}</MetaText>
+						<MetaText>Updated {updatedAt}</MetaText>
 					</div>
 				</div>
 			</div>
