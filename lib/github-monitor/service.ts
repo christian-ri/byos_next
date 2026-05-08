@@ -16,13 +16,6 @@ import type {
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CRITICAL_SEVERITIES = new Set(["critical", "high"]);
-const ACTIVE_WORKFLOW_STATUSES = new Set([
-	"queued",
-	"in_progress",
-	"requested",
-	"waiting",
-	"pending",
-]);
 
 type RepoBundle = {
 	repository: GitHubRepository;

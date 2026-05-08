@@ -19,6 +19,11 @@ type Props = CalendarRecipeData & {
 	height?: number;
 };
 
+const MONTH_OVERVIEW_WEEKDAYS = {
+	0: ["SO", "MO", "DI", "MI", "DO", "FR", "SA"],
+	1: ["MO", "DI", "MI", "DO", "FR", "SA", "SO"],
+} as const;
+
 function eventTimeLabel(event: CalendarDayEvent) {
 	if (event.allDay) return "All day";
 	if (event.multiDay && !event.timeLabel) return "Multi-day";
@@ -386,6 +391,239 @@ function MonthView({
 	);
 }
 
+function monthOverviewClock(timeZone: string) {
+	return new Intl.DateTimeFormat("de-DE", {
+		timeZone,
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).format(new Date());
+}
+
+function monthOverviewLabel(monthLabel: string) {
+	if (!monthLabel.trim()) {
+		return "";
+	}
+
+	try {
+		const parsed = new Date(`${monthLabel} 1`);
+		if (!Number.isNaN(parsed.getTime())) {
+			return new Intl.DateTimeFormat("de-DE", {
+				month: "long",
+				year: "numeric",
+			})
+				.format(parsed)
+				.toUpperCase();
+		}
+	} catch {}
+
+	return monthLabel.toUpperCase();
+}
+
+function DayCountMarker({ eventCount }: { eventCount: number }) {
+	if (eventCount <= 0) return null;
+
+	if (eventCount >= 5) {
+		return (
+			<ReadableText size={18} weight={700} style={{ lineHeight: 1 }}>
+				5+
+			</ReadableText>
+		);
+	}
+
+	const dotCount = eventCount <= 2 ? eventCount : 3;
+
+	return (
+		<div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+			{Array.from({ length: dotCount }, (_, index) => (
+				<div
+					key={`dot-${index}`}
+					style={{
+						width: 8,
+						height: 8,
+						borderRadius: 999,
+						backgroundColor: "#111",
+						flexShrink: 0,
+					}}
+				/>
+			))}
+		</div>
+	);
+}
+
+function MonthOverviewCell({ day }: { day: CalendarDay }) {
+	const dayColor = day.isCurrentMonth ? "#111" : "#9a9a9a";
+
+	return (
+		<div
+			style={{
+				borderRight: "2px solid #111",
+				borderBottom: "2px solid #111",
+				padding: "10px 10px 8px",
+				minHeight: 50,
+				display: "flex",
+				flexDirection: "column",
+				justifyContent: "space-between",
+				boxSizing: "border-box",
+				backgroundColor: "#fff",
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "flex-start",
+					justifyContent: "space-between",
+					minHeight: 30,
+				}}
+			>
+				<ReadableText size={28} weight={700} color={dayColor}>
+					{day.dayNumber}
+				</ReadableText>
+				{day.isToday ? (
+					<div
+						style={{
+							border: "3px solid #111",
+							padding: "2px 6px",
+							minWidth: 22,
+							display: "flex",
+							justifyContent: "center",
+							alignItems: "center",
+							boxSizing: "border-box",
+						}}
+					>
+						<ReadableText size={14} weight={700}>
+							HEUTE
+						</ReadableText>
+					</div>
+				) : null}
+			</div>
+			<DayCountMarker eventCount={day.eventCount} />
+		</div>
+	);
+}
+
+function MonthOverview({
+	providerLabel,
+	subtitle,
+	timeZone,
+	firstDay,
+	monthLabel,
+	monthWeeks,
+}: {
+	providerLabel: string;
+	subtitle: string;
+	timeZone: string;
+	firstDay: 0 | 1;
+	monthLabel: string;
+	monthWeeks: CalendarDay[][];
+}) {
+	const weekdayLabels = MONTH_OVERVIEW_WEEKDAYS[firstDay];
+	const clockLabel = monthOverviewClock(timeZone);
+	const monthHeading = monthOverviewLabel(monthLabel);
+
+	return (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				flex: 1,
+				border: "2px solid #111",
+				padding: 14,
+				backgroundColor: "#fff",
+				boxSizing: "border-box",
+				gap: 12,
+			}}
+		>
+			<div
+				style={{
+					display: "grid",
+					gridTemplateColumns: "1.2fr 1fr 1.2fr",
+					alignItems: "center",
+					columnGap: 12,
+				}}
+			>
+				<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+					<div
+						style={{
+							width: 30,
+							height: 30,
+							border: "3px solid #111",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							boxSizing: "border-box",
+							flexShrink: 0,
+						}}
+					>
+						<div
+							style={{
+								width: 12,
+								height: 12,
+								border: "3px solid #111",
+								boxSizing: "border-box",
+							}}
+						/>
+					</div>
+					<SafeTitle size={30} lines={1}>
+						{`${providerLabel.toUpperCase()} KALENDER`}
+					</SafeTitle>
+				</div>
+				<div style={{ display: "flex", justifyContent: "center" }}>
+					<ReadableText size={42} weight={700} style={{ lineHeight: 1 }}>
+						{clockLabel}
+					</ReadableText>
+				</div>
+				<div style={{ display: "flex", justifyContent: "flex-end" }}>
+					<SafeTitle size={30} lines={1}>
+						{monthHeading}
+					</SafeTitle>
+				</div>
+			</div>
+			<div
+				style={{
+					display: "grid",
+					gridTemplateColumns: "repeat(7, 1fr)",
+					borderTop: "2px solid #111",
+					borderLeft: "2px solid #111",
+				}}
+			>
+				{weekdayLabels.map((label) => (
+					<div
+						key={label}
+						style={{
+							height: 40,
+							borderRight: "2px solid #111",
+							borderBottom: "2px solid #111",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+						}}
+					>
+						<ReadableText size={20} weight={700}>
+							{label}
+						</ReadableText>
+					</div>
+				))}
+				{monthWeeks.flatMap((week) =>
+					week.map((day) => <MonthOverviewCell key={day.key} day={day} />),
+				)}
+			</div>
+			<div
+				style={{
+					marginTop: "auto",
+					paddingTop: 2,
+					display: "flex",
+					justifyContent: "flex-start",
+				}}
+			>
+				<ReadableText size={17} weight={700}>
+					{subtitle}
+				</ReadableText>
+			</div>
+		</div>
+	);
+}
+
 export default function CalendarScreen({
 	providerLabel = "Calendar",
 	title = "Calendar",
@@ -394,6 +632,7 @@ export default function CalendarScreen({
 	updatedAt = "",
 	note,
 	eventLayout = "month",
+	firstDay = 0,
 	defaultDays = [],
 	weekDays = [],
 	monthWeeks = [],
@@ -416,27 +655,40 @@ export default function CalendarScreen({
 					gap: 14,
 				}}
 			>
-				<Header
-					providerLabel={providerLabel}
-					title={title}
-					subtitle={subtitle}
-					timeZone={timeZone}
-					updatedAt={updatedAt}
-				/>
-				{eventLayout === "month" && monthWeeks.length > 0 ? (
-					<MonthView monthLabel={monthLabel} monthWeeks={monthWeeks} />
-				) : eventLayout === "two-day" ? (
-					<TwoDayView defaultDays={defaultDays} />
-				) : eventLayout === "week" ? (
-					<WeekView weekDays={weekDays} />
+				{eventLayout === "month-overview" && monthWeeks.length > 0 ? (
+					<MonthOverview
+						providerLabel={providerLabel}
+						subtitle={subtitle}
+						timeZone={timeZone}
+						firstDay={firstDay}
+						monthLabel={monthLabel}
+						monthWeeks={monthWeeks}
+					/>
 				) : (
-					<DefaultView defaultDays={defaultDays} />
+					<>
+						<Header
+							providerLabel={providerLabel}
+							title={title}
+							subtitle={subtitle}
+							timeZone={timeZone}
+							updatedAt={updatedAt}
+						/>
+						{eventLayout === "month" && monthWeeks.length > 0 ? (
+							<MonthView monthLabel={monthLabel} monthWeeks={monthWeeks} />
+						) : eventLayout === "two-day" ? (
+							<TwoDayView defaultDays={defaultDays} />
+						) : eventLayout === "week" ? (
+							<WeekView weekDays={weekDays} />
+						) : (
+							<DefaultView defaultDays={defaultDays} />
+						)}
+						{note ? (
+							<div style={{ marginTop: "auto" }}>
+								<MetaText size={META_TEXT}>{note}</MetaText>
+							</div>
+						) : null}
+					</>
 				)}
-				{note ? (
-					<div style={{ marginTop: "auto" }}>
-						<MetaText size={META_TEXT}>{note}</MetaText>
-					</div>
-				) : null}
 			</div>
 		</PreSatori>
 	);

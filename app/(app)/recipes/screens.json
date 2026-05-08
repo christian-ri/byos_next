@@ -266,14 +266,375 @@
 			"timeZone": "America/New_York",
 			"updatedAt": "Mar 29, 11:40 PM",
 			"note": "Preview - your device will show actual data once an ICS feed is configured.",
-			"eventLayout": "month",
+			"eventLayout": "month-overview",
 			"includeDescription": true,
 			"includeEventTime": true,
 			"firstDay": 1,
 			"defaultDays": [],
 			"weekDays": [],
-			"monthWeeks": [],
-			"monthLabel": "March 2026"
+			"monthWeeks": [
+				[
+					{
+						"key": "2026-04-27",
+						"label": "Apr 27",
+						"shortLabel": "Mon",
+						"dayNumber": "27",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-04-28",
+						"label": "Apr 28",
+						"shortLabel": "Tue",
+						"dayNumber": "28",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-04-29",
+						"label": "Apr 29",
+						"shortLabel": "Wed",
+						"dayNumber": "29",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-04-30",
+						"label": "Apr 30",
+						"shortLabel": "Thu",
+						"dayNumber": "30",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-01",
+						"label": "May 1",
+						"shortLabel": "Fri",
+						"dayNumber": "1",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-02",
+						"label": "May 2",
+						"shortLabel": "Sat",
+						"dayNumber": "2",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-05-03",
+						"label": "May 3",
+						"shortLabel": "Sun",
+						"dayNumber": "3",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-04",
+						"label": "May 4",
+						"shortLabel": "Mon",
+						"dayNumber": "4",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-05",
+						"label": "May 5",
+						"shortLabel": "Tue",
+						"dayNumber": "5",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-06",
+						"label": "May 6",
+						"shortLabel": "Wed",
+						"dayNumber": "6",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-07",
+						"label": "May 7",
+						"shortLabel": "Thu",
+						"dayNumber": "7",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 4,
+						"events": []
+					},
+					{
+						"key": "2026-05-08",
+						"label": "May 8",
+						"shortLabel": "Fri",
+						"dayNumber": "8",
+						"isToday": true,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-09",
+						"label": "May 9",
+						"shortLabel": "Sat",
+						"dayNumber": "9",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-10",
+						"label": "May 10",
+						"shortLabel": "Sun",
+						"dayNumber": "10",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-11",
+						"label": "May 11",
+						"shortLabel": "Mon",
+						"dayNumber": "11",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-12",
+						"label": "May 12",
+						"shortLabel": "Tue",
+						"dayNumber": "12",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-13",
+						"label": "May 13",
+						"shortLabel": "Wed",
+						"dayNumber": "13",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-14",
+						"label": "May 14",
+						"shortLabel": "Thu",
+						"dayNumber": "14",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-15",
+						"label": "May 15",
+						"shortLabel": "Fri",
+						"dayNumber": "15",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-16",
+						"label": "May 16",
+						"shortLabel": "Sat",
+						"dayNumber": "16",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-17",
+						"label": "May 17",
+						"shortLabel": "Sun",
+						"dayNumber": "17",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 5,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-18",
+						"label": "May 18",
+						"shortLabel": "Mon",
+						"dayNumber": "18",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-19",
+						"label": "May 19",
+						"shortLabel": "Tue",
+						"dayNumber": "19",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-20",
+						"label": "May 20",
+						"shortLabel": "Wed",
+						"dayNumber": "20",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-05-21",
+						"label": "May 21",
+						"shortLabel": "Thu",
+						"dayNumber": "21",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-22",
+						"label": "May 22",
+						"shortLabel": "Fri",
+						"dayNumber": "22",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 5,
+						"events": []
+					},
+					{
+						"key": "2026-05-23",
+						"label": "May 23",
+						"shortLabel": "Sat",
+						"dayNumber": "23",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-24",
+						"label": "May 24",
+						"shortLabel": "Sun",
+						"dayNumber": "24",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-25",
+						"label": "May 25",
+						"shortLabel": "Mon",
+						"dayNumber": "25",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-26",
+						"label": "May 26",
+						"shortLabel": "Tue",
+						"dayNumber": "26",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-27",
+						"label": "May 27",
+						"shortLabel": "Wed",
+						"dayNumber": "27",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-28",
+						"label": "May 28",
+						"shortLabel": "Thu",
+						"dayNumber": "28",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-29",
+						"label": "May 29",
+						"shortLabel": "Fri",
+						"dayNumber": "29",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-30",
+						"label": "May 30",
+						"shortLabel": "Sat",
+						"dayNumber": "30",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-05-31",
+						"label": "May 31",
+						"shortLabel": "Sun",
+						"dayNumber": "31",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					}
+				]
+			],
+			"monthLabel": "May 2026"
 		},
 		"params": {
 			"icsUrl": {
@@ -305,12 +666,13 @@
 				"type": "select",
 				"label": "Layout",
 				"description": "Choose the calendar layout.",
-				"default": "month",
+				"default": "month-overview",
 				"options": [
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
 					{ "label": "Week", "value": "week" },
-					{ "label": "Month", "value": "month" }
+					{ "label": "Month", "value": "month" },
+					{ "label": "Month Overview", "value": "month-overview" }
 				]
 			},
 			"timeFormat": {
@@ -382,8 +744,441 @@
 			"firstDay": 0,
 			"defaultDays": [],
 			"weekDays": [],
-			"monthWeeks": [],
-			"monthLabel": "March 2026"
+			"monthWeeks": [
+				[
+					{
+						"key": "2026-04-26",
+						"label": "Apr 26",
+						"shortLabel": "Sun",
+						"dayNumber": "26",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-04-27",
+						"label": "Apr 27",
+						"shortLabel": "Mon",
+						"dayNumber": "27",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-04-28",
+						"label": "Apr 28",
+						"shortLabel": "Tue",
+						"dayNumber": "28",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-04-29",
+						"label": "Apr 29",
+						"shortLabel": "Wed",
+						"dayNumber": "29",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-04-30",
+						"label": "Apr 30",
+						"shortLabel": "Thu",
+						"dayNumber": "30",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-01",
+						"label": "May 1",
+						"shortLabel": "Fri",
+						"dayNumber": "1",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-02",
+						"label": "May 2",
+						"shortLabel": "Sat",
+						"dayNumber": "2",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-03",
+						"label": "May 3",
+						"shortLabel": "Sun",
+						"dayNumber": "3",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-04",
+						"label": "May 4",
+						"shortLabel": "Mon",
+						"dayNumber": "4",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-05",
+						"label": "May 5",
+						"shortLabel": "Tue",
+						"dayNumber": "5",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-06",
+						"label": "May 6",
+						"shortLabel": "Wed",
+						"dayNumber": "6",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-07",
+						"label": "May 7",
+						"shortLabel": "Thu",
+						"dayNumber": "7",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 4,
+						"events": []
+					},
+					{
+						"key": "2026-05-08",
+						"label": "May 8",
+						"shortLabel": "Fri",
+						"dayNumber": "8",
+						"isToday": true,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-09",
+						"label": "May 9",
+						"shortLabel": "Sat",
+						"dayNumber": "9",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-10",
+						"label": "May 10",
+						"shortLabel": "Sun",
+						"dayNumber": "10",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-11",
+						"label": "May 11",
+						"shortLabel": "Mon",
+						"dayNumber": "11",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-12",
+						"label": "May 12",
+						"shortLabel": "Tue",
+						"dayNumber": "12",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-13",
+						"label": "May 13",
+						"shortLabel": "Wed",
+						"dayNumber": "13",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-14",
+						"label": "May 14",
+						"shortLabel": "Thu",
+						"dayNumber": "14",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-15",
+						"label": "May 15",
+						"shortLabel": "Fri",
+						"dayNumber": "15",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-16",
+						"label": "May 16",
+						"shortLabel": "Sat",
+						"dayNumber": "16",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-17",
+						"label": "May 17",
+						"shortLabel": "Sun",
+						"dayNumber": "17",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 5,
+						"events": []
+					},
+					{
+						"key": "2026-05-18",
+						"label": "May 18",
+						"shortLabel": "Mon",
+						"dayNumber": "18",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-19",
+						"label": "May 19",
+						"shortLabel": "Tue",
+						"dayNumber": "19",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-20",
+						"label": "May 20",
+						"shortLabel": "Wed",
+						"dayNumber": "20",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-05-21",
+						"label": "May 21",
+						"shortLabel": "Thu",
+						"dayNumber": "21",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-22",
+						"label": "May 22",
+						"shortLabel": "Fri",
+						"dayNumber": "22",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 5,
+						"events": []
+					},
+					{
+						"key": "2026-05-23",
+						"label": "May 23",
+						"shortLabel": "Sat",
+						"dayNumber": "23",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-24",
+						"label": "May 24",
+						"shortLabel": "Sun",
+						"dayNumber": "24",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-25",
+						"label": "May 25",
+						"shortLabel": "Mon",
+						"dayNumber": "25",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-26",
+						"label": "May 26",
+						"shortLabel": "Tue",
+						"dayNumber": "26",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-27",
+						"label": "May 27",
+						"shortLabel": "Wed",
+						"dayNumber": "27",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-28",
+						"label": "May 28",
+						"shortLabel": "Thu",
+						"dayNumber": "28",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-29",
+						"label": "May 29",
+						"shortLabel": "Fri",
+						"dayNumber": "29",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-30",
+						"label": "May 30",
+						"shortLabel": "Sat",
+						"dayNumber": "30",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-31",
+						"label": "May 31",
+						"shortLabel": "Sun",
+						"dayNumber": "31",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-06-01",
+						"label": "Jun 1",
+						"shortLabel": "Mon",
+						"dayNumber": "1",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-06-02",
+						"label": "Jun 2",
+						"shortLabel": "Tue",
+						"dayNumber": "2",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-06-03",
+						"label": "Jun 3",
+						"shortLabel": "Wed",
+						"dayNumber": "3",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-06-04",
+						"label": "Jun 4",
+						"shortLabel": "Thu",
+						"dayNumber": "4",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-06-05",
+						"label": "Jun 5",
+						"shortLabel": "Fri",
+						"dayNumber": "5",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-06-06",
+						"label": "Jun 6",
+						"shortLabel": "Sat",
+						"dayNumber": "6",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 0,
+						"events": []
+					}
+				]
+			],
+			"monthLabel": "May 2026"
 		},
 		"params": {
 			"icsUrl": {
@@ -420,7 +1215,8 @@
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
 					{ "label": "Week", "value": "week" },
-					{ "label": "Month", "value": "month" }
+					{ "label": "Month", "value": "month" },
+					{ "label": "Month Overview", "value": "month-overview" }
 				]
 			},
 			"timeFormat": {
@@ -492,8 +1288,441 @@
 			"firstDay": 0,
 			"defaultDays": [],
 			"weekDays": [],
-			"monthWeeks": [],
-			"monthLabel": "April 2026"
+			"monthWeeks": [
+				[
+					{
+						"key": "2026-04-26",
+						"label": "Apr 26",
+						"shortLabel": "Sun",
+						"dayNumber": "26",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-04-27",
+						"label": "Apr 27",
+						"shortLabel": "Mon",
+						"dayNumber": "27",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-04-28",
+						"label": "Apr 28",
+						"shortLabel": "Tue",
+						"dayNumber": "28",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-04-29",
+						"label": "Apr 29",
+						"shortLabel": "Wed",
+						"dayNumber": "29",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-04-30",
+						"label": "Apr 30",
+						"shortLabel": "Thu",
+						"dayNumber": "30",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-01",
+						"label": "May 1",
+						"shortLabel": "Fri",
+						"dayNumber": "1",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-02",
+						"label": "May 2",
+						"shortLabel": "Sat",
+						"dayNumber": "2",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-03",
+						"label": "May 3",
+						"shortLabel": "Sun",
+						"dayNumber": "3",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-04",
+						"label": "May 4",
+						"shortLabel": "Mon",
+						"dayNumber": "4",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-05",
+						"label": "May 5",
+						"shortLabel": "Tue",
+						"dayNumber": "5",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-06",
+						"label": "May 6",
+						"shortLabel": "Wed",
+						"dayNumber": "6",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-07",
+						"label": "May 7",
+						"shortLabel": "Thu",
+						"dayNumber": "7",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 4,
+						"events": []
+					},
+					{
+						"key": "2026-05-08",
+						"label": "May 8",
+						"shortLabel": "Fri",
+						"dayNumber": "8",
+						"isToday": true,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-09",
+						"label": "May 9",
+						"shortLabel": "Sat",
+						"dayNumber": "9",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-10",
+						"label": "May 10",
+						"shortLabel": "Sun",
+						"dayNumber": "10",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-11",
+						"label": "May 11",
+						"shortLabel": "Mon",
+						"dayNumber": "11",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-12",
+						"label": "May 12",
+						"shortLabel": "Tue",
+						"dayNumber": "12",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-13",
+						"label": "May 13",
+						"shortLabel": "Wed",
+						"dayNumber": "13",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-14",
+						"label": "May 14",
+						"shortLabel": "Thu",
+						"dayNumber": "14",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-15",
+						"label": "May 15",
+						"shortLabel": "Fri",
+						"dayNumber": "15",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-16",
+						"label": "May 16",
+						"shortLabel": "Sat",
+						"dayNumber": "16",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-17",
+						"label": "May 17",
+						"shortLabel": "Sun",
+						"dayNumber": "17",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 5,
+						"events": []
+					},
+					{
+						"key": "2026-05-18",
+						"label": "May 18",
+						"shortLabel": "Mon",
+						"dayNumber": "18",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-19",
+						"label": "May 19",
+						"shortLabel": "Tue",
+						"dayNumber": "19",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-20",
+						"label": "May 20",
+						"shortLabel": "Wed",
+						"dayNumber": "20",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-05-21",
+						"label": "May 21",
+						"shortLabel": "Thu",
+						"dayNumber": "21",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-22",
+						"label": "May 22",
+						"shortLabel": "Fri",
+						"dayNumber": "22",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 5,
+						"events": []
+					},
+					{
+						"key": "2026-05-23",
+						"label": "May 23",
+						"shortLabel": "Sat",
+						"dayNumber": "23",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-24",
+						"label": "May 24",
+						"shortLabel": "Sun",
+						"dayNumber": "24",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-25",
+						"label": "May 25",
+						"shortLabel": "Mon",
+						"dayNumber": "25",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-26",
+						"label": "May 26",
+						"shortLabel": "Tue",
+						"dayNumber": "26",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-27",
+						"label": "May 27",
+						"shortLabel": "Wed",
+						"dayNumber": "27",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-05-28",
+						"label": "May 28",
+						"shortLabel": "Thu",
+						"dayNumber": "28",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 3,
+						"events": []
+					},
+					{
+						"key": "2026-05-29",
+						"label": "May 29",
+						"shortLabel": "Fri",
+						"dayNumber": "29",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-05-30",
+						"label": "May 30",
+						"shortLabel": "Sat",
+						"dayNumber": "30",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 0,
+						"events": []
+					}
+				],
+				[
+					{
+						"key": "2026-05-31",
+						"label": "May 31",
+						"shortLabel": "Sun",
+						"dayNumber": "31",
+						"isToday": false,
+						"isCurrentMonth": true,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-06-01",
+						"label": "Jun 1",
+						"shortLabel": "Mon",
+						"dayNumber": "1",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-06-02",
+						"label": "Jun 2",
+						"shortLabel": "Tue",
+						"dayNumber": "2",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-06-03",
+						"label": "Jun 3",
+						"shortLabel": "Wed",
+						"dayNumber": "3",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 2,
+						"events": []
+					},
+					{
+						"key": "2026-06-04",
+						"label": "Jun 4",
+						"shortLabel": "Thu",
+						"dayNumber": "4",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 1,
+						"events": []
+					},
+					{
+						"key": "2026-06-05",
+						"label": "Jun 5",
+						"shortLabel": "Fri",
+						"dayNumber": "5",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 0,
+						"events": []
+					},
+					{
+						"key": "2026-06-06",
+						"label": "Jun 6",
+						"shortLabel": "Sat",
+						"dayNumber": "6",
+						"isToday": false,
+						"isCurrentMonth": false,
+						"eventCount": 0,
+						"events": []
+					}
+				]
+			],
+			"monthLabel": "May 2026"
 		},
 		"params": {
 			"icsUrl": {
@@ -530,7 +1759,8 @@
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
 					{ "label": "Week", "value": "week" },
-					{ "label": "Month", "value": "month" }
+					{ "label": "Month", "value": "month" },
+					{ "label": "Month Overview", "value": "month-overview" }
 				]
 			},
 			"timeFormat": {

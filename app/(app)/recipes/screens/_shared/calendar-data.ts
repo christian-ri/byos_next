@@ -5,7 +5,12 @@ import {
 	parseLooseHeaderString,
 } from "@/app/(app)/recipes/screens/_shared/fetch-utils";
 
-export type CalendarLayout = "default" | "two-day" | "week" | "month";
+export type CalendarLayout =
+	| "default"
+	| "two-day"
+	| "week"
+	| "month"
+	| "month-overview";
 
 export type CalendarDayEvent = {
 	id: string;
@@ -28,6 +33,7 @@ export type CalendarDay = {
 	dayNumber: string;
 	isToday: boolean;
 	isCurrentMonth: boolean;
+	eventCount: number;
 	events: CalendarDayEvent[];
 };
 
@@ -138,6 +144,10 @@ function normalizeLayout(value?: string): CalendarLayout {
 			return "two-day";
 		case "week":
 			return "week";
+		case "month-overview":
+		case "month_overview":
+		case "monthoverview":
+			return "month-overview";
 		case "month":
 		case "rolling_month":
 			return "month";
@@ -385,6 +395,7 @@ function buildFallbackData(
 	const subtitle =
 		calendarName?.trim() ||
 		(providerLabel === "Apple" ? "Personal Calendar" : "Connected Calendar");
+
 	return buildCalendarData({
 		providerLabel,
 		title: `${providerLabel} Calendar`,
@@ -883,12 +894,14 @@ function buildDay(
 	const dayEnd = zonedEndOfDayUtc(dayDate, options.timeZone);
 	const now = zonedCalendarDate(new Date(), options.timeZone);
 
-	const dayEvents = events
+	const matchingEvents = events
 		.filter((event) => {
 			const inclusiveEnd = eventEndInclusive(event);
 			return inclusiveEnd >= dayStart && event.start <= dayEnd;
 		})
-		.sort((a, b) => a.start.getTime() - b.start.getTime())
+		.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+	const dayEvents = matchingEvents
 		.slice(0, options.maxEventsPerDay)
 		.map((event) => buildEventForDay(event, dayDate, options));
 
@@ -902,6 +915,7 @@ function buildDay(
 		isCurrentMonth:
 			options.currentMonth === undefined ||
 			dayDate.getMonth() === options.currentMonth,
+		eventCount: matchingEvents.length,
 		events: dayEvents,
 	};
 }
@@ -1051,7 +1065,10 @@ export async function loadCalendarRecipeData(
 	params?: CalendarParams,
 ): Promise<CalendarRecipeData> {
 	const timeZone = normalizeTimeZoneIdentifier(params?.timezone);
-	const eventLayout = normalizeLayout(params?.eventLayout);
+	const eventLayout = normalizeLayout(
+		params?.eventLayout ||
+			(providerLabel === "Apple" ? "month-overview" : "month"),
+	);
 	const includeDescription = parseBoolean(params?.includeDescription, true);
 	const includeEventTime = parseBoolean(params?.includeEventTime, true);
 	const firstDay = normalizeFirstDay(params?.firstDay);

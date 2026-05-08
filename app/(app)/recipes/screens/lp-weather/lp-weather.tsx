@@ -99,7 +99,6 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 export default function LpWeather({
 	title,
 	locationLabel,
-	temperatureUnit,
 	windUnit,
 	currentTemp,
 	feelsLike,
