@@ -251,7 +251,6 @@
 		"version": "0.1.0",
 		"category": "display-components"
 	},
-<<<<<<< Updated upstream
 	"calendar-today": {
 		"title": "Calendar Today",
 		"published": true,
@@ -415,7 +414,16 @@
 			}
 		},
 		"tags": ["calendar", "ics", "today", "agenda"],
-=======
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
 	"iss-position": {
 		"title": "ISS Position",
 		"published": true,
@@ -691,7 +699,6 @@
 			}
 		},
 		"tags": ["food", "recipe", "mealdb", "daily"],
->>>>>>> Stashed changes
 		"author": {
 			"name": "TRMNL",
 			"github": "usetrmnl"
