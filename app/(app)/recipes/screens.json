@@ -251,6 +251,179 @@
 		"version": "0.1.0",
 		"category": "display-components"
 	},
+	"calendar-today": {
+		"title": "Calendar Today",
+		"published": true,
+		"createdAt": "2026-05-08T00:00:00Z",
+		"updatedAt": "2026-05-08T00:00:00Z",
+		"description": "A focused day view that shows only today's calendar events from an ICS feed.",
+		"componentPath": "./screens/calendar-today",
+		"hasDataFetch": true,
+		"props": {
+			"providerLabel": "Calendar",
+			"title": "Calendar Today",
+			"subtitle": "Christian's Kalender",
+			"timeZone": "America/New_York",
+			"updatedAt": "May 8, 11:40 AM",
+			"note": "Preview - your device will show actual data once an ICS feed is configured.",
+			"eventLayout": "default",
+			"includeDescription": true,
+			"includeEventTime": true,
+			"firstDay": 1,
+			"defaultDays": [
+				{
+					"key": "2026-05-08",
+					"isoDate": "2026-05-08",
+					"label": "May 8",
+					"shortLabel": "Fri",
+					"dayNumber": "8",
+					"isToday": true,
+					"isCurrentMonth": true,
+					"eventCount": 4,
+					"events": [
+						{
+							"id": "today-1",
+							"summary": "Projekt Sync",
+							"description": "Offene Punkte und Prioritaeten fuer diese Woche",
+							"location": "",
+							"allDay": false,
+							"multiDay": false,
+							"startsToday": true,
+							"endsToday": true,
+							"continuesBefore": false,
+							"continuesAfter": false,
+							"timeLabel": "09:00 AM - 09:30 AM",
+							"startDateTime": "2026-05-08T09:00:00-04:00",
+							"endDateTime": "2026-05-08T09:30:00-04:00",
+							"startMinute": 540,
+							"endMinute": 570
+						},
+						{
+							"id": "today-2",
+							"summary": "Design Review",
+							"description": "Finale Freigabe fuer die neue Wochenansicht",
+							"location": "",
+							"allDay": false,
+							"multiDay": false,
+							"startsToday": true,
+							"endsToday": true,
+							"continuesBefore": false,
+							"continuesAfter": false,
+							"timeLabel": "11:00 AM - 12:00 PM",
+							"startDateTime": "2026-05-08T11:00:00-04:00",
+							"endDateTime": "2026-05-08T12:00:00-04:00",
+							"startMinute": 660,
+							"endMinute": 720
+						},
+						{
+							"id": "today-3",
+							"summary": "Deep Work",
+							"description": "Keine Meetings, Fokusblock fuer Implementierung",
+							"location": "",
+							"allDay": false,
+							"multiDay": false,
+							"startsToday": true,
+							"endsToday": true,
+							"continuesBefore": false,
+							"continuesAfter": false,
+							"timeLabel": "01:30 PM - 03:30 PM",
+							"startDateTime": "2026-05-08T13:30:00-04:00",
+							"endDateTime": "2026-05-08T15:30:00-04:00",
+							"startMinute": 810,
+							"endMinute": 930
+						},
+						{
+							"id": "today-4",
+							"summary": "Ganztagesnotiz",
+							"description": "Abgabe fuer den Monatsreport",
+							"location": "",
+							"allDay": true,
+							"multiDay": false,
+							"startsToday": true,
+							"endsToday": true,
+							"continuesBefore": false,
+							"continuesAfter": false,
+							"timeLabel": "All day",
+							"startDateTime": "2026-05-08T00:00:00-04:00",
+							"endDateTime": "2026-05-09T00:00:00-04:00",
+							"startMinute": null,
+							"endMinute": null
+						}
+					]
+				}
+			],
+			"weekDays": [],
+			"monthWeeks": [],
+			"monthLabel": "May 2026"
+		},
+		"params": {
+			"icsUrl": {
+				"type": "multiline",
+				"label": "ICS URL(s)",
+				"description": "Published ICS URL. Multiple feeds may be entered on separate lines. Replace webcal:// with https://.",
+				"default": "",
+				"placeholder": "https://example.com/calendar.ics"
+			},
+			"calendarName": {
+				"type": "string",
+				"label": "Calendar Name",
+				"description": "Name shown in the header.",
+				"default": "Personal Calendar"
+			},
+			"headers": {
+				"type": "multiline",
+				"label": "Headers",
+				"description": "Optional request headers in key=value or Header: Value format, one per line.",
+				"default": ""
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Time Zone",
+				"description": "IANA time zone used for display.",
+				"default": "America/New_York"
+			},
+			"timeFormat": {
+				"type": "string",
+				"label": "Time Format",
+				"description": "Use 12h or 24h.",
+				"default": "12h"
+			},
+			"includeDescription": {
+				"type": "string",
+				"label": "Include Description",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"includeEventTime": {
+				"type": "string",
+				"label": "Include Event Time",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"ignoredPhrases": {
+				"type": "multiline",
+				"label": "Ignored Phrases",
+				"description": "Events whose title or description includes these phrases will be ignored. One phrase per line.",
+				"default": ""
+			},
+			"maxEventsPerDay": {
+				"type": "number",
+				"label": "Max Events Per Day",
+				"description": "Caps visible events shown for today.",
+				"default": 6
+			}
+		},
+		"tags": ["calendar", "ics", "today", "agenda"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
 	"calendar-apple": {
 		"title": "Calendar (Apple)",
 		"published": true,
@@ -670,9 +843,7 @@
 				"options": [
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
-					{ "label": "Week", "value": "week" },
 					{ "label": "Week Timeline", "value": "week-timeline" },
-					{ "label": "Month", "value": "month" },
 					{ "label": "Month Overview", "value": "month-overview" }
 				]
 			},
@@ -739,7 +910,7 @@
 			"timeZone": "America/New_York",
 			"updatedAt": "Mar 29, 11:40 PM",
 			"note": "Preview - your device will show actual data once an ICS feed is configured.",
-			"eventLayout": "month",
+			"eventLayout": "month-overview",
 			"includeDescription": true,
 			"includeEventTime": true,
 			"firstDay": 0,
@@ -1211,13 +1382,11 @@
 				"type": "select",
 				"label": "Layout",
 				"description": "Choose the calendar layout.",
-				"default": "month",
+				"default": "month-overview",
 				"options": [
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
-					{ "label": "Week", "value": "week" },
 					{ "label": "Week Timeline", "value": "week-timeline" },
-					{ "label": "Month", "value": "month" },
 					{ "label": "Month Overview", "value": "month-overview" }
 				]
 			},
@@ -1284,7 +1453,7 @@
 			"timeZone": "America/New_York",
 			"updatedAt": "Apr 29, 01:44 PM",
 			"note": "Preview - your device will show actual data once an Outlook ICS feed is configured.",
-			"eventLayout": "month",
+			"eventLayout": "month-overview",
 			"includeDescription": true,
 			"includeEventTime": true,
 			"firstDay": 0,
@@ -1756,13 +1925,11 @@
 				"type": "select",
 				"label": "Layout",
 				"description": "Choose the calendar layout.",
-				"default": "month",
+				"default": "month-overview",
 				"options": [
 					{ "label": "Default (3 Days)", "value": "default" },
 					{ "label": "Two Days", "value": "two-day" },
-					{ "label": "Week", "value": "week" },
 					{ "label": "Week Timeline", "value": "week-timeline" },
-					{ "label": "Month", "value": "month" },
 					{ "label": "Month Overview", "value": "month-overview" }
 				]
 			},

@@ -48,10 +48,28 @@ type Aircraft = {
 	routeLabel: string;
 	altitudeLabel: string;
 	speedLabel: string;
+	latitude: number | null;
+	longitude: number | null;
 	x: number;
 	y: number;
 	heading: number;
 	brightness: number;
+};
+
+type MapTile = {
+	id: string;
+	src: string;
+	left: number;
+	top: number;
+	size: number;
+};
+
+type MapView = {
+	centerLat: number;
+	centerLon: number;
+	zoom: number;
+	size: number;
+	tiles: MapTile[];
 };
 
 export type SkyWatchRecipeData = {
@@ -60,6 +78,7 @@ export type SkyWatchRecipeData = {
 	radiusLabel: string;
 	updatedAt: string;
 	note?: string;
+	map: MapView;
 	aircraft: Aircraft[];
 };
 
@@ -67,6 +86,9 @@ const DEFAULT_LAT = 50.8503;
 const DEFAULT_LON = 4.3517;
 const DEFAULT_RADIUS_KM = 90;
 const DEFAULT_LOCATION = "Brussels";
+const MAP_SIZE = 360;
+const MAP_TILE_SIZE = 256;
+const EARTH_CIRCUMFERENCE_METERS = 40075016.686;
 
 function clamp(value: number, min: number, max: number) {
 	return Math.min(max, Math.max(min, value));
@@ -74,6 +96,89 @@ function clamp(value: number, min: number, max: number) {
 
 function toNm(km: number) {
 	return km * 0.539957;
+}
+
+function lonToWorldPx(lon: number, zoom: number) {
+	return ((lon + 180) / 360) * MAP_TILE_SIZE * 2 ** zoom;
+}
+
+function latToWorldPx(lat: number, zoom: number) {
+	const clampedLat = clamp(lat, -85.05112878, 85.05112878);
+	const radians = (clampedLat * Math.PI) / 180;
+	const mercator =
+		(1 - Math.log(Math.tan(radians) + 1 / Math.cos(radians)) / Math.PI) / 2;
+	return mercator * MAP_TILE_SIZE * 2 ** zoom;
+}
+
+function mapZoomForRadius(lat: number, radiusKm: number) {
+	const spanMeters = radiusKm * 1000 * 2.35;
+	const metersPerPixel = spanMeters / MAP_SIZE;
+	const rawZoom = Math.log2(
+		(Math.cos((lat * Math.PI) / 180) * EARTH_CIRCUMFERENCE_METERS) /
+			(MAP_TILE_SIZE * metersPerPixel),
+	);
+
+	return clamp(Math.floor(rawZoom), 6, 11);
+}
+
+function buildMapView(centerLat: number, centerLon: number, radiusKm: number) {
+	const zoom = mapZoomForRadius(centerLat, radiusKm);
+	const centerWorldX = lonToWorldPx(centerLon, zoom);
+	const centerWorldY = latToWorldPx(centerLat, zoom);
+	const topLeftX = centerWorldX - MAP_SIZE / 2;
+	const topLeftY = centerWorldY - MAP_SIZE / 2;
+	const maxTileIndex = 2 ** zoom - 1;
+	const tileStartX = Math.floor(topLeftX / MAP_TILE_SIZE);
+	const tileEndX = Math.floor((topLeftX + MAP_SIZE) / MAP_TILE_SIZE);
+	const tileStartY = Math.floor(topLeftY / MAP_TILE_SIZE);
+	const tileEndY = Math.floor((topLeftY + MAP_SIZE) / MAP_TILE_SIZE);
+	const tiles: MapTile[] = [];
+
+	for (let tileY = tileStartY; tileY <= tileEndY; tileY += 1) {
+		if (tileY < 0 || tileY > maxTileIndex) continue;
+
+		for (let tileX = tileStartX; tileX <= tileEndX; tileX += 1) {
+			const wrappedX =
+				((tileX % (maxTileIndex + 1)) + (maxTileIndex + 1)) %
+				(maxTileIndex + 1);
+
+			tiles.push({
+				id: `${zoom}-${wrappedX}-${tileY}`,
+				src: `https://tile.openstreetmap.org/${zoom}/${wrappedX}/${tileY}.png`,
+				left: tileX * MAP_TILE_SIZE - topLeftX,
+				top: tileY * MAP_TILE_SIZE - topLeftY,
+				size: MAP_TILE_SIZE,
+			});
+		}
+	}
+
+	return {
+		map: {
+			centerLat,
+			centerLon,
+			zoom,
+			size: MAP_SIZE,
+			tiles,
+		},
+		topLeftX,
+		topLeftY,
+	};
+}
+
+function projectAircraftToMap(
+	latitude: number,
+	longitude: number,
+	topLeftX: number,
+	topLeftY: number,
+	zoom: number,
+) {
+	const x = lonToWorldPx(longitude, zoom) - topLeftX;
+	const y = latToWorldPx(latitude, zoom) - topLeftY;
+
+	return {
+		x: clamp(x / MAP_SIZE, 0.04, 0.96),
+		y: clamp(y / MAP_SIZE, 0.04, 0.96),
+	};
 }
 
 function formatAltitude(value?: number | string) {
@@ -85,6 +190,7 @@ function formatAltitude(value?: number | string) {
 
 function buildFallback(
 	locationLabel: string,
+	map: MapView,
 	note?: string,
 ): SkyWatchRecipeData {
 	return {
@@ -93,6 +199,7 @@ function buildFallback(
 		radiusLabel: "50 nm",
 		updatedAt: formatUpdatedAt(new Date()),
 		note,
+		map,
 		aircraft: [
 			{
 				id: "sample-1",
@@ -101,6 +208,8 @@ function buildFallback(
 				routeLabel: "DLM → BRS",
 				altitudeLabel: "38k ft",
 				speedLabel: "419 kt",
+				latitude: null,
+				longitude: null,
 				x: 0.33,
 				y: 0.23,
 				heading: 295,
@@ -113,6 +222,8 @@ function buildFallback(
 				routeLabel: "LHR → PVG",
 				altitudeLabel: "35k ft",
 				speedLabel: "511 kt",
+				latitude: null,
+				longitude: null,
 				x: 0.67,
 				y: 0.58,
 				heading: 120,
@@ -125,6 +236,8 @@ function buildFallback(
 				routeLabel: "STN → SAW",
 				altitudeLabel: "37.1k ft",
 				speedLabel: "472 kt",
+				latitude: null,
+				longitude: null,
 				x: 0.46,
 				y: 0.67,
 				heading: 340,
@@ -137,6 +250,8 @@ function buildFallback(
 				routeLabel: "",
 				altitudeLabel: "600 ft",
 				speedLabel: "57 kt",
+				latitude: null,
+				longitude: null,
 				x: 0.89,
 				y: 0.79,
 				heading: 76,
@@ -209,6 +324,7 @@ export default async function getData(
 		160,
 	);
 	const radiusNm = Math.round(toNm(radiusKm));
+	const mapView = buildMapView(latitude, longitude, radiusKm);
 
 	try {
 		const response = await fetchJsonWithTimeout<AirplanesLiveResponse>(
@@ -224,12 +340,15 @@ export default async function getData(
 				)
 				.slice(0, 12)
 				.map((entry) => {
-					const dst = clamp(Number(entry.dst || 0), 0, radiusNm);
-					const dir = Number(entry.dir || 0);
-					const angle = ((dir - 90) * Math.PI) / 180;
-					const radial = dst / Math.max(radiusNm, 1);
-					const x = clamp(0.5 + Math.cos(angle) * radial * 0.42, 0.06, 0.94);
-					const y = clamp(0.5 + Math.sin(angle) * radial * 0.42, 0.08, 0.9);
+					const lat = Number(entry.lat);
+					const lon = Number(entry.lon);
+					const projected = projectAircraftToMap(
+						lat,
+						lon,
+						mapView.topLeftX,
+						mapView.topLeftY,
+						mapView.map.zoom,
+					);
 					const altitudeNumeric = Number(entry.alt_baro);
 					const brightness = Number.isFinite(altitudeNumeric)
 						? clamp(0.45 + altitudeNumeric / 50000, 0.5, 1)
@@ -242,8 +361,10 @@ export default async function getData(
 						routeLabel: entry.r || "",
 						altitudeLabel: formatAltitude(entry.alt_baro),
 						speedLabel: `${Math.round(entry.gs || 0)} kt`,
-						x,
-						y,
+						latitude: lat,
+						longitude: lon,
+						x: projected.x,
+						y: projected.y,
 						heading: Number(entry.track || 0),
 						brightness,
 					};
@@ -252,6 +373,7 @@ export default async function getData(
 		if (aircraft.length === 0) {
 			return buildFallback(
 				location.name,
+				mapView.map,
 				"No live aircraft returned for this area.",
 			);
 		}
@@ -262,12 +384,14 @@ export default async function getData(
 			radiusLabel: `${radiusNm} nm`,
 			updatedAt: formatUpdatedAt(new Date()),
 			note: "Aircraft via airplanes.live public point feed.",
+			map: mapView.map,
 			aircraft,
 		};
 	} catch (error) {
 		console.error("Error loading SkyWatch data:", error);
 		return buildFallback(
 			location.name,
+			mapView.map,
 			"Live aircraft fetch failed, so this preview is showing sample traffic.",
 		);
 	}

@@ -4,8 +4,6 @@ import type {
 	CalendarRecipeData,
 } from "@/app/(app)/recipes/screens/_shared/calendar-data";
 import {
-	BORDER_WIDTH,
-	EInkCard,
 	META_TEXT,
 	MetaText,
 	ReadableText,
@@ -23,15 +21,45 @@ const MONTH_OVERVIEW_WEEKDAYS = {
 	0: ["SO", "MO", "DI", "MI", "DO", "FR", "SA"],
 	1: ["MO", "DI", "MI", "DO", "FR", "SA", "SO"],
 } as const;
+const GERMAN_WEEKDAY_LABELS = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"];
+const MONTH_OVERVIEW_DAY_WIDTH = 88;
 const TIMELINE_START_HOUR = 6;
 const TIMELINE_END_HOUR = 22;
 const TIMELINE_TOTAL_MINUTES = (TIMELINE_END_HOUR - TIMELINE_START_HOUR) * 60;
-const GERMAN_WEEKDAY_LABELS = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"];
+const TIMELINE_LABEL_WIDTH = 64;
+const TIMELINE_DAY_WIDTH = 92;
+const TIMELINE_BODY_HEIGHT = 284;
+const TIMELINE_BLOCK_GAP = 4;
 
-function eventTimeLabel(event: CalendarDayEvent) {
-	if (event.allDay) return "All day";
-	if (event.multiDay && !event.timeLabel) return "Multi-day";
-	return event.timeLabel || "TBA";
+function CalendarGlyph({
+	size = 28,
+	accent = false,
+}: {
+	size?: number;
+	accent?: boolean;
+}) {
+	const dotFill = accent ? "#111" : "#8f8f8f";
+
+	return (
+		<svg
+			viewBox="0 0 22 22"
+			width={size}
+			height={size}
+			aria-hidden="true"
+			focusable="false"
+		>
+			<path
+				d="M4 3h14c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1H4c-.55 0-1-.45-1-1V4c0-.55.45-1 1-1Z"
+				fill="none"
+				stroke="#111"
+				strokeWidth="1.8"
+			/>
+			<circle cx="7.1" cy="7.2" r="1.15" fill={dotFill} />
+			<circle cx="11" cy="7.2" r="1.15" fill={dotFill} />
+			<circle cx="14.9" cy="7.2" r="1.15" fill={dotFill} />
+			<circle cx="7.1" cy="14.7" r="1.15" fill={dotFill} />
+		</svg>
+	);
 }
 
 function Header({
@@ -55,17 +83,25 @@ function Header({
 			style={{
 				display: "flex",
 				justifyContent: "space-between",
-				alignItems: "flex-start",
+				alignItems: "center",
 				gap: 16,
 			}}
 		>
 			<div
-				style={{ display: "flex", flexDirection: "column", gap: 8, width: 470 }}
+				style={{
+					display: "flex",
+					alignItems: "center",
+					gap: 10,
+					width: 470,
+				}}
 			>
-				<MetaText>{provider}</MetaText>
-				<SafeTitle size={32} lines={2}>
-					{mainTitle}
-				</SafeTitle>
+				<CalendarGlyph size={24} accent={true} />
+				<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+					<MetaText>{provider}</MetaText>
+					<SafeTitle size={32} lines={2}>
+						{mainTitle}
+					</SafeTitle>
+				</div>
 			</div>
 			<div
 				style={{
@@ -84,30 +120,46 @@ function Header({
 	);
 }
 
-function DayHeader({ day }: { day: CalendarDay }) {
-	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-			<ReadableText size={18} weight={700}>
-				{day.label}
-			</ReadableText>
-			<MetaText>{day.shortLabel}</MetaText>
-		</div>
-	);
+function agendaRightDateLabel(day: CalendarDay) {
+	const date = parseIsoDate(day.isoDate);
+	const weekday = GERMAN_WEEKDAY_LABELS[date.getDay()];
+	const month = new Intl.DateTimeFormat("de-DE", {
+		month: "long",
+	}).format(date);
+
+	return `${weekday} ${date.getDate()}. ${month}`;
 }
 
-function EventList({
-	events,
-	maxEvents,
-	cardWidth,
-	compact = false,
+function agendaEventTimeLabel(
+	event: CalendarDayEvent,
+	includeEventTime: boolean,
+) {
+	if (event.allDay) return "Ganztägig";
+	if (event.multiDay) return "Fortlaufend";
+	if (!includeEventTime) return null;
+	return event.timeLabel || null;
+}
+
+function eventCountLabel(count: number) {
+	return count === 1 ? "1 Termin" : `${count} Termine`;
+}
+
+function DefaultView({
+	providerLabel,
+	timeZone,
+	defaultDays,
+	includeDescription,
+	includeEventTime,
 }: {
-	events: CalendarDayEvent[];
-	maxEvents: number;
-	cardWidth: number;
-	compact?: boolean;
+	providerLabel: string;
+	timeZone: string;
+	defaultDays: CalendarDay[];
+	includeDescription: boolean;
+	includeEventTime: boolean;
 }) {
-	const visibleEvents = events.slice(0, maxEvents);
-	const remaining = Math.max(0, events.length - visibleEvents.length);
+	const visibleDays = defaultDays.slice(0, 3);
+	const clockLabel = zonedClockLabel(timeZone);
+	const rightLabel = visibleDays[0] ? agendaRightDateLabel(visibleDays[0]) : "";
 
 	return (
 		<div
@@ -115,283 +167,243 @@ function EventList({
 				display: "flex",
 				flexDirection: "column",
 				gap: 10,
-				width: "100%",
+				flex: 1,
 			}}
-		>
-			{visibleEvents.map((event) => (
-				<EInkCard
-					key={event.id}
-					padding={compact ? 10 : 12}
-					radius={compact ? 12 : 14}
-					style={{
-						width: cardWidth,
-						minHeight: compact ? 64 : 74,
-						display: "flex",
-						flexDirection: "column",
-						justifyContent: "center",
-						gap: compact ? 6 : 8,
-						flexShrink: 0,
-					}}
-				>
-					<ReadableText
-						size={compact ? 15 : 16}
-						weight={700}
-						style={{ lineHeight: 1 }}
-					>
-						{eventTimeLabel(event)}
-					</ReadableText>
-					<ReadableText
-						size={compact ? 18 : 20}
-						style={{ lineHeight: compact ? 1.04 : 1.08 }}
-					>
-						{event.summary}
-					</ReadableText>
-				</EInkCard>
-			))}
-			{remaining > 0 ? (
-				<ReadableText size={18} weight={700}>
-					+{remaining} more
-				</ReadableText>
-			) : null}
-		</div>
-	);
-}
-
-function DefaultView({ defaultDays }: { defaultDays: CalendarDay[] }) {
-	const columnWidth = 244;
-	const cardWidth = 234;
-	return (
-		<div
-			style={{
-				display: "flex",
-				gap: 10,
-				alignItems: "stretch",
-				justifyContent: "space-between",
-			}}
-		>
-			{defaultDays.map((day, index) => (
-				<div
-					key={day.key}
-					style={{
-						width: columnWidth,
-						display: "flex",
-						flexDirection: "column",
-						gap: 14,
-						paddingRight: index < defaultDays.length - 1 ? 10 : 0,
-						borderRight:
-							index < defaultDays.length - 1 ? "2px solid #111" : "none",
-						boxSizing: "border-box",
-					}}
-				>
-					<DayHeader day={day} />
-					<EventList
-						events={day.events}
-						maxEvents={day.events.length}
-						cardWidth={cardWidth}
-					/>
-				</div>
-			))}
-		</div>
-	);
-}
-
-function TwoDayView({ defaultDays }: { defaultDays: CalendarDay[] }) {
-	const twoDays = defaultDays.slice(0, 2);
-	const cardWidth = 372;
-
-	return (
-		<div
-			style={{
-				display: "flex",
-				gap: 16,
-				alignItems: "stretch",
-				justifyContent: "space-between",
-			}}
-		>
-			{twoDays.map((day) => (
-				<div
-					key={day.key}
-					style={{
-						width: 372,
-						display: "flex",
-						flexDirection: "column",
-						gap: 16,
-						boxSizing: "border-box",
-					}}
-				>
-					<div
-						style={{
-							display: "flex",
-							flexDirection: "column",
-							gap: 4,
-							paddingBottom: 8,
-							borderBottom: "2px solid #111",
-						}}
-					>
-						<ReadableText size={22} weight={700}>
-							{day.label}
-						</ReadableText>
-						<MetaText size={16}>{day.shortLabel}</MetaText>
-					</div>
-					<EventList
-						events={day.events}
-						maxEvents={day.events.length}
-						cardWidth={cardWidth}
-						compact={true}
-					/>
-				</div>
-			))}
-		</div>
-	);
-}
-
-function WeekView({ weekDays }: { weekDays: CalendarDay[] }) {
-	const cardWidth = 90;
-	return (
-		<div
-			style={{
-				display: "flex",
-				gap: 8,
-			}}
-		>
-			{weekDays.slice(0, 7).map((day) => (
-				<div
-					key={day.key}
-					style={{
-						width: 96,
-						minHeight: 286,
-						display: "flex",
-						flexDirection: "column",
-						gap: 12,
-						paddingRight: 6,
-						borderRight: "2px solid #111",
-					}}
-				>
-					<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-						<ReadableText size={16} weight={700}>
-							{day.shortLabel}
-						</ReadableText>
-						<MetaText>{day.dayNumber}</MetaText>
-					</div>
-					<EventList
-						events={day.events}
-						maxEvents={day.events.length}
-						cardWidth={cardWidth}
-					/>
-				</div>
-			))}
-		</div>
-	);
-}
-
-function MonthCell({ day }: { day: CalendarDay }) {
-	const firstEvent = day.events[0];
-	const remaining = Math.max(0, day.events.length - (firstEvent ? 1 : 0));
-
-	return (
-		<div
-			style={{
-				border: `${BORDER_WIDTH}px solid ${day.isCurrentMonth ? "#111" : "#d4d4d4"}`,
-				padding: 8,
-				minHeight: 88,
-				backgroundColor: day.isToday ? "#111" : "#fff",
-				color: day.isToday ? "#fff" : day.isCurrentMonth ? "#111" : "#7a7a7a",
-				display: "flex",
-				flexDirection: "column",
-				gap: 6,
-				boxSizing: "border-box",
-			}}
-		>
-			<ReadableText
-				size={16}
-				weight={700}
-				color={day.isToday ? "#fff" : day.isCurrentMonth ? "#111" : "#7a7a7a"}
-			>
-				{day.dayNumber}
-			</ReadableText>
-			{firstEvent ? (
-				<>
-					<ReadableText
-						size={14}
-						weight={700}
-						color={day.isToday ? "#fff" : "#111"}
-					>
-						{eventTimeLabel(firstEvent)}
-					</ReadableText>
-					<ReadableText size={14} color={day.isToday ? "#fff" : "#111"}>
-						{firstEvent.summary}
-					</ReadableText>
-				</>
-			) : null}
-			{remaining > 0 ? (
-				<ReadableText
-					size={14}
-					weight={700}
-					color={day.isToday ? "#fff" : "#111"}
-				>
-					+{remaining} more
-				</ReadableText>
-			) : null}
-		</div>
-	);
-}
-
-function MonthView({
-	monthLabel,
-	monthWeeks,
-}: {
-	monthLabel: string;
-	monthWeeks: CalendarDay[][];
-}) {
-	const weekdayHeader = monthWeeks[0]?.map((day) => day.shortLabel) || [
-		"Sun",
-		"Mon",
-		"Tue",
-		"Wed",
-		"Thu",
-		"Fri",
-		"Sat",
-	];
-
-	return (
-		<EInkCard
-			padding={14}
-			radius={18}
-			style={{ display: "flex", flexDirection: "column", gap: 12 }}
 		>
 			<div
 				style={{
 					display: "flex",
-					justifyContent: "space-between",
 					alignItems: "center",
+					justifyContent: "space-between",
+					gap: 10,
+					paddingBottom: 8,
+					borderBottom: "2px solid #111",
 				}}
 			>
-				<SafeTitle size={30} lines={2}>
-					{monthLabel}
-				</SafeTitle>
-				<MetaText>{monthWeeks.length} weeks</MetaText>
-			</div>
-			<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-				<div style={{ display: "flex", gap: 6 }}>
-					{weekdayHeader.map((label) => (
-						<div key={label} style={{ width: 96, textAlign: "center" }}>
-							<ReadableText size={14} weight={700}>
-								{label}
-							</ReadableText>
-						</div>
-					))}
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: 10,
+						width: 260,
+					}}
+				>
+					<CalendarGlyph size={26} accent={true} />
+					<SafeTitle size={28} lines={1}>
+						{`${providerLabel.toUpperCase()} KALENDER`}
+					</SafeTitle>
 				</div>
-				{monthWeeks.map((week, index) => (
-					<div key={`week-${index}`} style={{ display: "flex", gap: 6 }}>
-						{week.map((day) => (
-							<div key={day.key} style={{ width: 96 }}>
-								<MonthCell day={day} />
-							</div>
-						))}
-					</div>
-				))}
+				<ReadableText size={40} weight={700} style={{ lineHeight: 1 }}>
+					{clockLabel}
+				</ReadableText>
+				<div
+					style={{
+						width: 220,
+						display: "flex",
+						justifyContent: "flex-end",
+					}}
+				>
+					<ReadableText size={22} weight={700}>
+						{rightLabel}
+					</ReadableText>
+				</div>
 			</div>
-		</EInkCard>
+			{visibleDays.map((day) => {
+				const dayDate = parseIsoDate(day.isoDate);
+				const monthLabel = new Intl.DateTimeFormat("de-DE", {
+					month: "short",
+				}).format(dayDate);
+
+				return (
+					<div
+						key={day.isoDate}
+						style={{
+							display: "flex",
+							minHeight: 108,
+							border: "2px solid #111",
+							backgroundColor: "#fff",
+							boxSizing: "border-box",
+						}}
+					>
+						<div
+							style={{
+								width: 150,
+								padding: "12px 14px",
+								borderRight: "2px solid #111",
+								display: "flex",
+								flexDirection: "column",
+								justifyContent: "space-between",
+								gap: 10,
+								boxSizing: "border-box",
+								backgroundColor: day.isToday ? "#f5f5f5" : "#fff",
+							}}
+						>
+							<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+								<ReadableText
+									size={36}
+									weight={700}
+									style={{ lineHeight: 0.95 }}
+								>
+									{GERMAN_WEEKDAY_LABELS[dayDate.getDay()]}
+								</ReadableText>
+								<ReadableText size={18} weight={700}>
+									{`${dayDate.getDate()}. ${monthLabel}`}
+								</ReadableText>
+								{day.isToday ? (
+									<div
+										style={{
+											alignSelf: "flex-start",
+											border: "2px solid #111",
+											backgroundColor: "#111",
+											padding: "2px 8px",
+											boxSizing: "border-box",
+										}}
+									>
+										<ReadableText size={13} weight={700} color="#fff">
+											HEUTE
+										</ReadableText>
+									</div>
+								) : null}
+							</div>
+							<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+								<ReadableText size={17} weight={700}>
+									{eventCountLabel(day.eventCount)}
+								</ReadableText>
+								<DayCountMarker
+									eventCount={day.eventCount}
+									dotSize={7}
+									gap={6}
+									textSize={14}
+								/>
+							</div>
+						</div>
+						<div
+							style={{
+								flex: 1,
+								display: "flex",
+								flexDirection: "column",
+								padding: "0 12px",
+								boxSizing: "border-box",
+							}}
+						>
+							{day.events.length === 0 ? (
+								<div
+									style={{
+										flex: 1,
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+									}}
+								>
+									<ReadableText size={22} weight={700} color="#777">
+										Keine Termine
+									</ReadableText>
+								</div>
+							) : (
+								day.events.slice(0, 3).map((event, index) => {
+									const timeLabel = agendaEventTimeLabel(
+										event,
+										includeEventTime,
+									);
+
+									return (
+										<div
+											key={event.id}
+											style={{
+												minHeight: 34,
+												display: "flex",
+												alignItems: "stretch",
+												padding: "10px 0",
+												borderBottom:
+													index < Math.min(day.events.length, 3) - 1
+														? "2px solid #d0d0d0"
+														: "none",
+												boxSizing: "border-box",
+												gap: 12,
+											}}
+										>
+											<div
+												style={{
+													width: 92,
+													display: "flex",
+													alignItems: "flex-start",
+													paddingTop: 2,
+												}}
+											>
+												<ReadableText size={17} weight={700}>
+													{timeLabel || "Termin"}
+												</ReadableText>
+											</div>
+											<div
+												style={{
+													width: 2,
+													backgroundColor: "#111",
+													flexShrink: 0,
+												}}
+											/>
+											<div
+												style={{
+													width: 14,
+													display: "flex",
+													alignItems: "flex-start",
+													justifyContent: "center",
+													paddingTop: 5,
+													flexShrink: 0,
+												}}
+											>
+												<div
+													style={{
+														width: 10,
+														height: 10,
+														borderRadius: 999,
+														backgroundColor: "#111",
+													}}
+												/>
+											</div>
+											<div
+												style={{
+													flex: 1,
+													display: "flex",
+													flexDirection: "column",
+													gap: 4,
+													minWidth: 0,
+												}}
+											>
+												<ReadableText
+													size={18}
+													weight={700}
+													style={{
+														lineHeight: 1.05,
+														whiteSpace: "nowrap",
+														overflow: "hidden",
+														textOverflow: "ellipsis",
+													}}
+												>
+													{event.summary}
+												</ReadableText>
+												{includeDescription && event.description ? (
+													<ReadableText
+														size={16}
+														style={{
+															lineHeight: 1.05,
+															whiteSpace: "nowrap",
+															overflow: "hidden",
+															textOverflow: "ellipsis",
+														}}
+													>
+														{event.description}
+													</ReadableText>
+												) : null}
+											</div>
+										</div>
+									);
+								})
+							)}
+						</div>
+					</div>
+				);
+			})}
+		</div>
 	);
 }
 
@@ -424,12 +436,22 @@ function monthOverviewLabel(monthLabel: string) {
 	return monthLabel.toUpperCase();
 }
 
-function DayCountMarker({ eventCount }: { eventCount: number }) {
+function DayCountMarker({
+	eventCount,
+	dotSize = 8,
+	gap = 8,
+	textSize = 18,
+}: {
+	eventCount: number;
+	dotSize?: number;
+	gap?: number;
+	textSize?: number;
+}) {
 	if (eventCount <= 0) return null;
 
 	if (eventCount >= 5) {
 		return (
-			<ReadableText size={18} weight={700} style={{ lineHeight: 1 }}>
+			<ReadableText size={textSize} weight={700} style={{ lineHeight: 1 }}>
 				5+
 			</ReadableText>
 		);
@@ -438,13 +460,13 @@ function DayCountMarker({ eventCount }: { eventCount: number }) {
 	const dotCount = eventCount <= 2 ? eventCount : 3;
 
 	return (
-		<div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+		<div style={{ display: "flex", gap, alignItems: "center" }}>
 			{Array.from({ length: dotCount }, (_, index) => (
 				<div
 					key={`dot-${index}`}
 					style={{
-						width: 8,
-						height: 8,
+						width: dotSize,
+						height: dotSize,
 						borderRadius: 999,
 						backgroundColor: "#111",
 						flexShrink: 0,
@@ -529,11 +551,28 @@ function weekRangeLabel(weekDays: CalendarDay[]) {
 	}).format(lastDate)}`;
 }
 
+function dayFullLabel(day: CalendarDay) {
+	const date = parseIsoDate(day.isoDate);
+	const weekday = GERMAN_WEEKDAY_LABELS[date.getDay()];
+	const month = new Intl.DateTimeFormat("de-DE", {
+		month: "long",
+	}).format(date);
+
+	return `${weekday} ${date.getDate()}. ${month} ${date.getFullYear()}`;
+}
+
+function twoDayEventTimeLabel(event: CalendarDayEvent) {
+	if (event.allDay) return "Ganztägig";
+	if (event.multiDay) return "Fortlaufend";
+	return event.timeLabel || "Zeit folgt";
+}
+
 function isoWeekNumber(isoDate: string) {
 	const date = parseIsoDate(isoDate);
 	const day = date.getDay() || 7;
 	date.setDate(date.getDate() + 4 - day);
 	const yearStart = new Date(date.getFullYear(), 0, 1);
+
 	return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
@@ -548,9 +587,11 @@ function visibleTimedEvents(day: CalendarDay) {
 		if (event.allDay || event.multiDay) {
 			return false;
 		}
+
 		if (event.startMinute === null || event.endMinute === null) {
 			return false;
 		}
+
 		return (
 			event.endMinute > TIMELINE_START_HOUR * 60 &&
 			event.startMinute < TIMELINE_END_HOUR * 60
@@ -571,9 +612,14 @@ function eventLanes(events: CalendarDayEvent[]) {
 		.sort((a, b) => (a.start === b.start ? a.end - b.end : a.start - b.start));
 
 	const laneEnds: number[] = [];
-	let laneCount = 0;
+	const assigned: Array<{
+		event: CalendarDayEvent;
+		start: number;
+		end: number;
+		lane: number;
+	}> = [];
 
-	return placements.map((placement) => {
+	for (const placement of placements) {
 		let lane = laneEnds.findIndex((end) => end <= placement.start);
 		if (lane === -1) {
 			lane = laneEnds.length;
@@ -582,16 +628,16 @@ function eventLanes(events: CalendarDayEvent[]) {
 			laneEnds[lane] = placement.end;
 		}
 
-		laneCount = Math.max(laneCount, lane + 1);
-
-		return {
+		assigned.push({
 			...placement,
 			lane,
-			get laneCount() {
-				return laneCount;
-			},
-		};
-	});
+		});
+	}
+
+	return assigned.map((placement) => ({
+		...placement,
+		laneCount: Math.max(1, laneEnds.length),
+	}));
 }
 
 function TimelineEventBlocks({
@@ -602,6 +648,7 @@ function TimelineEventBlocks({
 	bodyHeight: number;
 }) {
 	const placements = eventLanes(visibleTimedEvents(day));
+	const usableWidth = TIMELINE_DAY_WIDTH - TIMELINE_BLOCK_GAP * 2;
 
 	return (
 		<>
@@ -609,9 +656,7 @@ function TimelineEventBlocks({
 				const top = timelineMinuteToOffset(start, bodyHeight);
 				const bottom = timelineMinuteToOffset(end, bodyHeight);
 				const height = Math.max(14, bottom - top);
-				const gap = 4;
-				const widthPercent = 100 / laneCount;
-				const leftPercent = lane * widthPercent;
+				const laneWidth = usableWidth / laneCount;
 
 				return (
 					<div
@@ -619,12 +664,42 @@ function TimelineEventBlocks({
 						style={{
 							position: "absolute",
 							top,
-							left: `calc(${leftPercent}% + ${gap}px)`,
-							width: `calc(${widthPercent}% - ${gap * 2}px)`,
+							left: TIMELINE_BLOCK_GAP + lane * laneWidth,
+							width: Math.max(12, laneWidth - TIMELINE_BLOCK_GAP),
 							height,
 							backgroundColor: "#d9d9d9",
 							border: "2px solid #111",
 							boxSizing: "border-box",
+						}}
+					/>
+				);
+			})}
+		</>
+	);
+}
+
+function TimelineHourGuides() {
+	return (
+		<>
+			{Array.from(
+				{ length: TIMELINE_END_HOUR - TIMELINE_START_HOUR + 1 },
+				(_, index) => TIMELINE_START_HOUR + index,
+			).map((hour) => {
+				if (hour === TIMELINE_START_HOUR) {
+					return null;
+				}
+
+				const top = timelineMinuteToOffset(hour * 60, TIMELINE_BODY_HEIGHT);
+
+				return (
+					<div
+						key={`hour-line-${hour}`}
+						style={{
+							position: "absolute",
+							top,
+							left: 0,
+							right: 0,
+							borderTop: "1px solid #cfcfcf",
 						}}
 					/>
 				);
@@ -649,9 +724,8 @@ function WeekTimeline({
 	const showCurrentMarker =
 		currentMinute >= TIMELINE_START_HOUR * 60 &&
 		currentMinute <= TIMELINE_END_HOUR * 60;
-	const bodyHeight = 284;
 	const markerTop = showCurrentMarker
-		? timelineMinuteToOffset(currentMinute, bodyHeight)
+		? timelineMinuteToOffset(currentMinute, TIMELINE_BODY_HEIGHT)
 		: 0;
 	const timeLabels = Array.from(
 		{ length: TIMELINE_END_HOUR - TIMELINE_START_HOUR + 1 },
@@ -673,23 +747,18 @@ function WeekTimeline({
 		>
 			<div
 				style={{
-					display: "grid",
-					gridTemplateColumns: "1.3fr 1fr 1.3fr",
+					display: "flex",
 					alignItems: "center",
-					columnGap: 12,
+					justifyContent: "space-between",
+					gap: 12,
 					paddingBottom: 10,
 					borderBottom: "2px solid #111",
 				}}
 			>
-				<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-					<div
-						style={{
-							width: 28,
-							height: 28,
-							border: "3px solid #111",
-							boxSizing: "border-box",
-						}}
-					/>
+				<div
+					style={{ display: "flex", alignItems: "center", gap: 12, width: 250 }}
+				>
+					<CalendarGlyph size={28} accent={true} />
 					<SafeTitle size={28} lines={1}>
 						{`${providerLabel.toUpperCase()} KALENDER`}
 					</SafeTitle>
@@ -715,6 +784,7 @@ function WeekTimeline({
 						flexDirection: "column",
 						alignItems: "flex-end",
 						gap: 4,
+						width: 250,
 					}}
 				>
 					<SafeTitle size={26} lines={1}>
@@ -725,11 +795,8 @@ function WeekTimeline({
 					</ReadableText>
 				</div>
 			</div>
-			<div
-				style={{ display: "grid", gridTemplateColumns: "66px repeat(7, 1fr)" }}
-			>
-				<div />
-				{weekDays.slice(0, 7).map((day) => {
+			<div style={{ display: "flex", marginLeft: TIMELINE_LABEL_WIDTH }}>
+				{weekDays.slice(0, 7).map((day, index) => {
 					const dateLabel = `${day.isoDate.slice(8, 10)}.${day.isoDate.slice(
 						5,
 						7,
@@ -739,72 +806,72 @@ function WeekTimeline({
 						<div
 							key={`header-${day.isoDate}`}
 							style={{
-								height: 64,
+								width: TIMELINE_DAY_WIDTH,
+								height: 58,
 								display: "flex",
 								flexDirection: "column",
 								alignItems: "center",
 								justifyContent: "center",
 								gap: 4,
-								borderLeft: "2px solid #111",
+								borderLeft: index === 0 ? "2px solid #111" : "none",
 								borderTop: "2px solid #111",
 								borderRight: "2px solid #111",
 								backgroundColor: day.isToday ? "#111" : "#fff",
-								color: day.isToday ? "#fff" : "#111",
+								boxSizing: "border-box",
 							}}
 						>
 							<ReadableText
-								size={20}
+								size={18}
 								weight={700}
 								color={day.isToday ? "#fff" : "#111"}
 							>
 								{GERMAN_WEEKDAY_LABELS[parseIsoDate(day.isoDate).getDay()]}
 							</ReadableText>
 							<ReadableText
-								size={15}
+								size={14}
 								weight={700}
 								color={day.isToday ? "#fff" : "#111"}
 							>
 								{dateLabel}
 							</ReadableText>
-							<div
-								style={{
-									transform: "scale(0.8)",
-									transformOrigin: "center",
-								}}
-							>
-								<DayCountMarker eventCount={day.eventCount} />
-							</div>
+							<DayCountMarker
+								eventCount={day.eventCount}
+								dotSize={6}
+								gap={5}
+								textSize={14}
+							/>
 						</div>
 					);
 				})}
 			</div>
-			<div
-				style={{ display: "grid", gridTemplateColumns: "66px 1fr", flex: 1 }}
-			>
+			<div style={{ display: "flex", flex: 1 }}>
 				<div
 					style={{
 						position: "relative",
-						height: bodyHeight,
+						width: TIMELINE_LABEL_WIDTH,
+						height: TIMELINE_BODY_HEIGHT,
 						borderLeft: "2px solid #111",
-						borderBottom: "2px solid #111",
 						borderTop: "2px solid #111",
+						borderBottom: "2px solid #111",
 						backgroundColor: "#fff",
+						boxSizing: "border-box",
 					}}
 				>
 					{timeLabels.map((hour) => {
 						const top =
 							hour === TIMELINE_END_HOUR
-								? bodyHeight - 24
-								: timelineMinuteToOffset(hour * 60, bodyHeight) + 6;
+								? TIMELINE_BODY_HEIGHT - 22
+								: timelineMinuteToOffset(hour * 60, TIMELINE_BODY_HEIGHT) + 6;
+
 						return (
 							<ReadableText
 								key={`label-${hour}`}
-								size={14}
-								weight={hour * 60 === currentMinute ? 700 : 600}
+								size={13}
+								weight={600}
 								style={{
 									position: "absolute",
 									top,
-									left: 8,
+									left: 6,
 									lineHeight: 1,
 								}}
 							>
@@ -814,12 +881,12 @@ function WeekTimeline({
 					})}
 					{showCurrentMarker ? (
 						<ReadableText
-							size={14}
+							size={13}
 							weight={700}
 							style={{
 								position: "absolute",
 								top: Math.max(0, markerTop - 8),
-								left: 8,
+								left: 6,
 								lineHeight: 1,
 								backgroundColor: "#fff",
 							}}
@@ -831,33 +898,16 @@ function WeekTimeline({
 				<div
 					style={{
 						position: "relative",
-						height: bodyHeight,
-						display: "grid",
-						gridTemplateColumns: "repeat(7, 1fr)",
+						display: "flex",
+						height: TIMELINE_BODY_HEIGHT,
 						borderTop: "2px solid #111",
 						borderRight: "2px solid #111",
 						borderBottom: "2px solid #111",
 						backgroundColor: "#fff",
+						boxSizing: "border-box",
 					}}
 				>
-					{timeLabels.map((hour) => {
-						const top = timelineMinuteToOffset(hour * 60, bodyHeight);
-						return (
-							<div
-								key={`hour-line-${hour}`}
-								style={{
-									position: "absolute",
-									top,
-									left: 0,
-									right: 0,
-									borderTop:
-										hour === TIMELINE_START_HOUR
-											? "none"
-											: "1px dashed #b9b9b9",
-								}}
-							/>
-						);
-					})}
+					<TimelineHourGuides />
 					{showCurrentMarker ? (
 						<div
 							style={{
@@ -870,21 +920,239 @@ function WeekTimeline({
 							}}
 						/>
 					) : null}
-					{weekDays.slice(0, 7).map((day) => (
+					{weekDays.slice(0, 7).map((day, index) => (
 						<div
 							key={`column-${day.isoDate}`}
 							style={{
 								position: "relative",
-								height: bodyHeight,
-								borderLeft: day.isToday ? "3px solid #111" : "2px solid #111",
+								width: TIMELINE_DAY_WIDTH,
+								height: TIMELINE_BODY_HEIGHT,
+								borderLeft:
+									index === 0
+										? day.isToday
+											? "3px solid #111"
+											: "2px solid #111"
+										: day.isToday
+											? "3px solid #111"
+											: "1px solid #111",
 								backgroundColor: day.isToday ? "#f2f2f2" : "#fff",
 								boxSizing: "border-box",
 							}}
 						>
-							<TimelineEventBlocks day={day} bodyHeight={bodyHeight} />
+							<TimelineEventBlocks
+								day={day}
+								bodyHeight={TIMELINE_BODY_HEIGHT}
+							/>
 						</div>
 					))}
 				</div>
+			</div>
+		</div>
+	);
+}
+
+function TwoDayTimeline({
+	providerLabel,
+	timeZone,
+	defaultDays,
+	weekDays,
+}: {
+	providerLabel: string;
+	timeZone: string;
+	defaultDays: CalendarDay[];
+	weekDays: CalendarDay[];
+}) {
+	const twoDays = defaultDays.slice(0, 2);
+	const clockLabel = zonedClockLabel(timeZone);
+	const weekSource = weekDays.length > 0 ? weekDays : twoDays;
+	const weekNumber = weekSource[0]
+		? isoWeekNumber(weekSource[0].isoDate)
+		: null;
+	const rangeLabel = weekRangeLabel(weekSource);
+
+	return (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				flex: 1,
+				padding: "6px 0 0",
+				backgroundColor: "#fff",
+				boxSizing: "border-box",
+				gap: 10,
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "space-between",
+					gap: 10,
+					paddingBottom: 8,
+					borderBottom: "2px solid #111",
+				}}
+			>
+				<div
+					style={{ display: "flex", alignItems: "center", gap: 10, width: 260 }}
+				>
+					<CalendarGlyph size={26} accent={true} />
+					<SafeTitle size={28} lines={1}>
+						{`${providerLabel.toUpperCase()} KALENDER`}
+					</SafeTitle>
+				</div>
+				<ReadableText size={40} weight={700} style={{ lineHeight: 1 }}>
+					{clockLabel}
+				</ReadableText>
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "flex-end",
+						gap: 2,
+						width: 260,
+					}}
+				>
+					<SafeTitle size={24} lines={1}>
+						{weekNumber ? `KW ${weekNumber}` : ""}
+					</SafeTitle>
+					<ReadableText size={15} weight={700}>
+						{rangeLabel}
+					</ReadableText>
+				</div>
+			</div>
+			<div style={{ display: "flex", gap: 10, flex: 1 }}>
+				{twoDays.map((day) => (
+					<div
+						key={day.key}
+						style={{
+							flex: 1,
+							display: "flex",
+							flexDirection: "column",
+							border: "2px solid #111",
+							boxSizing: "border-box",
+							backgroundColor: "#fff",
+							minWidth: 0,
+						}}
+					>
+						<div
+							style={{
+								minHeight: 56,
+								display: "flex",
+								alignItems: "flex-start",
+								justifyContent: "space-between",
+								padding: "10px 12px 8px",
+								borderBottom: "2px solid #111",
+								boxSizing: "border-box",
+								backgroundColor: day.isToday ? "#f3f3f3" : "#fff",
+								gap: 10,
+							}}
+						>
+							<div
+								style={{
+									display: "flex",
+									flexDirection: "column",
+									gap: 4,
+									minWidth: 0,
+								}}
+							>
+								<ReadableText size={20} weight={700}>
+									{dayFullLabel(day)}
+								</ReadableText>
+								<ReadableText size={15} weight={700}>
+									{eventCountLabel(day.eventCount)}
+								</ReadableText>
+							</div>
+							{day.isToday ? (
+								<div
+									style={{
+										border: "2px solid #111",
+										backgroundColor: "#111",
+										padding: "2px 8px",
+										boxSizing: "border-box",
+									}}
+								>
+									<ReadableText size={13} weight={700} color="#fff">
+										HEUTE
+									</ReadableText>
+								</div>
+							) : null}
+						</div>
+						<div
+							style={{
+								flex: 1,
+								display: "flex",
+								flexDirection: "column",
+								padding: "4px 12px 8px",
+								boxSizing: "border-box",
+								minWidth: 0,
+								overflow: "hidden",
+							}}
+						>
+							{day.events.length === 0 ? (
+								<div
+									style={{
+										flex: 1,
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+									}}
+								>
+									<ReadableText size={22} weight={700} color="#777">
+										Keine Termine
+									</ReadableText>
+								</div>
+							) : (
+								day.events.slice(0, 4).map((event, index) => (
+									<div
+										key={event.id}
+										style={{
+											display: "flex",
+											flexDirection: "column",
+											gap: 4,
+											padding: "12px 0 10px",
+											borderBottom:
+												index < Math.min(day.events.length, 4) - 1
+													? "2px solid #d0d0d0"
+													: "none",
+											minWidth: 0,
+										}}
+									>
+										<ReadableText size={14} weight={700} color="#666">
+											{twoDayEventTimeLabel(event)}
+										</ReadableText>
+										<ReadableText
+											size={22}
+											weight={700}
+											style={{
+												lineHeight: 1.05,
+												whiteSpace: "nowrap",
+												overflow: "hidden",
+												textOverflow: "ellipsis",
+											}}
+										>
+											{event.summary}
+										</ReadableText>
+									</div>
+								))
+							)}
+							<div
+								style={{
+									marginTop: "auto",
+									paddingTop: 8,
+									display: "flex",
+									justifyContent: "flex-start",
+								}}
+							>
+								<DayCountMarker
+									eventCount={day.eventCount}
+									dotSize={7}
+									gap={6}
+									textSize={15}
+								/>
+							</div>
+						</div>
+					</div>
+				))}
 			</div>
 		</div>
 	);
@@ -896,10 +1164,11 @@ function MonthOverviewCell({ day }: { day: CalendarDay }) {
 	return (
 		<div
 			style={{
+				width: MONTH_OVERVIEW_DAY_WIDTH,
 				borderRight: "2px solid #111",
 				borderBottom: "2px solid #111",
 				padding: "10px 10px 8px",
-				minHeight: 50,
+				height: 52,
 				display: "flex",
 				flexDirection: "column",
 				justifyContent: "space-between",
@@ -912,7 +1181,7 @@ function MonthOverviewCell({ day }: { day: CalendarDay }) {
 					display: "flex",
 					alignItems: "flex-start",
 					justifyContent: "space-between",
-					minHeight: 30,
+					minHeight: 24,
 				}}
 			>
 				<ReadableText size={28} weight={700} color={dayColor}>
@@ -923,20 +1192,24 @@ function MonthOverviewCell({ day }: { day: CalendarDay }) {
 						style={{
 							border: "3px solid #111",
 							padding: "2px 6px",
-							minWidth: 22,
 							display: "flex",
 							justifyContent: "center",
 							alignItems: "center",
 							boxSizing: "border-box",
 						}}
 					>
-						<ReadableText size={14} weight={700}>
+						<ReadableText size={12} weight={700}>
 							HEUTE
 						</ReadableText>
 					</div>
 				) : null}
 			</div>
-			<DayCountMarker eventCount={day.eventCount} />
+			<DayCountMarker
+				eventCount={day.eventCount}
+				dotSize={6}
+				gap={5}
+				textSize={14}
+			/>
 		</div>
 	);
 }
@@ -975,34 +1248,14 @@ function MonthOverview({
 		>
 			<div
 				style={{
-					display: "grid",
-					gridTemplateColumns: "1.2fr 1fr 1.2fr",
+					display: "flex",
 					alignItems: "center",
-					columnGap: 12,
+					justifyContent: "space-between",
+					gap: 12,
 				}}
 			>
 				<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-					<div
-						style={{
-							width: 30,
-							height: 30,
-							border: "3px solid #111",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							boxSizing: "border-box",
-							flexShrink: 0,
-						}}
-					>
-						<div
-							style={{
-								width: 12,
-								height: 12,
-								border: "3px solid #111",
-								boxSizing: "border-box",
-							}}
-						/>
-					</div>
+					<CalendarGlyph size={30} accent={true} />
 					<SafeTitle size={30} lines={1}>
 						{`${providerLabel.toUpperCase()} KALENDER`}
 					</SafeTitle>
@@ -1020,32 +1273,42 @@ function MonthOverview({
 			</div>
 			<div
 				style={{
-					display: "grid",
-					gridTemplateColumns: "repeat(7, 1fr)",
+					display: "flex",
+					flexDirection: "column",
 					borderTop: "2px solid #111",
-					borderLeft: "2px solid #111",
 				}}
 			>
-				{weekdayLabels.map((label) => (
+				<div style={{ display: "flex", borderLeft: "2px solid #111" }}>
+					{weekdayLabels.map((label) => (
+						<div
+							key={label}
+							style={{
+								width: MONTH_OVERVIEW_DAY_WIDTH,
+								height: 40,
+								borderRight: "2px solid #111",
+								borderBottom: "2px solid #111",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+								boxSizing: "border-box",
+							}}
+						>
+							<ReadableText size={20} weight={700}>
+								{label}
+							</ReadableText>
+						</div>
+					))}
+				</div>
+				{monthWeeks.map((week, index) => (
 					<div
-						key={label}
-						style={{
-							height: 40,
-							borderRight: "2px solid #111",
-							borderBottom: "2px solid #111",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-						}}
+						key={`month-overview-week-${index}`}
+						style={{ display: "flex", borderLeft: "2px solid #111" }}
 					>
-						<ReadableText size={20} weight={700}>
-							{label}
-						</ReadableText>
+						{week.map((day) => (
+							<MonthOverviewCell key={day.key} day={day} />
+						))}
 					</div>
 				))}
-				{monthWeeks.flatMap((week) =>
-					week.map((day) => <MonthOverviewCell key={day.key} day={day} />),
-				)}
 			</div>
 			<div
 				style={{
@@ -1070,7 +1333,9 @@ export default function CalendarScreen({
 	timeZone = "America/New_York",
 	updatedAt = "",
 	note,
-	eventLayout = "month",
+	eventLayout = "month-overview",
+	includeDescription = true,
+	includeEventTime = true,
 	firstDay = 0,
 	defaultDays = [],
 	weekDays = [],
@@ -1109,6 +1374,13 @@ export default function CalendarScreen({
 						timeZone={timeZone}
 						weekDays={weekDays}
 					/>
+				) : eventLayout === "two-day" ? (
+					<TwoDayTimeline
+						providerLabel={providerLabel}
+						timeZone={timeZone}
+						defaultDays={defaultDays}
+						weekDays={weekDays}
+					/>
 				) : (
 					<>
 						<Header
@@ -1118,15 +1390,13 @@ export default function CalendarScreen({
 							timeZone={timeZone}
 							updatedAt={updatedAt}
 						/>
-						{eventLayout === "month" && monthWeeks.length > 0 ? (
-							<MonthView monthLabel={monthLabel} monthWeeks={monthWeeks} />
-						) : eventLayout === "two-day" ? (
-							<TwoDayView defaultDays={defaultDays} />
-						) : eventLayout === "week" ? (
-							<WeekView weekDays={weekDays} />
-						) : (
-							<DefaultView defaultDays={defaultDays} />
-						)}
+						<DefaultView
+							providerLabel={providerLabel}
+							timeZone={timeZone}
+							defaultDays={defaultDays}
+							includeDescription={includeDescription}
+							includeEventTime={includeEventTime}
+						/>
 						{note ? (
 							<div style={{ marginTop: "auto" }}>
 								<MetaText size={META_TEXT}>{note}</MetaText>

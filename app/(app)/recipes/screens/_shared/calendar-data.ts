@@ -8,9 +8,7 @@ import {
 export type CalendarLayout =
 	| "default"
 	| "two-day"
-	| "week"
 	| "week-timeline"
-	| "month"
 	| "month-overview";
 
 export type CalendarDayEvent = {
@@ -149,7 +147,7 @@ function normalizeLayout(value?: string): CalendarLayout {
 		case "two_day":
 			return "two-day";
 		case "week":
-			return "week";
+			return "week-timeline";
 		case "week-timeline":
 		case "week_timeline":
 		case "timeline-week":
@@ -161,7 +159,7 @@ function normalizeLayout(value?: string): CalendarLayout {
 			return "month-overview";
 		case "month":
 		case "rolling_month":
-			return "month";
+			return "month-overview";
 		default:
 			return "default";
 	}
@@ -1138,20 +1136,14 @@ export async function loadCalendarRecipeData(
 	params?: CalendarParams,
 ): Promise<CalendarRecipeData> {
 	const timeZone = normalizeTimeZoneIdentifier(params?.timezone);
-	const eventLayout = normalizeLayout(
-		params?.eventLayout ||
-			(providerLabel === "Apple" ? "month-overview" : "month"),
-	);
+	const eventLayout = normalizeLayout(params?.eventLayout || "month-overview");
 	const includeDescription = parseBoolean(params?.includeDescription, true);
 	const includeEventTime = parseBoolean(params?.includeEventTime, true);
 	const firstDay = normalizeFirstDay(params?.firstDay);
 	const timeFormat = normalizeTimeFormat(params?.timeFormat);
 	const maxEventsPerDay = Math.max(
 		1,
-		Math.min(
-			8,
-			Number(params?.maxEventsPerDay || (eventLayout === "month" ? 4 : 6)),
-		),
+		Math.min(8, Number(params?.maxEventsPerDay || 6)),
 	);
 	const calendarName = String(params?.calendarName || "").trim();
 	const title = `${providerLabel} Calendar`;
