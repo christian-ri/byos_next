@@ -1,0 +1,62 @@
+{
+	"name": "GitHub Monitor",
+	"description": "Private TRMNL plugin for a static 800x480 GitHub monitoring dashboard.",
+	"fields": [
+		{
+			"key": "GITHUB_TOKEN",
+			"type": "secret",
+			"required": true,
+			"label": "GitHub Token",
+			"description": "Personal access token with repo, actions, and optional security permissions."
+		},
+		{
+			"key": "GITHUB_OWNER",
+			"type": "string",
+			"required": true,
+			"label": "GitHub Owner",
+			"description": "GitHub user or organization name."
+		},
+		{
+			"key": "REPOSITORIES",
+			"type": "string",
+			"required": false,
+			"label": "Repositories",
+			"description": "Optional comma-separated repository list. Leave blank to auto-load owner repositories."
+		},
+		{
+			"key": "INCLUDE_PRIVATE_REPOS",
+			"type": "boolean",
+			"required": false,
+			"default": true,
+			"label": "Include Private Repos"
+		},
+		{
+			"key": "STALE_DAYS",
+			"type": "number",
+			"required": false,
+			"default": 14,
+			"label": "Stale Days"
+		},
+		{
+			"key": "TIMEZONE",
+			"type": "string",
+			"required": false,
+			"default": "Europe/Berlin",
+			"label": "Timezone"
+		},
+		{
+			"key": "MAX_REPOS",
+			"type": "number",
+			"required": false,
+			"default": 6,
+			"label": "Max Repos"
+		},
+		{
+			"key": "MAX_WORKFLOW_RUNS",
+			"type": "number",
+			"required": false,
+			"default": 5,
+			"label": "Max Workflow Runs"
+		}
+	]
+}

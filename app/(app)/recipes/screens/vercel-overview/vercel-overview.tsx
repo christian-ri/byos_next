@@ -49,7 +49,7 @@ function MetricCard({ metric }: { metric: Metric }) {
 			}}
 		>
 			<ReadableText
-				size={18}
+				size={16}
 				weight={700}
 				style={{ lineHeight: 1, letterSpacing: -0.2 }}
 			>
@@ -62,7 +62,7 @@ function MetricCard({ metric }: { metric: Metric }) {
 				{metric.value}
 			</div>
 			{metric.secondary ? (
-				<ReadableText size={18} color="#444" style={{ lineHeight: 1 }}>
+				<ReadableText size={16} color="#444" style={{ lineHeight: 1 }}>
 					{metric.secondary}
 				</ReadableText>
 			) : (
@@ -87,7 +87,7 @@ function DeploymentsPanel({ rows }: { rows: DeploymentRow[] }) {
 				flexDirection: "column",
 			}}
 		>
-			<ReadableText size={24} weight={700} style={{ marginBottom: 8 }}>
+			<ReadableText size={20} weight={700} style={{ marginBottom: 8 }}>
 				Latest Deployments
 			</ReadableText>
 			<div
@@ -97,19 +97,19 @@ function DeploymentsPanel({ rows }: { rows: DeploymentRow[] }) {
 					borderBottom: "2px solid #111",
 				}}
 			>
-				<ReadableText size={18} weight={700} style={{ width: 132 }}>
+				<ReadableText size={16} weight={700} style={{ width: 132 }}>
 					Project
 				</ReadableText>
-				<ReadableText size={18} weight={700} style={{ width: 86 }}>
+				<ReadableText size={16} weight={700} style={{ width: 86 }}>
 					Branch
 				</ReadableText>
-				<ReadableText size={18} weight={700} style={{ width: 104 }}>
+				<ReadableText size={16} weight={700} style={{ width: 104 }}>
 					Status
 				</ReadableText>
-				<ReadableText size={18} weight={700} style={{ width: 64 }}>
+				<ReadableText size={16} weight={700} style={{ width: 64 }}>
 					Time
 				</ReadableText>
-				<ReadableText size={18} weight={700} style={{ width: 56 }}>
+				<ReadableText size={16} weight={700} style={{ width: 56 }}>
 					Dur.
 				</ReadableText>
 			</div>
@@ -158,7 +158,13 @@ function DeploymentsPanel({ rows }: { rows: DeploymentRow[] }) {
 	);
 }
 
-function ProductionPanel({ rows, note }: { rows: ProductionRow[]; note?: string }) {
+function ProductionPanel({
+	rows,
+	note,
+}: {
+	rows: ProductionRow[];
+	note?: string;
+}) {
 	const visibleRows = rows.slice(0, 3);
 
 	return (
@@ -175,10 +181,12 @@ function ProductionPanel({ rows, note }: { rows: ProductionRow[]; note?: string 
 				flexDirection: "column",
 			}}
 		>
-			<ReadableText size={24} weight={700} style={{ marginBottom: 8 }}>
+			<ReadableText size={20} weight={700} style={{ marginBottom: 8 }}>
 				Current Production
 			</ReadableText>
-			<div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+			<div
+				style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}
+			>
 				{visibleRows.map((row, index) => (
 					<div
 						key={`${row.project}-${row.sha}-${index}`}
@@ -199,10 +207,10 @@ function ProductionPanel({ rows, note }: { rows: ProductionRow[]; note?: string 
 								gap: 3,
 							}}
 						>
-							<ReadableText size={20} weight={700} style={{ lineHeight: 1 }}>
+							<ReadableText size={18} weight={700} style={{ lineHeight: 1 }}>
 								{row.project}
 							</ReadableText>
-							<ReadableText size={18} color="#444" style={{ lineHeight: 1 }}>
+							<ReadableText size={15} color="#444" style={{ lineHeight: 1.05 }}>
 								{row.domain}
 							</ReadableText>
 						</div>
@@ -215,10 +223,10 @@ function ProductionPanel({ rows, note }: { rows: ProductionRow[]; note?: string 
 								gap: 3,
 							}}
 						>
-							<ReadableText size={18} style={{ lineHeight: 1 }}>
+							<ReadableText size={16} style={{ lineHeight: 1 }}>
 								{row.age}
 							</ReadableText>
-							<ReadableText size={18} color="#444" style={{ lineHeight: 1 }}>
+							<ReadableText size={16} color="#444" style={{ lineHeight: 1 }}>
 								{row.sha}
 							</ReadableText>
 						</div>
@@ -226,7 +234,11 @@ function ProductionPanel({ rows, note }: { rows: ProductionRow[]; note?: string 
 				))}
 			</div>
 			{note && visibleRows.length === 0 ? (
-				<ReadableText size={16} color="#555" style={{ marginTop: 4, lineHeight: 1.1 }}>
+				<ReadableText
+					size={16}
+					color="#555"
+					style={{ marginTop: 4, lineHeight: 1.1 }}
+				>
 					{note}
 				</ReadableText>
 			) : null}
@@ -234,12 +246,18 @@ function ProductionPanel({ rows, note }: { rows: ProductionRow[]; note?: string 
 	);
 }
 
-function FooterMetric({ metric, showDivider }: { metric: Metric; showDivider: boolean }) {
+function FooterMetric({
+	metric,
+	showDivider,
+}: {
+	metric: Metric;
+	showDivider: boolean;
+}) {
 	return (
 		<div
 			style={{
 				width: 187,
-				height: 46,
+				height: 60,
 				paddingLeft: 12,
 				paddingRight: 12,
 				boxSizing: "border-box",
@@ -250,10 +268,10 @@ function FooterMetric({ metric, showDivider }: { metric: Metric; showDivider: bo
 				gap: 2,
 			}}
 		>
-			<ReadableText size={18} color="#444" style={{ lineHeight: 1 }}>
+			<ReadableText size={16} color="#444" style={{ lineHeight: 1 }}>
 				{metric.label}
 			</ReadableText>
-			<div className="font-blockkie" style={{ fontSize: 24, lineHeight: 0.95 }}>
+			<div className="font-blockkie" style={{ fontSize: 28, lineHeight: 0.95 }}>
 				{metric.value}
 			</div>
 		</div>
@@ -262,7 +280,6 @@ function FooterMetric({ metric, showDivider }: { metric: Metric; showDivider: bo
 
 export default function VercelOverview({
 	title,
-	currentTime,
 	updatedAt,
 	globalStatus,
 	globalStatusLabel,
@@ -291,7 +308,7 @@ export default function VercelOverview({
 			>
 				<div
 					style={{
-						height: 52,
+						height: 46,
 						display: "flex",
 						alignItems: "center",
 						justifyContent: "space-between",
@@ -299,7 +316,14 @@ export default function VercelOverview({
 						paddingBottom: 8,
 					}}
 				>
-					<div style={{ width: 250, display: "flex", alignItems: "center", gap: 10 }}>
+					<div
+						style={{
+							width: 250,
+							display: "flex",
+							alignItems: "center",
+							gap: 10,
+						}}
+					>
 						<VercelMark />
 						<SafeTitle size={28} style={{ lineHeight: 1 }}>
 							{title}
@@ -310,14 +334,10 @@ export default function VercelOverview({
 						style={{
 							width: 200,
 							display: "flex",
-							flexDirection: "column",
 							alignItems: "center",
-							gap: 4,
+							justifyContent: "center",
 						}}
 					>
-						<div className="font-blockkie" style={{ fontSize: 32, lineHeight: 0.95 }}>
-							{currentTime}
-						</div>
 						<ReadableText size={18} color="#444" style={{ lineHeight: 1 }}>
 							Last updated {updatedAt}
 						</ReadableText>
@@ -376,7 +396,6 @@ export default function VercelOverview({
 						/>
 					))}
 				</div>
-
 			</div>
 		</PreSatori>
 	);

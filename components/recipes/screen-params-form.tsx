@@ -6,6 +6,13 @@ import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type {
 	RecipeParamDefinition,
@@ -68,6 +75,34 @@ const renderField = (
 				/>
 				<span className="text-sm">Enabled</span>
 			</label>
+		);
+	}
+
+	if (definition.type === "select") {
+		const options = definition.options || [];
+		const stringValue =
+			typeof value === "string" || typeof value === "number"
+				? String(value)
+				: "";
+
+		return (
+			<Select
+				value={stringValue}
+				onValueChange={(nextValue) => onChange(key, nextValue)}
+			>
+				<SelectTrigger className="max-w-lg">
+					<SelectValue
+						placeholder={definition.placeholder || "Select an option"}
+					/>
+				</SelectTrigger>
+				<SelectContent>
+					{options.map((option) => (
+						<SelectItem key={option.value} value={option.value}>
+							{option.label}
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
 		);
 	}
 

@@ -1,4 +1,8 @@
-import { MetaText, ReadableText, SafeTitle } from "@/app/(app)/recipes/screens/_shared/eink";
+import {
+	MetaText,
+	ReadableText,
+	SafeTitle,
+} from "@/app/(app)/recipes/screens/_shared/eink";
 import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
 import type { SkyWatchRecipeData } from "./getData";
@@ -17,7 +21,15 @@ function AircraftCard({
 		>
 			<div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
 				<PlaneIcon heading={flight.heading} size={28} color="#fff" />
-				<div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+				<div
+					style={{
+						flex: 1,
+						minWidth: 0,
+						display: "flex",
+						flexDirection: "column",
+						gap: 2,
+					}}
+				>
 					<ReadableText size={16} weight={700} color="#fff">
 						{flight.callsign}
 					</ReadableText>
@@ -103,15 +115,40 @@ export default function SkyWatch({
 							opacity="0.16"
 						/>
 					))}
-					<line x1="530" y1="0" x2="530" y2="440" stroke="#fff" strokeWidth="2" opacity="0.08" />
-					<line x1="332" y1="220" x2="760" y2="220" stroke="#fff" strokeWidth="2" opacity="0.08" />
+					<line
+						x1="530"
+						y1="0"
+						x2="530"
+						y2="440"
+						stroke="#fff"
+						strokeWidth="2"
+						opacity="0.08"
+					/>
+					<line
+						x1="332"
+						y1="220"
+						x2="760"
+						y2="220"
+						stroke="#fff"
+						strokeWidth="2"
+						opacity="0.08"
+					/>
 				</svg>
 				<div style={{ position: "absolute", left: 28, top: 24, width: 250 }}>
 					<MetaText color="#cfcfcf">{title}</MetaText>
-					<SafeTitle size={28} lines={2} style={{ color: "#fff", marginTop: 10 }}>
+					<SafeTitle
+						size={28}
+						lines={2}
+						style={{ color: "#fff", marginTop: 10 }}
+					>
 						{primaryLocation}
 					</SafeTitle>
-					<ReadableText size={18} weight={700} color="#fff" style={{ marginTop: 12 }}>
+					<ReadableText
+						size={18}
+						weight={700}
+						color="#fff"
+						style={{ marginTop: 12 }}
+					>
 						{radiusLabel}
 					</ReadableText>
 					<MetaText color="#cfcfcf" style={{ marginTop: 8 }}>

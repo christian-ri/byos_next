@@ -93,7 +93,9 @@ function extractProjects(response: VercelProjectsResponse): VercelProject[] {
 }
 
 function normalizeState(deployment: VercelDeployment) {
-	return String(deployment.readyState || deployment.state || "UNKNOWN").toUpperCase();
+	return String(
+		deployment.readyState || deployment.state || "UNKNOWN",
+	).toUpperCase();
 }
 
 function appendTeamId(url: string, teamId?: string) {
@@ -339,10 +341,7 @@ export default async function getData(
 				12000,
 			),
 			fetchJsonWithTimeout<VercelDeploymentsResponse>(
-				appendTeamId(
-					"https://api.vercel.com/v6/deployments?limit=100",
-					teamId,
-				),
+				appendTeamId("https://api.vercel.com/v6/deployments?limit=100", teamId),
 				{ headers },
 				12000,
 			),
@@ -415,13 +414,15 @@ export default async function getData(
 				duration: formatDuration(computeDurationMs(deployment)),
 			}));
 
-		const currentProduction = currentProductionAll.slice(0, 5).map((deployment) => ({
-			project: deployment.name || "project",
-			domain: pickDomain(deployment),
-			age: formatAge(deployment.createdAt, now),
-			sha: shortSha(deployment.meta?.githubCommitSha),
-			status: statusTone(normalizeState(deployment)),
-		}));
+		const currentProduction = currentProductionAll
+			.slice(0, 5)
+			.map((deployment) => ({
+				project: deployment.name || "project",
+				domain: pickDomain(deployment),
+				age: formatAge(deployment.createdAt, now),
+				sha: shortSha(deployment.meta?.githubCommitSha),
+				status: statusTone(normalizeState(deployment)),
+			}));
 
 		const latestDeployTime = sortedDeployments[0]?.createdAt
 			? formatShortTime(sortedDeployments[0].createdAt)

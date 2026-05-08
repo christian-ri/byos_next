@@ -14,7 +14,9 @@ export default async function Wikipedia({
 	"use cache";
 
 	const safeTitle =
-		title || displaytitle?.replace(/<[^>]*>?/g, "").trim() || "Wikipedia Article";
+		title ||
+		displaytitle?.replace(/<[^>]*>?/g, "").trim() ||
+		"Wikipedia Article";
 	const safeExtract = extract || "Article content is unavailable.";
 	const safeContentUrl =
 		fullurl || content_urls?.desktop?.page || "https://en.wikipedia.org";
@@ -26,7 +28,9 @@ export default async function Wikipedia({
 		typeof thumbnail.height === "number" &&
 		thumbnail.height > 0;
 	const truncatedExtract =
-		safeExtract.length > 560 ? `${safeExtract.slice(0, 560).trim()}...` : safeExtract;
+		safeExtract.length > 560
+			? `${safeExtract.slice(0, 560).trim()}...`
+			: safeExtract;
 	const formattedDate = new Date().toLocaleDateString("en-GB", {
 		year: "numeric",
 		month: "short",
@@ -50,13 +54,27 @@ export default async function Wikipedia({
 				}}
 			>
 				<div style={{ padding: 16, borderBottom: "2px solid #111" }}>
-					<div className="font-blockkie" style={{ fontSize: 52, lineHeight: 1 }}>
+					<div
+						className="font-blockkie"
+						style={{ fontSize: 52, lineHeight: 1 }}
+					>
 						{safeTitle}
 					</div>
 				</div>
 
-				<div style={{ display: "flex", gap: 16, flex: 1, padding: 16, boxSizing: "border-box" }}>
-					<div className="font-geneva9" style={{ fontSize: 22, lineHeight: 1.55, flex: 1 }}>
+				<div
+					style={{
+						display: "flex",
+						gap: 16,
+						flex: 1,
+						padding: 16,
+						boxSizing: "border-box",
+					}}
+				>
+					<div
+						className="font-geneva9"
+						style={{ fontSize: 22, lineHeight: 1.55, flex: 1 }}
+					>
 						{truncatedExtract}
 					</div>
 					{hasValidThumbnail ? (
@@ -78,7 +96,14 @@ export default async function Wikipedia({
 					) : null}
 				</div>
 
-				<div style={{ padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+				<div
+					style={{
+						padding: "0 16px 16px",
+						display: "flex",
+						flexDirection: "column",
+						gap: 8,
+					}}
+				>
 					<div className="font-geneva9" style={{ fontSize: 12 }}>
 						{safeContentUrl}
 					</div>
@@ -93,7 +118,10 @@ export default async function Wikipedia({
 							alignItems: "center",
 						}}
 					>
-						<div className="font-blockkie" style={{ fontSize: 20, lineHeight: 1 }}>
+						<div
+							className="font-blockkie"
+							style={{ fontSize: 20, lineHeight: 1 }}
+						>
 							Wikipedia
 						</div>
 						<div className="font-geneva9" style={{ fontSize: 12 }}>

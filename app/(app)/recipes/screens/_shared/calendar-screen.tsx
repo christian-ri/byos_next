@@ -10,7 +10,6 @@ import {
 	MetaText,
 	ReadableText,
 	SafeTitle,
-	TwoLineEvent,
 } from "@/app/(app)/recipes/screens/_shared/eink";
 import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
@@ -90,21 +89,55 @@ function DayHeader({ day }: { day: CalendarDay }) {
 function EventList({
 	events,
 	maxEvents,
+	cardWidth,
+	compact = false,
 }: {
 	events: CalendarDayEvent[];
 	maxEvents: number;
+	cardWidth: number;
+	compact?: boolean;
 }) {
 	const visibleEvents = events.slice(0, maxEvents);
 	const remaining = Math.max(0, events.length - visibleEvents.length);
 
 	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: 10,
+				width: "100%",
+			}}
+		>
 			{visibleEvents.map((event) => (
-				<TwoLineEvent
+				<EInkCard
 					key={event.id}
-					time={eventTimeLabel(event)}
-					title={event.summary}
-				/>
+					padding={compact ? 10 : 12}
+					radius={compact ? 12 : 14}
+					style={{
+						width: cardWidth,
+						minHeight: compact ? 64 : 74,
+						display: "flex",
+						flexDirection: "column",
+						justifyContent: "center",
+						gap: compact ? 6 : 8,
+						flexShrink: 0,
+					}}
+				>
+					<ReadableText
+						size={compact ? 15 : 16}
+						weight={700}
+						style={{ lineHeight: 1 }}
+					>
+						{eventTimeLabel(event)}
+					</ReadableText>
+					<ReadableText
+						size={compact ? 18 : 20}
+						style={{ lineHeight: compact ? 1.04 : 1.08 }}
+					>
+						{event.summary}
+					</ReadableText>
+				</EInkCard>
 			))}
 			{remaining > 0 ? (
 				<ReadableText size={18} weight={700}>
@@ -116,16 +149,18 @@ function EventList({
 }
 
 function DefaultView({ defaultDays }: { defaultDays: CalendarDay[] }) {
-	const columnWidth = 222;
+	const columnWidth = 244;
+	const cardWidth = 234;
 	return (
 		<div
 			style={{
 				display: "flex",
-				gap: 16,
+				gap: 10,
 				alignItems: "stretch",
+				justifyContent: "space-between",
 			}}
 		>
-			{defaultDays.map((day) => (
+			{defaultDays.map((day, index) => (
 				<div
 					key={day.key}
 					style={{
@@ -133,12 +168,68 @@ function DefaultView({ defaultDays }: { defaultDays: CalendarDay[] }) {
 						display: "flex",
 						flexDirection: "column",
 						gap: 14,
-						padding: "0 8px 0 0",
-						borderRight: "2px solid #111",
+						paddingRight: index < defaultDays.length - 1 ? 10 : 0,
+						borderRight:
+							index < defaultDays.length - 1 ? "2px solid #111" : "none",
+						boxSizing: "border-box",
 					}}
 				>
 					<DayHeader day={day} />
-					<EventList events={day.events} maxEvents={5} />
+					<EventList
+						events={day.events}
+						maxEvents={day.events.length}
+						cardWidth={cardWidth}
+					/>
+				</div>
+			))}
+		</div>
+	);
+}
+
+function TwoDayView({ defaultDays }: { defaultDays: CalendarDay[] }) {
+	const twoDays = defaultDays.slice(0, 2);
+	const cardWidth = 372;
+
+	return (
+		<div
+			style={{
+				display: "flex",
+				gap: 16,
+				alignItems: "stretch",
+				justifyContent: "space-between",
+			}}
+		>
+			{twoDays.map((day) => (
+				<div
+					key={day.key}
+					style={{
+						width: 372,
+						display: "flex",
+						flexDirection: "column",
+						gap: 16,
+						boxSizing: "border-box",
+					}}
+				>
+					<div
+						style={{
+							display: "flex",
+							flexDirection: "column",
+							gap: 4,
+							paddingBottom: 8,
+							borderBottom: "2px solid #111",
+						}}
+					>
+						<ReadableText size={22} weight={700}>
+							{day.label}
+						</ReadableText>
+						<MetaText size={16}>{day.shortLabel}</MetaText>
+					</div>
+					<EventList
+						events={day.events}
+						maxEvents={day.events.length}
+						cardWidth={cardWidth}
+						compact={true}
+					/>
 				</div>
 			))}
 		</div>
@@ -146,6 +237,7 @@ function DefaultView({ defaultDays }: { defaultDays: CalendarDay[] }) {
 }
 
 function WeekView({ weekDays }: { weekDays: CalendarDay[] }) {
+	const cardWidth = 90;
 	return (
 		<div
 			style={{
@@ -172,7 +264,11 @@ function WeekView({ weekDays }: { weekDays: CalendarDay[] }) {
 						</ReadableText>
 						<MetaText>{day.dayNumber}</MetaText>
 					</div>
-					<EventList events={day.events} maxEvents={4} />
+					<EventList
+						events={day.events}
+						maxEvents={day.events.length}
+						cardWidth={cardWidth}
+					/>
 				</div>
 			))}
 		</div>
@@ -329,6 +425,8 @@ export default function CalendarScreen({
 				/>
 				{eventLayout === "month" && monthWeeks.length > 0 ? (
 					<MonthView monthLabel={monthLabel} monthWeeks={monthWeeks} />
+				) : eventLayout === "two-day" ? (
+					<TwoDayView defaultDays={defaultDays} />
 				) : eventLayout === "week" ? (
 					<WeekView weekDays={weekDays} />
 				) : (

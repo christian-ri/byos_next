@@ -44,7 +44,17 @@ export type ComponentProps = Record<string, unknown> & {
 	height?: number;
 };
 
-export type RecipeParamType = "string" | "number" | "boolean" | "multiline";
+export type RecipeParamType =
+	| "string"
+	| "number"
+	| "boolean"
+	| "multiline"
+	| "select";
+
+export type RecipeParamOption = {
+	label: string;
+	value: string;
+};
 
 export type RecipeParamDefinition = {
 	label: string;
@@ -52,6 +62,7 @@ export type RecipeParamDefinition = {
 	description?: string;
 	default?: unknown;
 	placeholder?: string;
+	options?: RecipeParamOption[];
 };
 
 export type RecipeParamDefinitions = Record<string, RecipeParamDefinition>;
@@ -159,6 +170,7 @@ export const fetchRecipeComponent = cache(async (slug: string) => {
 type FetchPropsOptions = {
 	validateFetchedData?: (slug: string, data: unknown) => boolean;
 	userId?: string | null;
+	paramOverrides?: Record<string, unknown>;
 };
 
 export const fetchRecipeProps = cache(
@@ -167,9 +179,13 @@ export const fetchRecipeProps = cache(
 		config: RecipeConfig,
 		options?: FetchPropsOptions,
 	): Promise<ComponentProps> => {
-		const params = config.params
+		const storedParams = config.params
 			? await getScreenParams(slug, config.params, options?.userId)
 			: {};
+		const params =
+			options?.paramOverrides && Object.keys(options.paramOverrides).length > 0
+				? { ...storedParams, ...options.paramOverrides }
+				: storedParams;
 
 		let props: ComponentProps = {
 			...(config.props || {}),
@@ -344,10 +360,12 @@ export const buildRecipeElement = async ({
 	slug,
 	validateProps,
 	userId,
+	paramOverrides,
 }: {
 	slug: string;
 	validateProps?: (slug: string, props: ComponentProps) => boolean;
 	userId?: string | null;
+	paramOverrides?: Record<string, unknown>;
 }) => {
 	const config = fetchRecipeConfig(slug);
 	const Component = config ? await fetchRecipeComponent(slug) : null;
@@ -362,6 +380,7 @@ export const buildRecipeElement = async ({
 	}
 
 	const props = await fetchRecipeProps(slug, config, {
+		paramOverrides,
 		userId,
 		validateFetchedData: validateProps
 			? (slug: string, data: unknown) => {

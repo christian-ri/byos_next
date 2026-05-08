@@ -5,7 +5,7 @@ import {
 	parseLooseHeaderString,
 } from "@/app/(app)/recipes/screens/_shared/fetch-utils";
 
-export type CalendarLayout = "default" | "week" | "month";
+export type CalendarLayout = "default" | "two-day" | "week" | "month";
 
 export type CalendarDayEvent = {
 	id: string;
@@ -132,6 +132,10 @@ function parseBoolean(value: string | boolean | undefined, fallback = true) {
 
 function normalizeLayout(value?: string): CalendarLayout {
 	switch ((value || "").trim().toLowerCase()) {
+		case "two-day":
+		case "twoday":
+		case "two_day":
+			return "two-day";
 		case "week":
 			return "week";
 		case "month":

@@ -59,10 +59,18 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 						points={mapped.map((point) => `${point.x},${point.y}`).join(" ")}
 					/>
 					{mapped.map((point) => (
-						<circle key={point.timeLabel} cx={point.x} cy={point.y} r="4" fill="#111" />
+						<circle
+							key={point.timeLabel}
+							cx={point.x}
+							cy={point.y}
+							r="4"
+							fill="#111"
+						/>
 					))}
 				</svg>
-				<div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+				<div
+					style={{ display: "flex", justifyContent: "space-between", gap: 8 }}
+				>
 					{points.map((point) => (
 						<div
 							key={`label-${point.timeLabel}`}
@@ -124,7 +132,14 @@ export default function LpWeather({
 				}}
 			>
 				<div style={{ display: "flex", gap: 14 }}>
-					<div style={{ width: 330, display: "flex", flexDirection: "column", gap: 14 }}>
+					<div
+						style={{
+							width: 330,
+							display: "flex",
+							flexDirection: "column",
+							gap: 14,
+						}}
+					>
 						<EInkCard padding={16} radius={18}>
 							<MetaText>{title}</MetaText>
 							<ReadableText
@@ -158,56 +173,66 @@ export default function LpWeather({
 				</div>
 
 				<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
-						<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-							<SafeTitle size={28}>Forecast</SafeTitle>
-							<div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
-								<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-									<MetaText>Wind</MetaText>
-									<ReadableText size={18} weight={700}>
-										{windSpeed} {windUnit} {windDirection}
+					<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+						<SafeTitle size={28}>Forecast</SafeTitle>
+						<div
+							style={{
+								display: "flex",
+								justifyContent: "space-between",
+								gap: 16,
+							}}
+						>
+							<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+								<MetaText>Wind</MetaText>
+								<ReadableText size={18} weight={700}>
+									{windSpeed} {windUnit} {windDirection}
+								</ReadableText>
+							</div>
+							<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+								<MetaText>Humidity</MetaText>
+								<ReadableText size={18} weight={700}>
+									{humidity}%
+								</ReadableText>
+							</div>
+							<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+								<MetaText>Sun</MetaText>
+								<ReadableText size={18} weight={700}>
+									{sunrise} / {sunset}
+								</ReadableText>
+							</div>
+						</div>
+						{days.slice(0, 3).map((day) => (
+							<div
+								key={day.label}
+								style={{
+									display: "flex",
+									alignItems: "center",
+									gap: 12,
+									border: "2px solid #111",
+									padding: "10px 12px",
+								}}
+							>
+								<div style={{ flex: 1, minWidth: 0 }}>
+									<ReadableText
+										size={18}
+										weight={700}
+										style={{ whiteSpace: "pre-line" }}
+									>
+										{`${day.label}\n${day.condition}`}
 									</ReadableText>
 								</div>
-								<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-									<MetaText>Humidity</MetaText>
-									<ReadableText size={18} weight={700}>
-										{humidity}%
+								<div style={{ textAlign: "right", minWidth: 126 }}>
+									<ReadableText size={18} weight={700} align="right">
+										{day.high}° / {day.low}°
 									</ReadableText>
-								</div>
-								<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-									<MetaText>Sun</MetaText>
-									<ReadableText size={18} weight={700}>
-										{sunrise} / {sunset}
-									</ReadableText>
+									<MetaText align="right">
+										{day.precipProbability}% rain
+									</MetaText>
 								</div>
 							</div>
-							{days.slice(0, 3).map((day) => (
-								<div
-									key={day.label}
-									style={{
-										display: "flex",
-										alignItems: "center",
-										gap: 12,
-										border: "2px solid #111",
-										padding: "10px 12px",
-									}}
-								>
-									<div style={{ flex: 1, minWidth: 0 }}>
-										<ReadableText size={18} weight={700} style={{ whiteSpace: "pre-line" }}>
-											{`${day.label}\n${day.condition}`}
-										</ReadableText>
-									</div>
-									<div style={{ textAlign: "right", minWidth: 126 }}>
-										<ReadableText size={18} weight={700} align="right">
-											{day.high}° / {day.low}°
-										</ReadableText>
-										<MetaText align="right">
-											{day.precipProbability}% rain
-										</MetaText>
-									</div>
-								</div>
-							))}
-							{note ? <MetaText>{note}</MetaText> : null}
-						</div>
+						))}
+						{note ? <MetaText>{note}</MetaText> : null}
+					</div>
 				</EInkCard>
 			</div>
 		</PreSatori>

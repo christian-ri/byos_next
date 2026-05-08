@@ -175,6 +175,7 @@ Common calendar params:
 - `f1-race-standings` - next race + driver standings
 - `f1-weekend-teams` - weekend schedule + constructor standings
 - `nasa-image-of-the-day`
+- `github-monitor`
 - `vercel-overview`
 - `pollen-air-quality`
 
@@ -227,8 +228,18 @@ Common calendar params:
 - Supports:
   - `apiToken`
   - `teamId`
-  - `projectLimit`
-  - `deploymentLimit`
+
+#### `github-monitor`
+- Uses the GitHub REST API
+- Supports:
+  - `githubToken`
+  - `owner`
+  - `repositories`
+  - `includePrivateRepos`
+  - `staleDays`
+  - `timezone`
+  - `maxRepos`
+  - `maxWorkflowRuns`
 
 #### `pollen-air-quality`
 - Uses Open-Meteo Air Quality

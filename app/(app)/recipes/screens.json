@@ -302,10 +302,16 @@
 				"default": "America/New_York"
 			},
 			"eventLayout": {
-				"type": "string",
+				"type": "select",
 				"label": "Layout",
-				"description": "Use default, week, or month.",
-				"default": "month"
+				"description": "Choose the calendar layout.",
+				"default": "month",
+				"options": [
+					{ "label": "Default (3 Days)", "value": "default" },
+					{ "label": "Two Days", "value": "two-day" },
+					{ "label": "Week", "value": "week" },
+					{ "label": "Month", "value": "month" }
+				]
 			},
 			"timeFormat": {
 				"type": "string",
@@ -406,10 +412,16 @@
 				"default": "America/New_York"
 			},
 			"eventLayout": {
-				"type": "string",
+				"type": "select",
 				"label": "Layout",
-				"description": "Use default, week, or month.",
-				"default": "month"
+				"description": "Choose the calendar layout.",
+				"default": "month",
+				"options": [
+					{ "label": "Default (3 Days)", "value": "default" },
+					{ "label": "Two Days", "value": "two-day" },
+					{ "label": "Week", "value": "week" },
+					{ "label": "Month", "value": "month" }
+				]
 			},
 			"timeFormat": {
 				"type": "string",
@@ -510,10 +522,16 @@
 				"default": "America/New_York"
 			},
 			"eventLayout": {
-				"type": "string",
+				"type": "select",
 				"label": "Layout",
-				"description": "Use default, week, or month.",
-				"default": "month"
+				"description": "Choose the calendar layout.",
+				"default": "month",
+				"options": [
+					{ "label": "Default (3 Days)", "value": "default" },
+					{ "label": "Two Days", "value": "two-day" },
+					{ "label": "Week", "value": "week" },
+					{ "label": "Month", "value": "month" }
+				]
 			},
 			"timeFormat": {
 				"type": "string",
@@ -975,6 +993,76 @@
 			}
 		},
 		"tags": ["vercel", "deployments", "projects", "dashboard", "api"],
+		"author": {
+			"name": "BYOS",
+			"github": "christian-ri"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"github-monitor": {
+		"title": "GitHub Monitor",
+		"published": true,
+		"createdAt": "2026-05-07T00:00:00Z",
+		"updatedAt": "2026-05-07T00:00:00Z",
+		"description": "Black-and-white GitHub monitoring dashboard for repositories, pull requests, issues, workflows, and security alerts.",
+		"componentPath": "./screens/github-monitor",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"githubToken": {
+				"type": "string",
+				"label": "GitHub Token",
+				"description": "Required for live data. Leave blank to use GITHUB_TOKEN from the environment or mock preview data.",
+				"default": ""
+			},
+			"owner": {
+				"type": "string",
+				"label": "Owner",
+				"description": "GitHub user or organization name.",
+				"default": "christian-ri"
+			},
+			"repositories": {
+				"type": "string",
+				"label": "Repositories",
+				"description": "Optional comma-separated repo list. Leave blank to auto-load visible repositories for the owner.",
+				"default": ""
+			},
+			"includePrivateRepos": {
+				"type": "boolean",
+				"label": "Include Private Repos",
+				"description": "Defaults to true when the token can access private repositories.",
+				"default": true
+			},
+			"staleDays": {
+				"type": "number",
+				"label": "Stale Days",
+				"description": "Threshold for stale pull requests, issues, and commits.",
+				"default": 14
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Timezone",
+				"description": "IANA timezone for the dashboard clock.",
+				"default": "Europe/Berlin"
+			},
+			"maxRepos": {
+				"type": "number",
+				"label": "Max Repos",
+				"description": "Maximum number of repositories to analyze.",
+				"default": 6
+			},
+			"maxWorkflowRuns": {
+				"type": "number",
+				"label": "Max Workflow Runs",
+				"description": "Maximum number of workflow rows to render.",
+				"default": 5
+			}
+		},
+		"tags": ["github", "dashboard", "workflows", "issues", "security", "api"],
 		"author": {
 			"name": "BYOS",
 			"github": "christian-ri"

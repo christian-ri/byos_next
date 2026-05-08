@@ -20,9 +20,15 @@ export async function GET(
 	const format = searchParams.get("format") || "final-png";
 	const width = Number(searchParams.get("width") || DEFAULT_IMAGE_WIDTH);
 	const height = Number(searchParams.get("height") || DEFAULT_IMAGE_HEIGHT);
+	const paramOverrides = Object.fromEntries(
+		Array.from(searchParams.entries()).filter(
+			([key]) => !["format", "width", "height"].includes(key),
+		),
+	);
 
 	const { config, Component, props, element } = await buildRecipeElement({
 		slug: recipeSlug,
+		paramOverrides,
 	});
 	const ComponentToRender =
 		Component ??

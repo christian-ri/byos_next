@@ -24,9 +24,7 @@ export default function F1WeekendTeams({
 	const flatSchedule =
 		schedule.length > 0
 			? schedule.slice(0, 4)
-			: [
-					{ day: "Friday", time: "TBA", label: "Weekend schedule pending" },
-				];
+			: [{ day: "Friday", time: "TBA", label: "Weekend schedule pending" }];
 	const topTeams = teamStandings.slice(0, 4);
 	const remainingTeams = teamStandings.slice(4, 11);
 
@@ -72,7 +70,14 @@ export default function F1WeekendTeams({
 						<ReadableText size={22} weight={700}>
 							Schedule
 						</ReadableText>
-						<div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+						<div
+							style={{
+								display: "flex",
+								flexDirection: "column",
+								gap: 12,
+								marginTop: 12,
+							}}
+						>
 							{flatSchedule.map((entry, index) => (
 								<div
 									key={`${entry.day}-${entry.label}-${entry.time}-${index}`}
@@ -122,14 +127,20 @@ export default function F1WeekendTeams({
 								}}
 							>
 								<div style={{ display: "flex", gap: 12, minWidth: 0 }}>
-									<div className="font-blockkie" style={{ fontSize: 22, width: 24 }}>
+									<div
+										className="font-blockkie"
+										style={{ fontSize: 22, width: 24 }}
+									>
 										{team.position}
 									</div>
 									<ReadableText size={22} weight={700}>
 										{team.team}
 									</ReadableText>
 								</div>
-								<div className="font-blockkie" style={{ fontSize: 24, lineHeight: 1 }}>
+								<div
+									className="font-blockkie"
+									style={{ fontSize: 24, lineHeight: 1 }}
+								>
 									{team.points}
 								</div>
 							</div>
