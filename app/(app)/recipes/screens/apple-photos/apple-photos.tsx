@@ -1,9 +1,6 @@
 import {
-	EInkCard,
 	META_TEXT,
 	ReadableText,
-	SafeTitle,
-	TITLE_TEXT,
 } from "@/app/(app)/recipes/screens/_shared/eink";
 import {
 	clampText,

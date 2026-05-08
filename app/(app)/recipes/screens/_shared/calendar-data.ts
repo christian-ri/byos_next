@@ -5,7 +5,11 @@ import {
 	parseLooseHeaderString,
 } from "@/app/(app)/recipes/screens/_shared/fetch-utils";
 
-export type CalendarLayout = "default" | "two-day" | "week" | "month";
+export type CalendarLayout =
+	| "default"
+	| "two-day"
+	| "week-timeline"
+	| "month-overview";
 
 export type CalendarDayEvent = {
 	id: string;
@@ -19,15 +23,21 @@ export type CalendarDayEvent = {
 	continuesBefore: boolean;
 	continuesAfter: boolean;
 	timeLabel: string;
+	startDateTime: string;
+	endDateTime: string;
+	startMinute: number | null;
+	endMinute: number | null;
 };
 
 export type CalendarDay = {
 	key: string;
+	isoDate: string;
 	label: string;
 	shortLabel: string;
 	dayNumber: string;
 	isToday: boolean;
 	isCurrentMonth: boolean;
+	eventCount: number;
 	events: CalendarDayEvent[];
 };
 
@@ -137,10 +147,19 @@ function normalizeLayout(value?: string): CalendarLayout {
 		case "two_day":
 			return "two-day";
 		case "week":
-			return "week";
+			return "week-timeline";
+		case "week-timeline":
+		case "week_timeline":
+		case "timeline-week":
+		case "week-grid":
+			return "week-timeline";
+		case "month-overview":
+		case "month_overview":
+		case "monthoverview":
+			return "month-overview";
 		case "month":
 		case "rolling_month":
-			return "month";
+			return "month-overview";
 		default:
 			return "default";
 	}
@@ -191,6 +210,13 @@ function dayKey(date: Date, timeZone: string) {
 		},
 		timeZone,
 	);
+}
+
+function isoDayKey(date: Date, timeZone: string) {
+	const values = zonedDateBits(date, timeZone);
+	return `${values.year.toString().padStart(4, "0")}-${values.month
+		.toString()
+		.padStart(2, "0")}-${values.day.toString().padStart(2, "0")}`;
 }
 
 function weekdayShort(date: Date, timeZone: string) {
@@ -245,6 +271,27 @@ function formatClock(date: Date, timeZone: string, timeFormat: "12h" | "24h") {
 		},
 		timeZone,
 	);
+}
+
+function zonedTimeParts(date: Date, timeZone: string) {
+	const parts = new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).formatToParts(date);
+
+	const values = parts.reduce<Record<string, string>>((acc, part) => {
+		if (part.type !== "literal") {
+			acc[part.type] = part.value;
+		}
+		return acc;
+	}, {});
+
+	return {
+		hour: Number(values.hour || "0"),
+		minute: Number(values.minute || "0"),
+	};
 }
 
 function startOfDay(date: Date) {
@@ -385,6 +432,7 @@ function buildFallbackData(
 	const subtitle =
 		calendarName?.trim() ||
 		(providerLabel === "Apple" ? "Personal Calendar" : "Connected Calendar");
+
 	return buildCalendarData({
 		providerLabel,
 		title: `${providerLabel} Calendar`,
@@ -835,6 +883,11 @@ function buildEventForDay(
 	options: BuildDayOptions,
 ): CalendarDayEvent {
 	const dayStartKey = dayKey(dayDate, options.timeZone);
+	const dayStart = zonedStartOfDayUtc(dayDate, options.timeZone);
+	const nextDayStart = zonedStartOfDayUtc(
+		addZonedDays(dayDate, 1, options.timeZone),
+		options.timeZone,
+	);
 	const inclusiveEnd = eventEndInclusive(event);
 	const startsToday = dayKey(event.start, options.timeZone) === dayStartKey;
 	const endsToday = dayKey(inclusiveEnd, options.timeZone) === dayStartKey;
@@ -859,6 +912,29 @@ function buildEventForDay(
 		}
 	}
 
+	let startMinute: number | null = null;
+	let endMinute: number | null = null;
+
+	if (!event.allDay) {
+		const segmentStart =
+			event.start > dayStart ? event.start : new Date(dayStart.getTime());
+		const segmentEnd =
+			event.end < nextDayStart
+				? event.end
+				: new Date(nextDayStart.getTime() - 1);
+		const segmentStartParts = zonedTimeParts(segmentStart, options.timeZone);
+		const segmentEndParts = zonedTimeParts(segmentEnd, options.timeZone);
+
+		startMinute = segmentStartParts.hour * 60 + segmentStartParts.minute;
+		endMinute = segmentEndParts.hour * 60 + segmentEndParts.minute;
+
+		if (event.end >= nextDayStart) {
+			endMinute = 24 * 60;
+		} else if (event.end > segmentStart && endMinute <= startMinute) {
+			endMinute = Math.min(24 * 60, startMinute + 15);
+		}
+	}
+
 	return {
 		id: event.id,
 		summary: event.summary,
@@ -871,6 +947,10 @@ function buildEventForDay(
 		continuesBefore,
 		continuesAfter,
 		timeLabel,
+		startDateTime: event.start.toISOString(),
+		endDateTime: event.end.toISOString(),
+		startMinute,
+		endMinute,
 	};
 }
 
@@ -883,17 +963,20 @@ function buildDay(
 	const dayEnd = zonedEndOfDayUtc(dayDate, options.timeZone);
 	const now = zonedCalendarDate(new Date(), options.timeZone);
 
-	const dayEvents = events
+	const matchingEvents = events
 		.filter((event) => {
 			const inclusiveEnd = eventEndInclusive(event);
 			return inclusiveEnd >= dayStart && event.start <= dayEnd;
 		})
-		.sort((a, b) => a.start.getTime() - b.start.getTime())
+		.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+	const dayEvents = matchingEvents
 		.slice(0, options.maxEventsPerDay)
 		.map((event) => buildEventForDay(event, dayDate, options));
 
 	return {
 		key: dayKey(dayDate, options.timeZone),
+		isoDate: isoDayKey(dayDate, options.timeZone),
 		label: shortDateLabel(dayDate, options.timeZone),
 		shortLabel: weekdayShort(dayDate, options.timeZone),
 		dayNumber: dayNumber(dayDate, options.timeZone),
@@ -902,6 +985,7 @@ function buildDay(
 		isCurrentMonth:
 			options.currentMonth === undefined ||
 			dayDate.getMonth() === options.currentMonth,
+		eventCount: matchingEvents.length,
 		events: dayEvents,
 	};
 }
@@ -965,8 +1049,9 @@ function buildCalendarData({
 		}),
 	);
 
+	const weekStart = startOfWeek(today, firstDay);
 	const weekDays = Array.from({ length: 7 }, (_, index) =>
-		buildDay(addZonedDays(today, index, timeZone), rawEvents, {
+		buildDay(addZonedDays(weekStart, index, timeZone), rawEvents, {
 			timeZone,
 			timeFormat,
 			includeEventTime,
@@ -1051,17 +1136,14 @@ export async function loadCalendarRecipeData(
 	params?: CalendarParams,
 ): Promise<CalendarRecipeData> {
 	const timeZone = normalizeTimeZoneIdentifier(params?.timezone);
-	const eventLayout = normalizeLayout(params?.eventLayout);
+	const eventLayout = normalizeLayout(params?.eventLayout || "month-overview");
 	const includeDescription = parseBoolean(params?.includeDescription, true);
 	const includeEventTime = parseBoolean(params?.includeEventTime, true);
 	const firstDay = normalizeFirstDay(params?.firstDay);
 	const timeFormat = normalizeTimeFormat(params?.timeFormat);
 	const maxEventsPerDay = Math.max(
 		1,
-		Math.min(
-			8,
-			Number(params?.maxEventsPerDay || (eventLayout === "month" ? 4 : 6)),
-		),
+		Math.min(8, Number(params?.maxEventsPerDay || 6)),
 	);
 	const calendarName = String(params?.calendarName || "").trim();
 	const title = `${providerLabel} Calendar`;

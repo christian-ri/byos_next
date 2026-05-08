@@ -7,6 +7,9 @@ import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/resp
 import { PreSatori } from "@/utils/pre-satori";
 import type { SkyWatchRecipeData } from "./getData";
 
+const MAP_BOX_SIZE = 360;
+const PANEL_WIDTH = 360;
+
 function AircraftCard({
 	flight,
 }: {
@@ -15,26 +18,30 @@ function AircraftCard({
 	return (
 		<div
 			style={{
-				borderBottom: "2px solid rgba(255,255,255,0.18)",
-				paddingBottom: 10,
+				border: "2px solid #111",
+				padding: "12px 14px",
+				backgroundColor: "#fff",
+				display: "flex",
+				flexDirection: "column",
+				gap: 5,
 			}}
 		>
 			<div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-				<PlaneIcon heading={flight.heading} size={28} color="#fff" />
+				<PlaneIcon heading={flight.heading} size={26} color="#111" />
 				<div
 					style={{
 						flex: 1,
 						minWidth: 0,
 						display: "flex",
 						flexDirection: "column",
-						gap: 2,
+						gap: 3,
 					}}
 				>
-					<ReadableText size={16} weight={700} color="#fff">
+					<ReadableText size={18} weight={700}>
 						{flight.callsign}
 					</ReadableText>
-					<MetaText color="#d4d4d4">{flight.aircraftType}</MetaText>
-					<MetaText color="#d4d4d4">
+					<MetaText>{flight.aircraftType}</MetaText>
+					<MetaText>
 						{flight.altitudeLabel} · {flight.speedLabel}
 					</MetaText>
 				</div>
@@ -76,13 +83,15 @@ export default function SkyWatch({
 	radiusLabel,
 	updatedAt,
 	note,
+	map,
 	aircraft,
 	width = 800,
 	height = 480,
 }: SkyWatchRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const visibleAircraft = aircraft.slice(0, 2);
+	const visibleAircraft = aircraft.slice(0, 3);
 	const primaryLocation = locationLabel.split(",")[0]?.trim() || locationLabel;
+	const mapOffset = (MAP_BOX_SIZE - map.size) / 2;
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
@@ -90,121 +99,191 @@ export default function SkyWatch({
 				style={{
 					width: "100%",
 					height: "100%",
-					backgroundColor: "#111",
+					backgroundColor: "#f4f2ee",
 					padding: profile.padding,
-					position: "relative",
-					overflow: "hidden",
+					display: "flex",
+					flexDirection: "column",
+					gap: 14,
+					color: "#111",
 				}}
 			>
-				<svg
-					width="100%"
-					height="100%"
-					viewBox="0 0 760 440"
-					aria-hidden="true"
-					focusable="false"
+				<div
+					style={{
+						display: "flex",
+						alignItems: "flex-start",
+						justifyContent: "space-between",
+						gap: 12,
+						paddingBottom: 10,
+						borderBottom: "2px solid #111",
+					}}
 				>
-					{[64, 132, 198].map((radius) => (
-						<circle
-							key={radius}
-							cx="530"
-							cy="220"
-							r={radius}
-							fill="none"
-							stroke="#fff"
-							strokeWidth="2"
-							opacity="0.16"
-						/>
-					))}
-					<line
-						x1="530"
-						y1="0"
-						x2="530"
-						y2="440"
-						stroke="#fff"
-						strokeWidth="2"
-						opacity="0.08"
-					/>
-					<line
-						x1="332"
-						y1="220"
-						x2="760"
-						y2="220"
-						stroke="#fff"
-						strokeWidth="2"
-						opacity="0.08"
-					/>
-				</svg>
-				<div style={{ position: "absolute", left: 28, top: 24, width: 250 }}>
-					<MetaText color="#cfcfcf">{title}</MetaText>
-					<SafeTitle
-						size={28}
-						lines={2}
-						style={{ color: "#fff", marginTop: 10 }}
+					<div
+						style={{
+							display: "flex",
+							flexDirection: "column",
+							gap: 8,
+							width: PANEL_WIDTH,
+						}}
 					>
-						{primaryLocation}
-					</SafeTitle>
-					<ReadableText
-						size={18}
-						weight={700}
-						color="#fff"
-						style={{ marginTop: 12 }}
+						<MetaText>{title}</MetaText>
+						<SafeTitle size={30} lines={2}>
+							{primaryLocation}
+						</SafeTitle>
+					</div>
+					<div
+						style={{
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "flex-end",
+							gap: 6,
+							width: 180,
+						}}
 					>
-						{radiusLabel}
-					</ReadableText>
-					<MetaText color="#cfcfcf" style={{ marginTop: 8 }}>
-						Updated {updatedAt}
-					</MetaText>
+						<ReadableText size={22} weight={700}>
+							{radiusLabel}
+						</ReadableText>
+						<MetaText align="right">{`Updated ${updatedAt}`}</MetaText>
+					</div>
 				</div>
 				<div
 					style={{
-						position: "absolute",
-						left: 28,
-						width: 332,
-						bottom: 26,
-						padding: 16,
-						border: "2px solid rgba(255,255,255,0.25)",
-						backgroundColor: "rgba(0,0,0,0.32)",
+						display: "flex",
+						gap: 18,
+						flex: 1,
+						minHeight: 0,
 					}}
 				>
-					<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+					<div
+						style={{
+							width: PANEL_WIDTH,
+							display: "flex",
+							flexDirection: "column",
+							gap: 12,
+							minWidth: 0,
+						}}
+					>
+						<ReadableText size={16} weight={700}>
+							{visibleAircraft.length === 1
+								? "1 aircraft in range"
+								: `${visibleAircraft.length} aircraft in range`}
+						</ReadableText>
+						<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+							{visibleAircraft.map((flight) => (
+								<AircraftCard key={flight.id} flight={flight} />
+							))}
+						</div>
+						<div
+							style={{
+								marginTop: "auto",
+								display: "flex",
+								flexDirection: "column",
+								gap: 4,
+							}}
+						>
+							{note ? <MetaText>{note}</MetaText> : null}
+							<MetaText>Map © OpenStreetMap contributors</MetaText>
+						</div>
+					</div>
+					<div
+						style={{
+							position: "relative",
+							width: MAP_BOX_SIZE,
+							height: MAP_BOX_SIZE,
+							border: "2px solid #111",
+							backgroundColor: "#fbfbfb",
+							overflow: "hidden",
+							boxSizing: "border-box",
+						}}
+					>
+						{map.tiles.map((tile) => (
+							/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */
+							<img
+								key={tile.id}
+								src={tile.src}
+								alt=""
+								style={{
+									position: "absolute",
+									left: mapOffset + tile.left,
+									top: mapOffset + tile.top,
+									width: tile.size,
+									height: tile.size,
+									opacity: 0.28,
+								}}
+							/>
+						))}
+						<div
+							style={{
+								position: "absolute",
+								left: 0,
+								top: 0,
+								right: 0,
+								bottom: 0,
+								backgroundColor: "rgba(255,255,255,0.38)",
+							}}
+						/>
+						{[74, 132, 180].map((diameter) => (
+							<div
+								key={diameter}
+								style={{
+									position: "absolute",
+									left: (MAP_BOX_SIZE - diameter) / 2,
+									top: (MAP_BOX_SIZE - diameter) / 2,
+									width: diameter,
+									height: diameter,
+									borderRadius: diameter / 2,
+									border: "2px solid rgba(17,17,17,0.28)",
+								}}
+							/>
+						))}
+						<div
+							style={{
+								position: "absolute",
+								left: MAP_BOX_SIZE / 2,
+								top: 0,
+								bottom: 0,
+								borderLeft: "2px solid rgba(17,17,17,0.16)",
+							}}
+						/>
+						<div
+							style={{
+								position: "absolute",
+								left: 0,
+								right: 0,
+								top: MAP_BOX_SIZE / 2,
+								borderTop: "2px solid rgba(17,17,17,0.16)",
+							}}
+						/>
+						<div
+							style={{
+								position: "absolute",
+								left: MAP_BOX_SIZE / 2 - 10,
+								top: MAP_BOX_SIZE / 2 - 10,
+								width: 20,
+								height: 20,
+								borderRadius: 10,
+								backgroundColor: "#111",
+								border: "4px solid #fff",
+							}}
+						/>
 						{visibleAircraft.map((flight) => (
-							<AircraftCard key={flight.id} flight={flight} />
+							<div
+								key={`marker-${flight.id}`}
+								style={{
+									position: "absolute",
+									left: flight.x * MAP_BOX_SIZE - 17,
+									top: flight.y * MAP_BOX_SIZE - 17,
+									width: 34,
+									height: 34,
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+								}}
+							>
+								<PlaneIcon heading={flight.heading} size={34} color="#111" />
+							</div>
 						))}
 					</div>
 				</div>
-				<div
-					style={{
-						position: "absolute",
-						left: 518,
-						top: 208,
-						width: 24,
-						height: 24,
-						borderRadius: 12,
-						backgroundColor: "#fff",
-					}}
-				/>
-				{visibleAircraft.map((flight, index) => (
-					<div
-						key={`marker-${flight.id}`}
-						style={{
-							position: "absolute",
-							left: `${index === 0 ? 50 : 56}%`,
-							top: `${index === 0 ? 34 : 52}%`,
-							transform: "translate(-50%, -50%)",
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							gap: 6,
-						}}
-					>
-						<PlaneIcon heading={flight.heading} size={34} color="#fff" />
-					</div>
-				))}
-				{note ? (
-					<div style={{ position: "absolute", left: 28, right: 28, bottom: 8 }}>
-						<MetaText color="#bfbfbf">{note}</MetaText>
-					</div>
-				) : null}
 			</div>
 		</PreSatori>
 	);
