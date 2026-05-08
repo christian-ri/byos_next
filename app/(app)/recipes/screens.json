@@ -251,6 +251,7 @@
 		"version": "0.1.0",
 		"category": "display-components"
 	},
+<<<<<<< Updated upstream
 	"calendar-today": {
 		"title": "Calendar Today",
 		"published": true,
@@ -414,6 +415,283 @@
 			}
 		},
 		"tags": ["calendar", "ics", "today", "agenda"],
+=======
+	"iss-position": {
+		"title": "ISS Position",
+		"published": true,
+		"createdAt": "2026-05-08T00:00:00Z",
+		"updatedAt": "2026-05-08T00:00:00Z",
+		"description": "A quiet orbital snapshot of the International Space Station with a simplified world projection.",
+		"componentPath": "./screens/iss-position",
+		"hasDataFetch": true,
+		"props": {
+			"title": "ISS Position",
+			"subtitle": "International Space Station",
+			"unitsLabel": "kilometers",
+			"showFootprint": true,
+			"showTimestamp": true,
+			"latitudeLabel": "23.45° N",
+			"longitudeLabel": "42.10° W",
+			"altitudeLabel": "415 km",
+			"velocityLabel": "27,600 km/h",
+			"visibilityLabel": "Daylight",
+			"updatedAt": "May 8, 11:54 AM",
+			"footprintLabel": "4,475 km",
+			"mapX": 0.38,
+			"mapY": 0.4,
+			"footprintPercent": 0.24,
+			"note": "Live orbital position with simplified ground track view."
+		},
+		"params": {
+			"units": {
+				"type": "string",
+				"label": "Units",
+				"description": "Use kilometers or miles.",
+				"default": "kilometers"
+			},
+			"showFootprint": {
+				"type": "string",
+				"label": "Show Footprint",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"showTimestamp": {
+				"type": "string",
+				"label": "Show Timestamp",
+				"description": "Use yes or no.",
+				"default": "yes"
+			}
+		},
+		"tags": ["space", "iss", "orbit", "live-data"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"museum-piece-of-the-day": {
+		"title": "Museum Piece of the Day",
+		"published": true,
+		"createdAt": "2026-05-08T00:00:00Z",
+		"updatedAt": "2026-05-08T00:00:00Z",
+		"description": "A daily work from The Met Open Access collection with strong typography for eInk.",
+		"componentPath": "./screens/museum-piece-of-the-day",
+		"hasDataFetch": true,
+		"props": {
+			"title": "Museum Piece",
+			"label": "Piece of the Day",
+			"updatedAt": "May 8, 11:54 AM",
+			"artworkTitle": "The Great Wave off Kanagawa",
+			"artist": "Katsushika Hokusai",
+			"culture": "Japan",
+			"dateLabel": "ca. 1830-32",
+			"medium": "Polychrome woodblock print; ink and color on paper",
+			"department": "Asian Art",
+			"imageUrl": "https://images.metmuseum.org/CRDImages/as/web-large/DP130155.jpg",
+			"showArtist": true,
+			"showCulture": true,
+			"preferPortrait": false,
+			"note": "Daily selection from The Met Open Access collection."
+		},
+		"params": {
+			"departmentId": {
+				"type": "number",
+				"label": "Department ID",
+				"description": "Optional Met department filter. Leave blank for the whole collection.",
+				"default": ""
+			},
+			"preferPortrait": {
+				"type": "string",
+				"label": "Prefer Portrait",
+				"description": "Use yes or no.",
+				"default": "no"
+			},
+			"showArtist": {
+				"type": "string",
+				"label": "Show Artist",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"showCulture": {
+				"type": "string",
+				"label": "Show Culture",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"seedStrategy": {
+				"type": "string",
+				"label": "Seed Strategy",
+				"description": "Optional daily seed suffix to vary the deterministic pick.",
+				"default": "daily"
+			}
+		},
+		"tags": ["art", "museum", "met", "open-access", "daily"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"on-this-day": {
+		"title": "On This Day",
+		"published": true,
+		"createdAt": "2026-05-08T00:00:00Z",
+		"updatedAt": "2026-05-08T00:00:00Z",
+		"description": "A typographic historical snapshot for today's date using Wikimedia's On This Day feed.",
+		"componentPath": "./screens/on-this-day",
+		"hasDataFetch": true,
+		"props": {
+			"title": "On This Day",
+			"dateLabel": "May 8",
+			"updatedAt": "May 8, 11:54 AM",
+			"mode": "top3",
+			"type": "events",
+			"showYearLarge": true,
+			"language": "en",
+			"items": [
+				{
+					"year": "1886",
+					"text": "Dr. John Pemberton sold the first glass of what became Coca-Cola in Atlanta.",
+					"context": "Business history",
+					"sourceUrl": ""
+				},
+				{
+					"year": "1945",
+					"text": "Victory in Europe Day marked the formal acceptance of Nazi Germany's surrender.",
+					"context": "World history",
+					"sourceUrl": ""
+				},
+				{
+					"year": "1969",
+					"text": "Apollo 10 transmitted the first live color television pictures from space.",
+					"context": "Spaceflight milestone",
+					"sourceUrl": ""
+				}
+			],
+			"note": "Wikimedia feed wrapper keeps the future provider swap simple."
+		},
+		"params": {
+			"language": {
+				"type": "string",
+				"label": "Language",
+				"description": "Wikipedia language code, for example en or de.",
+				"default": "en"
+			},
+			"mode": {
+				"type": "select",
+				"label": "Mode",
+				"description": "Choose a single highlight or the top three entries.",
+				"default": "highlight",
+				"options": [
+					{ "label": "Highlight", "value": "highlight" },
+					{ "label": "Top 3", "value": "top3" }
+				]
+			},
+			"type": {
+				"type": "select",
+				"label": "Feed Type",
+				"description": "Choose which On This Day stream to show.",
+				"default": "selected",
+				"options": [
+					{ "label": "Selected", "value": "selected" },
+					{ "label": "Events", "value": "events" },
+					{ "label": "Births", "value": "births" },
+					{ "label": "Deaths", "value": "deaths" }
+				]
+			},
+			"showYearLarge": {
+				"type": "string",
+				"label": "Show Year Large",
+				"description": "Use yes or no.",
+				"default": "yes"
+			}
+		},
+		"tags": ["history", "wikimedia", "on-this-day", "daily"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
+	"recipe-roulette": {
+		"title": "Recipe Roulette",
+		"published": true,
+		"createdAt": "2026-05-08T00:00:00Z",
+		"updatedAt": "2026-05-08T00:00:00Z",
+		"description": "A strong what-should-I-cook screen using TheMealDB with ingredients front and center.",
+		"componentPath": "./screens/recipe-roulette",
+		"hasDataFetch": true,
+		"props": {
+			"title": "Recipe Roulette",
+			"label": "Cook tonight",
+			"updatedAt": "May 8, 11:54 AM",
+			"mode": "random",
+			"mealTitle": "Shakshuka",
+			"category": "Vegetarian",
+			"area": "Middle Eastern",
+			"imageUrl": "https://www.themealdb.com/images/media/meals/g373701551450225.jpg",
+			"ingredients": [
+				{ "name": "Eggs", "measure": "4" },
+				{ "name": "Tomatoes", "measure": "400g" },
+				{ "name": "Onion", "measure": "1" },
+				{ "name": "Garlic", "measure": "2 cloves" },
+				{ "name": "Paprika", "measure": "1 tsp" },
+				{ "name": "Olive Oil", "measure": "2 tbsp" }
+			],
+			"showIngredientsCount": true,
+			"note": "Random pick from TheMealDB."
+		},
+		"params": {
+			"apiKey": {
+				"type": "string",
+				"label": "API Key",
+				"description": "Use 1 for the free development key.",
+				"default": "1"
+			},
+			"category": {
+				"type": "string",
+				"label": "Category",
+				"description": "Optional TheMealDB category filter for category mode.",
+				"default": ""
+			},
+			"area": {
+				"type": "string",
+				"label": "Area",
+				"description": "Optional TheMealDB area filter for area mode.",
+				"default": ""
+			},
+			"mode": {
+				"type": "select",
+				"label": "Mode",
+				"description": "Choose random, category, or area.",
+				"default": "random",
+				"options": [
+					{ "label": "Random", "value": "random" },
+					{ "label": "Category", "value": "category" },
+					{ "label": "Area", "value": "area" }
+				]
+			},
+			"showIngredientsCount": {
+				"type": "string",
+				"label": "Show Ingredients Count",
+				"description": "Use yes or no.",
+				"default": "yes"
+			}
+		},
+		"tags": ["food", "recipe", "mealdb", "daily"],
+>>>>>>> Stashed changes
 		"author": {
 			"name": "TRMNL",
 			"github": "usetrmnl"
