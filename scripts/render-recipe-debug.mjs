@@ -11,6 +11,8 @@ const TARGET_SLUGS = [
 	"lp-weather",
 	"pollen-air-quality",
 	"skywatch",
+	"vercel-overview",
+	"wikipedia",
 	"whos-that-pokemon",
 ];
 

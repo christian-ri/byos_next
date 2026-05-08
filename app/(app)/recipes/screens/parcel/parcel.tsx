@@ -29,7 +29,9 @@ export default function Parcel({
 					</div>
 					<div className="text-right text-base">
 						<div>Updated {updatedAt}</div>
-						<div className="mt-2">{visibleDeliveries.length} packages shown</div>
+						<div className="mt-2">
+							{visibleDeliveries.length} packages shown
+						</div>
 					</div>
 				</div>
 
@@ -52,7 +54,9 @@ export default function Parcel({
 							</div>
 
 							<div className="w-[140px] flex flex-col text-right">
-								<span className="text-base uppercase tracking-[0.2em]">ETA</span>
+								<span className="text-base uppercase tracking-[0.2em]">
+									ETA
+								</span>
 								<span className="text-2xl mt-1">{delivery.deliveryBy}</span>
 								<span className="text-base mt-2">{delivery.days}</span>
 							</div>

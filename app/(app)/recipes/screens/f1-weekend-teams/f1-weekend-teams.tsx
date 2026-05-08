@@ -3,17 +3,16 @@ import {
 	MetaText,
 	ReadableText,
 	SafeTitle,
-	TeamBadge,
 } from "@/app/(app)/recipes/screens/_shared/eink";
 import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
 import type { F1RaceStandingsRecipeData } from "./getData";
 
 export default function F1WeekendTeams({
-	seasonLabel,
-	nextRaceName,
-	nextRaceDate,
-	nextRaceRound,
+	seasonLabel = "2026 season",
+	nextRaceName = "Montreal Grand Prix",
+	nextRaceDate = "May 24, 4:00 PM",
+	nextRaceRound = "Round 7",
 	schedule,
 	teamStandings,
 	updatedAt,
@@ -22,17 +21,14 @@ export default function F1WeekendTeams({
 	height = 480,
 }: F1RaceStandingsRecipeData & { width?: number; height?: number }) {
 	const profile = getBitmapLayoutProfile(width, height);
-	const groupedSchedule = schedule.reduce<Record<string, typeof schedule>>(
-		(acc, entry) => {
-			if (!acc[entry.day]) acc[entry.day] = [];
-			acc[entry.day].push(entry);
-			return acc;
-		},
-		{},
-	);
-	const teamColumns = [teamStandings.slice(0, 6), teamStandings.slice(6)];
-	const hasSchedule = Object.keys(groupedSchedule).length > 0;
-	const flatSchedule = schedule.slice(0, 6);
+	const flatSchedule =
+		schedule.length > 0
+			? schedule.slice(0, 4)
+			: [
+					{ day: "Friday", time: "TBA", label: "Weekend schedule pending" },
+				];
+	const topTeams = teamStandings.slice(0, 4);
+	const remainingTeams = teamStandings.slice(4, 11);
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
@@ -55,45 +51,41 @@ export default function F1WeekendTeams({
 					}}
 				>
 					<EInkCard padding={16} radius={18}>
-						<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-							<MetaText>F1 Weekend</MetaText>
-							<SafeTitle size={32} lines={3}>
-								{nextRaceName}
-							</SafeTitle>
-							<ReadableText size={20} weight={700}>
-								{nextRaceRound}
-							</ReadableText>
-							<MetaText>{nextRaceDate}</MetaText>
-						</div>
+						<MetaText>F1 Weekend</MetaText>
+						<SafeTitle
+							size={24}
+							lines={3}
+							style={{ marginTop: 8, fontFamily: "Georgia, serif" }}
+						>
+							{nextRaceName}
+						</SafeTitle>
+						<ReadableText
+							size={18}
+							weight={700}
+							style={{ marginTop: 10, whiteSpace: "pre-line" }}
+						>
+							{`${nextRaceRound}\n${nextRaceDate}`}
+						</ReadableText>
 					</EInkCard>
 
 					<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
-						<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-							<SafeTitle size={26}>Schedule</SafeTitle>
-							{hasSchedule ? (
-								flatSchedule.map((entry) => (
-									<div
-										key={`${entry.day}-${entry.label}-${entry.time}`}
-										style={{
-											borderLeft: "8px solid #111",
-											paddingLeft: 10,
-											display: "flex",
-											flexDirection: "column",
-											gap: 2,
-										}}
-									>
-										<ReadableText size={16}>{entry.day}</ReadableText>
-										<ReadableText size={18} weight={700}>
-											{entry.time}
-										</ReadableText>
-										<ReadableText size={18}>{entry.label}</ReadableText>
-									</div>
-								))
-							) : (
-								<ReadableText size={18}>
-									No session schedule published for this weekend yet.
-								</ReadableText>
-							)}
+						<ReadableText size={22} weight={700}>
+							Schedule
+						</ReadableText>
+						<div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+							{flatSchedule.map((entry, index) => (
+								<div
+									key={`${entry.day}-${entry.label}-${entry.time}-${index}`}
+									style={{
+										borderLeft: "6px solid #111",
+										paddingLeft: 10,
+									}}
+								>
+									<ReadableText size={16} style={{ whiteSpace: "pre-line" }}>
+										{`${entry.day}\n${entry.time}\n${entry.label}`}
+									</ReadableText>
+								</div>
+							))}
 						</div>
 					</EInkCard>
 				</div>
@@ -116,55 +108,59 @@ export default function F1WeekendTeams({
 						<MetaText>{seasonLabel.replace(" season", "")}</MetaText>
 					</div>
 					<MetaText>Updated {updatedAt}</MetaText>
+					<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+						{topTeams.map((team) => (
+							<div
+								key={`${team.position}-${team.team}`}
+								style={{
+									display: "flex",
+									alignItems: "baseline",
+									justifyContent: "space-between",
+									gap: 14,
+									paddingBottom: 8,
+									borderBottom: "2px solid #111",
+								}}
+							>
+								<div style={{ display: "flex", gap: 12, minWidth: 0 }}>
+									<div className="font-blockkie" style={{ fontSize: 22, width: 24 }}>
+										{team.position}
+									</div>
+									<ReadableText size={22} weight={700}>
+										{team.team}
+									</ReadableText>
+								</div>
+								<div className="font-blockkie" style={{ fontSize: 24, lineHeight: 1 }}>
+									{team.points}
+								</div>
+							</div>
+						))}
+					</div>
 					<div
 						style={{
-							display: "grid",
-							gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-							gap: 10,
+							borderTop: "2px solid #111",
+							paddingTop: 10,
+							display: "flex",
+							flexDirection: "column",
+							gap: 6,
 						}}
 					>
-						{teamColumns.map((column, columnIndex) => (
+						<MetaText>Rest of field</MetaText>
+						{remainingTeams.slice(0, 5).map((team) => (
 							<div
-								key={`col-${columnIndex}`}
-								style={{ display: "flex", flexDirection: "column", gap: 8 }}
+								key={`small-${team.position}-${team.team}`}
+								style={{
+									display: "flex",
+									justifyContent: "space-between",
+									alignItems: "baseline",
+									gap: 10,
+								}}
 							>
-								{column.map((team) => (
-									<div
-										key={`${team.position}-${team.team}`}
-										style={{
-											display: "flex",
-											alignItems: "center",
-											gap: 10,
-											border: "2px solid #111",
-											padding: "10px 12px",
-											minHeight: 54,
-										}}
-									>
-										<div
-											className="font-blockkie"
-											style={{ fontSize: 20, width: 22 }}
-										>
-											{team.position}
-										</div>
-										<TeamBadge team={team.team} size={30} />
-										<div style={{ flex: 1, minWidth: 0, maxWidth: 126 }}>
-											<ReadableText size={18} weight={700}>
-												{team.team}
-											</ReadableText>
-										</div>
-										<div
-											className="font-blockkie"
-											style={{
-												fontSize: 22,
-												lineHeight: 1,
-												width: 34,
-												textAlign: "right",
-											}}
-										>
-											{team.points}
-										</div>
-									</div>
-								))}
+								<ReadableText size={16}>
+									{team.position}. {team.team}
+								</ReadableText>
+								<ReadableText size={16} weight={700}>
+									{team.points}
+								</ReadableText>
 							</div>
 						))}
 					</div>

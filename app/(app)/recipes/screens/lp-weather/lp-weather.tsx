@@ -9,29 +9,6 @@ import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/resp
 import { PreSatori } from "@/utils/pre-satori";
 import type { LpWeatherRecipeData } from "./getData";
 
-function WeatherIcon({ label }: { label: string }) {
-	return (
-		<div
-			className="font-blockkie"
-			style={{
-				width: 52,
-				height: 52,
-				border: "2px solid #111",
-				borderRadius: 12,
-				backgroundColor: "#111",
-				color: "#fff",
-				display: "flex",
-				alignItems: "center",
-				justifyContent: "center",
-				fontSize: 18,
-				lineHeight: 1,
-			}}
-		>
-			{label.slice(0, 2).toUpperCase()}
-		</div>
-	);
-}
-
 function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 	const width = 420;
 	const height = 150;
@@ -82,31 +59,30 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 						points={mapped.map((point) => `${point.x},${point.y}`).join(" ")}
 					/>
 					{mapped.map((point) => (
-						<g key={point.timeLabel}>
-							<circle cx={point.x} cy={point.y} r="4" fill="#111" />
-							<text
-								x={point.x}
-								y={point.y - 10}
-								textAnchor="middle"
-								fontSize="14"
-								fontFamily="geneva9"
-								fill="#111"
-							>
-								{point.temperature}
-							</text>
-							<text
-								x={point.x}
-								y={height - 4}
-								textAnchor="middle"
-								fontSize="14"
-								fontFamily="geneva9"
-								fill="#111"
-							>
-								{point.timeLabel}
-							</text>
-						</g>
+						<circle key={point.timeLabel} cx={point.x} cy={point.y} r="4" fill="#111" />
 					))}
 				</svg>
+				<div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+					{points.map((point) => (
+						<div
+							key={`label-${point.timeLabel}`}
+							style={{
+								width: 60,
+								display: "flex",
+								flexDirection: "column",
+								gap: 2,
+								alignItems: "center",
+							}}
+						>
+							<ReadableText size={14} weight={700} align="center">
+								{point.temperature}°
+							</ReadableText>
+							<MetaText size={14} align="center">
+								{point.timeLabel}
+							</MetaText>
+						</div>
+					))}
+				</div>
 			</div>
 		</EInkCard>
 	);
@@ -143,78 +119,67 @@ export default function LpWeather({
 					backgroundColor: "#f3f1ee",
 					padding: profile.padding,
 					display: "flex",
+					flexDirection: "column",
 					gap: 14,
 				}}
 			>
-				<div
-					style={{
-						width: 330,
-						display: "flex",
-						flexDirection: "column",
-						gap: 14,
-					}}
-				>
-					<EInkCard padding={18} radius={18}>
-						<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+				<div style={{ display: "flex", gap: 14 }}>
+					<div style={{ width: 330, display: "flex", flexDirection: "column", gap: 14 }}>
+						<EInkCard padding={16} radius={18}>
 							<MetaText>{title}</MetaText>
-							<SafeTitle size={30} lines={2}>
-								{locationLabel}
-							</SafeTitle>
+							<ReadableText
+								size={20}
+								weight={700}
+								style={{ marginTop: 8, whiteSpace: "pre-line" }}
+							>
+								{locationLabel.replace(", ", "\n")}
+							</ReadableText>
+							<MetaText style={{ marginTop: 8 }}>Updated {updatedAt}</MetaText>
+						</EInkCard>
+						<EInkCard padding={18} radius={18} style={{ flex: 1 }}>
 							<TemperatureWithUnit
 								value={currentTemp}
-								unit={temperatureUnit}
+								unit=""
 								size={88}
 								unitSize={28}
 							/>
-							<ReadableText size={20} weight={700}>
-								{condition}
+							<ReadableText
+								size={18}
+								weight={700}
+								style={{ marginTop: 8, whiteSpace: "pre-line" }}
+							>
+								{`${condition}\nFeels like ${feelsLike}°`}
 							</ReadableText>
-							<MetaText>
-								Feels like {feelsLike}
-								{temperatureUnit}
-							</MetaText>
-							<MetaText>Updated {updatedAt}</MetaText>
-						</div>
-					</EInkCard>
-
-					<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
-						<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-							<div style={{ border: "2px solid #111", padding: 12 }}>
-								<MetaText>Wind</MetaText>
-								<ReadableText size={18} weight={700}>
-									{windSpeed} {windUnit}
-								</ReadableText>
-								<MetaText>{windDirection}</MetaText>
-							</div>
-							<div style={{ border: "2px solid #111", padding: 12 }}>
-								<MetaText>Humidity</MetaText>
-								<ReadableText size={18} weight={700}>
-									{humidity}%
-								</ReadableText>
-							</div>
-							<div style={{ border: "2px solid #111", padding: 12 }}>
-								<MetaText>Sunrise</MetaText>
-								<ReadableText size={18} weight={700}>
-									{sunrise}
-								</ReadableText>
-							</div>
-							<div style={{ border: "2px solid #111", padding: 12 }}>
-								<MetaText>Sunset</MetaText>
-								<ReadableText size={18} weight={700}>
-									{sunset}
-								</ReadableText>
-							</div>
-						</div>
-					</EInkCard>
+						</EInkCard>
+					</div>
+					<div style={{ width: 436 }}>
+						<HourlyChart hourly={hourly} />
+					</div>
 				</div>
 
-				<div
-					style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}
-				>
-					<HourlyChart hourly={hourly} />
-					<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
+				<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
 						<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 							<SafeTitle size={28}>Forecast</SafeTitle>
+							<div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+								<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+									<MetaText>Wind</MetaText>
+									<ReadableText size={18} weight={700}>
+										{windSpeed} {windUnit} {windDirection}
+									</ReadableText>
+								</div>
+								<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+									<MetaText>Humidity</MetaText>
+									<ReadableText size={18} weight={700}>
+										{humidity}%
+									</ReadableText>
+								</div>
+								<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+									<MetaText>Sun</MetaText>
+									<ReadableText size={18} weight={700}>
+										{sunrise} / {sunset}
+									</ReadableText>
+								</div>
+							</div>
 							{days.slice(0, 3).map((day) => (
 								<div
 									key={day.label}
@@ -226,18 +191,14 @@ export default function LpWeather({
 										padding: "10px 12px",
 									}}
 								>
-									<WeatherIcon label={day.icon} />
 									<div style={{ flex: 1, minWidth: 0 }}>
-										<ReadableText size={18} weight={700}>
-											{day.label}
+										<ReadableText size={18} weight={700} style={{ whiteSpace: "pre-line" }}>
+											{`${day.label}\n${day.condition}`}
 										</ReadableText>
-										<MetaText>{day.condition}</MetaText>
 									</div>
 									<div style={{ textAlign: "right", minWidth: 126 }}>
 										<ReadableText size={18} weight={700} align="right">
-											{day.high}
-											{temperatureUnit} / {day.low}
-											{temperatureUnit}
+											{day.high}° / {day.low}°
 										</ReadableText>
 										<MetaText align="right">
 											{day.precipProbability}% rain
@@ -247,8 +208,7 @@ export default function LpWeather({
 							))}
 							{note ? <MetaText>{note}</MetaText> : null}
 						</div>
-					</EInkCard>
-				</div>
+				</EInkCard>
 			</div>
 		</PreSatori>
 	);

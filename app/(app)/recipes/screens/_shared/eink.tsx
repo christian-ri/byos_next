@@ -163,7 +163,7 @@ export function TwoLineEvent({
 
 export function TemperatureWithUnit({
 	value,
-	unit = "C",
+	unit = "",
 	size = HERO_TEXT,
 	unitSize = 28,
 	color = "#111",
@@ -193,7 +193,7 @@ export function TemperatureWithUnit({
 				style={{
 					display: "flex",
 					alignItems: "flex-start",
-					gap: 4,
+					gap: unit ? 4 : 0,
 					paddingTop: 10,
 				}}
 			>
@@ -213,12 +213,14 @@ export function TemperatureWithUnit({
 						strokeWidth="2.5"
 					/>
 				</svg>
-				<div
-					className="font-blockkie"
-					style={{ fontSize: unitSize, lineHeight: 1 }}
-				>
-					{unit}
-				</div>
+				{unit ? (
+					<div
+						className="font-blockkie"
+						style={{ fontSize: unitSize, lineHeight: 1 }}
+					>
+						{unit}
+					</div>
+				) : null}
 			</div>
 		</div>
 	);

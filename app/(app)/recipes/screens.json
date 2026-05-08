@@ -956,7 +956,7 @@
 		"published": true,
 		"createdAt": "2026-05-03T00:00:00Z",
 		"updatedAt": "2026-05-03T00:00:00Z",
-		"description": "Projects and recent deployments from the Vercel REST API.",
+		"description": "Non-interactive 800x480 eInk dashboard for Vercel projects, deployments, and current production health.",
 		"componentPath": "./screens/vercel-overview",
 		"hasDataFetch": true,
 		"props": {},
@@ -964,29 +964,17 @@
 			"apiToken": {
 				"type": "string",
 				"label": "Vercel API Token",
-				"description": "Personal or team-scoped Vercel access token.",
+				"description": "Personal or team-scoped Vercel access token. Leave blank to use VERCEL_TOKEN from the environment.",
 				"default": ""
 			},
 			"teamId": {
 				"type": "string",
 				"label": "Team ID",
-				"description": "Optional team ID if you want to read team resources.",
+				"description": "Optional team ID if you want to read team resources. Leave blank for the personal account or VERCEL_TEAM_ID.",
 				"default": ""
-			},
-			"projectLimit": {
-				"type": "number",
-				"label": "Projects",
-				"description": "How many projects to show.",
-				"default": 4
-			},
-			"deploymentLimit": {
-				"type": "number",
-				"label": "Deployments",
-				"description": "How many deployments to show.",
-				"default": 4
 			}
 		},
-		"tags": ["vercel", "deployments", "projects", "api"],
+		"tags": ["vercel", "deployments", "projects", "dashboard", "api"],
 		"author": {
 			"name": "BYOS",
 			"github": "christian-ri"

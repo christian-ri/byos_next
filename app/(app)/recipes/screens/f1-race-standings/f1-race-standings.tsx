@@ -4,7 +4,6 @@ import {
 	MetaText,
 	ReadableText,
 	SafeTitle,
-	TeamBadge,
 } from "@/app/(app)/recipes/screens/_shared/eink";
 import { getBitmapLayoutProfile } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
@@ -15,6 +14,7 @@ export default function F1RaceStandings({
 	nextRaceName,
 	nextRaceDate,
 	nextRaceRound,
+	nextRaceTrackImageUrl,
 	driverStandings,
 	updatedAt,
 	note,
@@ -50,7 +50,11 @@ export default function F1RaceStandings({
 						style={{ display: "flex", flexDirection: "column", gap: 10 }}
 					>
 						<MetaText>F1 Driver Standings</MetaText>
-						<SafeTitle size={34} lines={3}>
+						<SafeTitle
+							size={34}
+							lines={3}
+							style={{ fontFamily: "Georgia, serif", letterSpacing: "-0.02em" }}
+						>
 							{nextRaceName}
 						</SafeTitle>
 						<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -63,15 +67,46 @@ export default function F1RaceStandings({
 					</EInkCard>
 
 					<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
-						<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-							<MetaText>{seasonLabel}</MetaText>
-							<ReadableText size={20}>
-								Track and event names wrap instead of clipping, and team
-								portraits are replaced with high-contrast monochrome badges for
-								1-bit eInk.
-							</ReadableText>
-							{note ? <MetaText size={META_TEXT}>{note}</MetaText> : null}
-						</div>
+						{nextRaceTrackImageUrl ? (
+							<div
+								style={{
+									display: "flex",
+									flexDirection: "column",
+									gap: 10,
+									height: "100%",
+								}}
+							>
+								<MetaText>{seasonLabel}</MetaText>
+								<div
+									style={{
+										flex: 1,
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										padding: 10,
+									}}
+								>
+									{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
+									<img
+										src={nextRaceTrackImageUrl}
+										alt={nextRaceName}
+										style={{
+											width: "100%",
+											height: "100%",
+											objectFit: "contain",
+											display: "block",
+										}}
+									/>
+								</div>
+								{note ? <MetaText size={META_TEXT}>{note}</MetaText> : null}
+							</div>
+						) : (
+							<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+								<MetaText>{seasonLabel}</MetaText>
+								<ReadableText size={20}>{nextRaceName}</ReadableText>
+								{note ? <MetaText size={META_TEXT}>{note}</MetaText> : null}
+							</div>
+						)}
 					</EInkCard>
 				</div>
 
@@ -116,7 +151,31 @@ export default function F1RaceStandings({
 								>
 									{driver.position}
 								</div>
-								<TeamBadge team={driver.team} size={34} />
+								<div
+									style={{
+										width: 42,
+										height: 42,
+										borderRadius: 21,
+										border: "2px solid #111",
+										overflow: "hidden",
+										flexShrink: 0,
+										backgroundColor: "#fff",
+									}}
+								>
+									{driver.headshotUrl ? (
+										/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */
+										<img
+											src={driver.headshotUrl}
+											alt={driver.name}
+											style={{
+												width: "100%",
+												height: "100%",
+												objectFit: "cover",
+												display: "block",
+											}}
+										/>
+									) : null}
+								</div>
 								<div
 									style={{
 										flex: 1,

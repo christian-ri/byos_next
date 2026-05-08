@@ -116,29 +116,30 @@ function EventList({
 }
 
 function DefaultView({ defaultDays }: { defaultDays: CalendarDay[] }) {
+	const columnWidth = 222;
 	return (
 		<div
 			style={{
-				display: "grid",
-				gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-				gap: 12,
+				display: "flex",
+				gap: 16,
+				alignItems: "stretch",
 			}}
 		>
 			{defaultDays.map((day) => (
-				<EInkCard
+				<div
 					key={day.key}
-					padding={14}
-					radius={16}
 					style={{
-						minHeight: 286,
+						width: columnWidth,
 						display: "flex",
 						flexDirection: "column",
 						gap: 14,
+						padding: "0 8px 0 0",
+						borderRight: "2px solid #111",
 					}}
 				>
 					<DayHeader day={day} />
 					<EventList events={day.events} maxEvents={5} />
-				</EInkCard>
+				</div>
 			))}
 		</div>
 	);
@@ -148,21 +149,21 @@ function WeekView({ weekDays }: { weekDays: CalendarDay[] }) {
 	return (
 		<div
 			style={{
-				display: "grid",
-				gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+				display: "flex",
 				gap: 8,
 			}}
 		>
-			{weekDays.map((day) => (
-				<EInkCard
+			{weekDays.slice(0, 7).map((day) => (
+				<div
 					key={day.key}
-					padding={10}
-					radius={14}
 					style={{
+						width: 96,
 						minHeight: 286,
 						display: "flex",
 						flexDirection: "column",
 						gap: 12,
+						paddingRight: 6,
+						borderRight: "2px solid #111",
 					}}
 				>
 					<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -172,7 +173,7 @@ function WeekView({ weekDays }: { weekDays: CalendarDay[] }) {
 						<MetaText>{day.dayNumber}</MetaText>
 					</div>
 					<EventList events={day.events} maxEvents={4} />
-				</EInkCard>
+				</div>
 			))}
 		</div>
 	);
@@ -265,22 +266,24 @@ function MonthView({
 				</SafeTitle>
 				<MetaText>{monthWeeks.length} weeks</MetaText>
 			</div>
-			<div
-				style={{
-					display: "grid",
-					gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-					gap: 6,
-				}}
-			>
-				{weekdayHeader.map((label) => (
-					<div key={label} style={{ textAlign: "center" }}>
-						<ReadableText size={14} weight={700}>
-							{label}
-						</ReadableText>
+			<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+				<div style={{ display: "flex", gap: 6 }}>
+					{weekdayHeader.map((label) => (
+						<div key={label} style={{ width: 96, textAlign: "center" }}>
+							<ReadableText size={14} weight={700}>
+								{label}
+							</ReadableText>
+						</div>
+					))}
+				</div>
+				{monthWeeks.map((week, index) => (
+					<div key={`week-${index}`} style={{ display: "flex", gap: 6 }}>
+						{week.map((day) => (
+							<div key={day.key} style={{ width: 96 }}>
+								<MonthCell day={day} />
+							</div>
+						))}
 					</div>
-				))}
-				{monthWeeks.flat().map((day) => (
-					<MonthCell key={day.key} day={day} />
 				))}
 			</div>
 		</EInkCard>

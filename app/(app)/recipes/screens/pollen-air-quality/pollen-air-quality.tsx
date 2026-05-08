@@ -163,21 +163,24 @@ export default function PollenAirQuality({
 
 					<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
 						<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-							{metrics.slice(0, 6).map((metric) => (
+							{metrics.slice(0, 5).map((metric) => (
 								<div
 									key={metric.key}
 									style={{
 										display: "flex",
 										justifyContent: "space-between",
 										alignItems: "baseline",
-										borderBottom: "2px solid #111",
-										paddingBottom: 8,
+										gap: 8,
 									}}
 								>
 									<ReadableText size={16}>{metric.label}</ReadableText>
-									<ReadableText size={24} weight={700}>
+									<ReadableText size={22} weight={700}>
 										{metric.value}
-										{metric.unit ? ` ${metric.unit}` : ""}
+										{metric.unit
+											? metric.unit.toUpperCase() === "C"
+												? "°"
+												: ` ${metric.unit}`
+											: ""}
 									</ReadableText>
 								</div>
 							))}
@@ -196,7 +199,7 @@ export default function PollenAirQuality({
 					<EInkCard padding={16} radius={18} style={{ flex: 1 }}>
 						<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 							<SafeTitle size={28}>Pollen</SafeTitle>
-							<ReadableText size={20}>
+							<ReadableText size={18}>
 								{pollenAvailable
 									? pollenSummary
 									: "No pollen forecast available for this region."}
