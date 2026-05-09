@@ -28,8 +28,8 @@ export default async function Wikipedia({
 		typeof thumbnail.height === "number" &&
 		thumbnail.height > 0;
 	const truncatedExtract =
-		safeExtract.length > 560
-			? `${safeExtract.slice(0, 560).trim()}...`
+		safeExtract.length > 700
+			? `${safeExtract.slice(0, 700).trim()}...`
 			: safeExtract;
 	const formattedDate = new Date().toLocaleDateString("en-GB", {
 		year: "numeric",
@@ -53,10 +53,12 @@ export default async function Wikipedia({
 					flexDirection: "column",
 				}}
 			>
-				<div style={{ padding: 16, borderBottom: "2px solid #111" }}>
+				<div
+					style={{ padding: "18px 20px 14px", borderBottom: "2px solid #111" }}
+				>
 					<div
 						className="font-blockkie"
-						style={{ fontSize: 52, lineHeight: 1 }}
+						style={{ fontSize: 42, lineHeight: 1.02 }}
 					>
 						{safeTitle}
 					</div>
@@ -67,18 +69,23 @@ export default async function Wikipedia({
 						display: "flex",
 						gap: 16,
 						flex: 1,
-						padding: 16,
+						padding: "18px 20px",
 						boxSizing: "border-box",
 					}}
 				>
 					<div
 						className="font-geneva9"
-						style={{ fontSize: 22, lineHeight: 1.55, flex: 1 }}
+						style={{
+							fontSize: 28,
+							lineHeight: 1.42,
+							flex: 1,
+							letterSpacing: 0,
+						}}
 					>
 						{truncatedExtract}
 					</div>
 					{hasValidThumbnail ? (
-						<div style={{ width: 240 }}>
+						<div style={{ width: 220, flexShrink: 0 }}>
 							{/* biome-ignore lint/performance/noImgElement: recipe bitmap rendering needs direct remote image URLs */}
 							<img
 								src={thumbnail.source}
@@ -86,10 +93,12 @@ export default async function Wikipedia({
 								width={thumbnail.width}
 								height={thumbnail.height}
 								style={{
-									width: 240,
-									height: 300,
+									width: 220,
+									height: 276,
 									objectFit: "contain",
 									display: "block",
+									border: "2px solid #111",
+									backgroundColor: "#fff",
 								}}
 							/>
 						</div>
@@ -98,13 +107,16 @@ export default async function Wikipedia({
 
 				<div
 					style={{
-						padding: "0 16px 16px",
+						padding: "0 20px 18px",
 						display: "flex",
 						flexDirection: "column",
 						gap: 8,
 					}}
 				>
-					<div className="font-geneva9" style={{ fontSize: 12 }}>
+					<div
+						className="font-geneva9"
+						style={{ fontSize: 16, lineHeight: 1.2 }}
+					>
 						{safeContentUrl}
 					</div>
 					<div
@@ -120,11 +132,14 @@ export default async function Wikipedia({
 					>
 						<div
 							className="font-blockkie"
-							style={{ fontSize: 20, lineHeight: 1 }}
+							style={{ fontSize: 22, lineHeight: 1 }}
 						>
 							Wikipedia
 						</div>
-						<div className="font-geneva9" style={{ fontSize: 12 }}>
+						<div
+							className="font-geneva9"
+							style={{ fontSize: 16, lineHeight: 1.2 }}
+						>
 							Generated: {formattedDate}
 						</div>
 					</div>
