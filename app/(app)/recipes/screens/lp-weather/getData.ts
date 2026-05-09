@@ -10,6 +10,8 @@ type WeatherParams = {
 	latitude?: string | number;
 	longitude?: string | number;
 	units?: string;
+	hours?: string | number;
+	days?: string | number;
 };
 
 type GeocodingResponse = {
@@ -25,6 +27,7 @@ type GeocodingResponse = {
 type ForecastResponse = {
 	timezone?: string;
 	current?: {
+		time?: string;
 		temperature_2m?: number;
 		apparent_temperature?: number;
 		precipitation?: number;
@@ -52,17 +55,21 @@ type ForecastResponse = {
 
 type ForecastDay = {
 	label: string;
+	dateLabel: string;
 	condition: string;
-	icon: string;
+	iconClass: string;
 	high: number;
 	low: number;
 	precipProbability: number;
+	sunrise?: string;
+	sunset?: string;
 };
 
 type HourPoint = {
-	timeLabel: string;
+	label: string;
+	timeIso: string;
 	temperature: number;
-	icon: string;
+	iconClass: string;
 	precipProbability: number;
 };
 
@@ -74,7 +81,7 @@ export type LpWeatherRecipeData = {
 	currentTemp: number;
 	feelsLike: number;
 	condition: string;
-	conditionIcon: string;
+	iconClass: string;
 	windSpeed: number;
 	windDirection: string;
 	humidity: number;
@@ -82,11 +89,36 @@ export type LpWeatherRecipeData = {
 	sunset: string;
 	sunriseIso?: string;
 	sunsetIso?: string;
+	currentTimeIso?: string;
 	updatedAt: string;
 	note?: string;
 	days: ForecastDay[];
 	hourly: HourPoint[];
 };
+
+const DEFAULT_LAT = 42.3601;
+const DEFAULT_LON = -71.0589;
+const DEFAULT_LOCATION = "Boston, United States";
+
+function normalizeUnits(value?: string) {
+	return String(value || "imperial")
+		.trim()
+		.toLowerCase() === "metric"
+		? "metric"
+		: "imperial";
+}
+
+function normalizeHours(value?: string | number) {
+	const hours = Number(value);
+	if (!Number.isFinite(hours)) return 25;
+	return Math.max(1, Math.min(25, Math.round(hours)));
+}
+
+function normalizeDays(value?: string | number) {
+	const days = Number(value);
+	if (!Number.isFinite(days)) return 6;
+	return Math.max(1, Math.min(6, Math.round(days)));
+}
 
 function weatherLabel(code?: number) {
 	switch (code) {
@@ -104,6 +136,7 @@ function weatherLabel(code?: number) {
 		case 51:
 		case 53:
 		case 55:
+			return "Drizzle";
 		case 61:
 		case 63:
 		case 65:
@@ -126,18 +159,25 @@ function weatherLabel(code?: number) {
 	}
 }
 
-function weatherIcon(code?: number) {
+function isDaytime(currentTime?: string, sunrise?: string, sunset?: string) {
+	if (!currentTime || !sunrise || !sunset) return true;
+	const now = new Date(currentTime).getTime();
+	return now >= new Date(sunrise).getTime() && now < new Date(sunset).getTime();
+}
+
+function iconClassForWeather(code?: number, day = true) {
 	switch (code) {
 		case 0:
-			return "sun";
+			return day ? "wi-day-sunny" : "wi-night-clear";
 		case 1:
+			return day ? "wi-day-sunny-overcast" : "wi-night-partly-cloudy";
 		case 2:
-			return "partly-cloudy";
+			return day ? "wi-day-cloudy" : "wi-night-cloudy";
 		case 3:
-			return "cloud";
+			return "wi-cloudy";
 		case 45:
 		case 48:
-			return "fog";
+			return "wi-fog";
 		case 51:
 		case 53:
 		case 55:
@@ -147,28 +187,51 @@ function weatherIcon(code?: number) {
 		case 80:
 		case 81:
 		case 82:
-			return "rain";
+			return "wi-rain";
 		case 71:
 		case 73:
 		case 75:
 		case 85:
 		case 86:
-			return "snow";
+			return "wi-snow";
 		case 95:
 		case 96:
 		case 99:
-			return "storm";
+			return "wi-thunderstorm";
 		default:
-			return "cloud";
+			return "wi-na";
 	}
 }
 
-function formatClock(value?: string) {
+function formatClock(value?: string, timeZone?: string) {
 	if (!value) return "--:--";
-	return new Date(value).toLocaleTimeString("en-US", {
+	return new Intl.DateTimeFormat("en-US", {
+		timeZone,
 		hour: "numeric",
 		minute: "2-digit",
-	});
+	}).format(new Date(value));
+}
+
+function formatHourLabel(value: string, timeZone?: string) {
+	return new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		hour: "numeric",
+	}).format(new Date(value));
+}
+
+function formatWeekday(value: string, timeZone?: string) {
+	return new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		weekday: "long",
+	}).format(new Date(value));
+}
+
+function formatShortDate(value: string, timeZone?: string) {
+	return new Intl.DateTimeFormat("en-US", {
+		timeZone,
+		month: "short",
+		day: "numeric",
+	}).format(new Date(value));
 }
 
 function windDirectionLabel(degrees?: number) {
@@ -198,7 +261,12 @@ async function resolveLocation(params?: WeatherParams) {
 	);
 	const first = geo.results?.[0];
 	if (!first) {
-		throw new Error(`Could not resolve location "${query}"`);
+		return {
+			latitude: DEFAULT_LAT,
+			longitude: DEFAULT_LON,
+			name: DEFAULT_LOCATION,
+			timezone: "America/New_York",
+		};
 	}
 
 	return {
@@ -209,53 +277,134 @@ async function resolveLocation(params?: WeatherParams) {
 	};
 }
 
+function buildFallback(
+	units: "metric" | "imperial",
+	hours: number,
+	days: number,
+): LpWeatherRecipeData {
+	const now = new Date().toISOString();
+	return {
+		title: "LP Weather",
+		locationLabel: DEFAULT_LOCATION,
+		temperatureUnit: units === "imperial" ? "F" : "C",
+		windUnit: units === "imperial" ? "mph" : "km/h",
+		currentTemp: units === "imperial" ? 48 : 9,
+		feelsLike: units === "imperial" ? 38 : 3,
+		condition: "Overcast",
+		iconClass: "wi-cloudy",
+		windSpeed: units === "imperial" ? 17 : 27,
+		windDirection: "W",
+		humidity: 35,
+		sunrise: "6:15 AM",
+		sunset: "7:15 PM",
+		sunriseIso: now,
+		sunsetIso: now,
+		currentTimeIso: now,
+		updatedAt: formatUpdatedAt(new Date()),
+		note: "Live forecast failed, so this preview is showing sample weather.",
+		hourly: Array.from({ length: Math.min(hours, 8) }, (_, index) => ({
+			label: index === 0 ? "Now" : `${index * 4 + 1} PM`,
+			timeIso: now,
+			temperature: (units === "imperial" ? 47 : 8) + Math.max(-4, 2 - index),
+			iconClass:
+				index < 2
+					? "wi-cloudy"
+					: index < 4
+						? "wi-day-cloudy"
+						: "wi-night-clear",
+			precipProbability: [0, 0, 24, 18, 10, 4, 0, 0][index] || 0,
+		})),
+		days: Array.from({ length: days }, (_, index) => ({
+			label:
+				index === 0
+					? "Today"
+					: [
+							"Tuesday",
+							"Wednesday",
+							"Thursday",
+							"Friday",
+							"Saturday",
+							"Sunday",
+						][index - 1] || "Next",
+			dateLabel:
+				["Mar 3", "Mar 4", "Mar 5", "Mar 6", "Mar 7", "Mar 8"][index] ||
+				"Mar 9",
+			condition:
+				["Overcast", "Snow", "Cloudy", "Clear", "Cloudy", "Cloudy"][index] ||
+				"Mixed",
+			iconClass:
+				[
+					"wi-cloudy",
+					"wi-snow",
+					"wi-cloudy",
+					"wi-day-sunny",
+					"wi-cloudy",
+					"wi-cloudy",
+				][index] || "wi-cloudy",
+			high: (units === "imperial" ? 48 : 9) + index * 2,
+			low: (units === "imperial" ? 35 : 2) + index,
+			precipProbability: [0, 24, 0, 0, 0, 12][index] || 0,
+			sunrise: now,
+			sunset: now,
+		})),
+	};
+}
+
 export default async function getData(
 	params?: WeatherParams,
 ): Promise<LpWeatherRecipeData> {
-	const units = String(params?.units || "imperial")
-		.trim()
-		.toLowerCase();
+	const units = normalizeUnits(params?.units);
+	const hours = normalizeHours(params?.hours);
+	const days = normalizeDays(params?.days);
 
 	try {
 		const location = await resolveLocation(params);
 		const forecast = await fetchJsonWithTimeout<ForecastResponse>(
-			`https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&timezone=${encodeURIComponent(location.timezone) || "auto"}&forecast_days=6${units === "imperial" ? "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch" : ""}`,
+			`https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&timezone=${encodeURIComponent(location.timezone || "auto")}&forecast_days=${days}${units === "imperial" ? "&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch" : ""}`,
 			{ headers: { Accept: "application/json" } },
 			10000,
 		);
 
+		const timeZone = forecast.timezone || location.timezone || "auto";
+		const currentTime = forecast.current?.time;
+		const sunriseToday = forecast.daily?.sunrise?.[0];
+		const sunsetToday = forecast.daily?.sunset?.[0];
 		const hourly = (forecast.hourly?.time || [])
-			.slice(0, 8)
+			.slice(0, hours)
 			.map((time, index) => ({
-				timeLabel:
-					index === 0
-						? "Now"
-						: new Date(time).toLocaleTimeString("en-US", {
-								hour: "numeric",
-							}),
+				label: index === 0 ? "Now" : formatHourLabel(time, timeZone),
+				timeIso: time,
 				temperature: Math.round(forecast.hourly?.temperature_2m?.[index] || 0),
-				icon: weatherIcon(forecast.hourly?.weather_code?.[index]),
+				iconClass: iconClassForWeather(
+					forecast.hourly?.weather_code?.[index],
+					isDaytime(time, sunriseToday, sunsetToday),
+				),
 				precipProbability: Math.round(
 					forecast.hourly?.precipitation_probability?.[index] || 0,
 				),
 			}));
 
-		const days =
-			forecast.daily?.time?.slice(0, 6).map((date, index) => ({
-				label:
-					index === 0
-						? "Today"
-						: new Date(date).toLocaleDateString("en-US", {
-								weekday: "long",
-							}),
-				condition: weatherLabel(forecast.daily?.weather_code?.[index]),
-				icon: weatherIcon(forecast.daily?.weather_code?.[index]),
-				high: Math.round(forecast.daily?.temperature_2m_max?.[index] || 0),
-				low: Math.round(forecast.daily?.temperature_2m_min?.[index] || 0),
-				precipProbability: Math.round(
-					forecast.daily?.precipitation_probability_max?.[index] || 0,
-				),
-			})) || [];
+		const forecastDays =
+			forecast.daily?.time?.slice(0, days).map((date, index) => {
+				const sunrise = forecast.daily?.sunrise?.[index];
+				const sunset = forecast.daily?.sunset?.[index];
+				return {
+					label: index === 0 ? "Today" : formatWeekday(date, timeZone),
+					dateLabel: formatShortDate(date, timeZone),
+					condition: weatherLabel(forecast.daily?.weather_code?.[index]),
+					iconClass: iconClassForWeather(
+						forecast.daily?.weather_code?.[index],
+						true,
+					),
+					high: Math.round(forecast.daily?.temperature_2m_max?.[index] || 0),
+					low: Math.round(forecast.daily?.temperature_2m_min?.[index] || 0),
+					precipProbability: Math.round(
+						forecast.daily?.precipitation_probability_max?.[index] || 0,
+					),
+					sunrise,
+					sunset,
+				};
+			}) || [];
 
 		return {
 			title: "LP Weather",
@@ -265,133 +414,25 @@ export default async function getData(
 			currentTemp: Math.round(forecast.current?.temperature_2m || 0),
 			feelsLike: Math.round(forecast.current?.apparent_temperature || 0),
 			condition: weatherLabel(forecast.current?.weather_code),
-			conditionIcon: weatherIcon(forecast.current?.weather_code),
+			iconClass: iconClassForWeather(
+				forecast.current?.weather_code,
+				isDaytime(currentTime, sunriseToday, sunsetToday),
+			),
 			windSpeed: Math.round(forecast.current?.wind_speed_10m || 0),
 			windDirection: windDirectionLabel(forecast.current?.wind_direction_10m),
 			humidity: Math.round(forecast.current?.relative_humidity_2m || 0),
-			sunrise: formatClock(forecast.daily?.sunrise?.[0]),
-			sunset: formatClock(forecast.daily?.sunset?.[0]),
-			sunriseIso: forecast.daily?.sunrise?.[0],
-			sunsetIso: forecast.daily?.sunset?.[0],
-			updatedAt: formatUpdatedAt(new Date()),
+			sunrise: formatClock(sunriseToday, timeZone),
+			sunset: formatClock(sunsetToday, timeZone),
+			sunriseIso: sunriseToday,
+			sunsetIso: sunsetToday,
+			currentTimeIso: currentTime,
+			updatedAt: formatUpdatedAt(new Date(), timeZone),
 			note: "Forecast via Open-Meteo.",
-			days,
+			days: forecastDays,
 			hourly,
 		};
 	} catch (error) {
 		console.error("Error loading LP Weather data:", error);
-		return {
-			title: "LP Weather",
-			locationLabel: "Boston, United States",
-			temperatureUnit: units === "imperial" ? "F" : "C",
-			windUnit: units === "imperial" ? "mph" : "km/h",
-			currentTemp: 48,
-			feelsLike: 38,
-			condition: "Overcast",
-			conditionIcon: "cloud",
-			windSpeed: 17,
-			windDirection: "W",
-			humidity: 35,
-			sunrise: "6:15 AM",
-			sunset: "7:15 PM",
-			sunriseIso: new Date().toISOString(),
-			sunsetIso: new Date().toISOString(),
-			updatedAt: formatUpdatedAt(new Date()),
-			note: "Live forecast failed, so this preview is showing sample weather.",
-			hourly: [
-				{
-					timeLabel: "Now",
-					temperature: 47,
-					icon: "cloud",
-					precipProbability: 0,
-				},
-				{
-					timeLabel: "5 PM",
-					temperature: 47,
-					icon: "partly-cloudy",
-					precipProbability: 0,
-				},
-				{
-					timeLabel: "9 PM",
-					temperature: 38,
-					icon: "moon",
-					precipProbability: 24,
-				},
-				{
-					timeLabel: "1 AM",
-					temperature: 33,
-					icon: "moon",
-					precipProbability: 10,
-				},
-				{
-					timeLabel: "5 AM",
-					temperature: 32,
-					icon: "cloud",
-					precipProbability: 12,
-				},
-				{
-					timeLabel: "9 AM",
-					temperature: 34,
-					icon: "snow",
-					precipProbability: 20,
-				},
-				{
-					timeLabel: "1 PM",
-					temperature: 34,
-					icon: "cloud",
-					precipProbability: 8,
-				},
-			],
-			days: [
-				{
-					label: "Today",
-					condition: "Overcast",
-					icon: "cloud",
-					high: 48,
-					low: 35,
-					precipProbability: 0,
-				},
-				{
-					label: "Tuesday",
-					condition: "Snow",
-					icon: "snow",
-					high: 40,
-					low: 31,
-					precipProbability: 24,
-				},
-				{
-					label: "Wednesday",
-					condition: "Cloudy",
-					icon: "cloud",
-					high: 39,
-					low: 29,
-					precipProbability: 0,
-				},
-				{
-					label: "Thursday",
-					condition: "Clear",
-					icon: "sun",
-					high: 54,
-					low: 34,
-					precipProbability: 0,
-				},
-				{
-					label: "Friday",
-					condition: "Cloudy",
-					icon: "cloud",
-					high: 62,
-					low: 39,
-					precipProbability: 0,
-				},
-				{
-					label: "Saturday",
-					condition: "Cloudy",
-					icon: "cloud",
-					high: 61,
-					low: 46,
-					precipProbability: 12,
-				},
-			],
-		};
+		return buildFallback(units, hours, days);
 	}
 }

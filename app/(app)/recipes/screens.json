@@ -2554,11 +2554,137 @@
 		"title": "LP Weather",
 		"published": true,
 		"createdAt": "2026-05-03T00:00:00Z",
-		"updatedAt": "2026-05-03T00:00:00Z",
-		"description": "Readable Open-Meteo forecast inspired by lucaspimentel's TRMNL weather plugin.",
+		"updatedAt": "2026-05-09T00:00:00Z",
+		"description": "LP Weather rebuilt to closely match lucaspimentel's TRMNL weather layout with weather-icons styling.",
 		"componentPath": "./screens/lp-weather",
 		"hasDataFetch": true,
-		"props": {},
+		"props": {
+			"title": "LP Weather",
+			"locationLabel": "Boston, United States",
+			"temperatureUnit": "F",
+			"windUnit": "mph",
+			"currentTemp": 48,
+			"feelsLike": 38,
+			"condition": "Overcast",
+			"iconClass": "wi-cloudy",
+			"windSpeed": 17,
+			"windDirection": "W",
+			"humidity": 35,
+			"sunrise": "6:15 AM",
+			"sunset": "7:15 PM",
+			"sunriseIso": "2026-05-09T06:15:00-04:00",
+			"sunsetIso": "2026-05-09T19:15:00-04:00",
+			"currentTimeIso": "2026-05-09T15:00:00-04:00",
+			"updatedAt": "Fri 3:00 PM",
+			"note": "Forecast via Open-Meteo.",
+			"hourly": [
+				{
+					"label": "Now",
+					"timeIso": "2026-05-09T15:00:00-04:00",
+					"temperature": 47,
+					"iconClass": "wi-cloudy",
+					"precipProbability": 0
+				},
+				{
+					"label": "5 PM",
+					"timeIso": "2026-05-09T17:00:00-04:00",
+					"temperature": 47,
+					"iconClass": "wi-day-cloudy",
+					"precipProbability": 0
+				},
+				{
+					"label": "9 PM",
+					"timeIso": "2026-05-09T21:00:00-04:00",
+					"temperature": 38,
+					"iconClass": "wi-night-clear",
+					"precipProbability": 24
+				},
+				{
+					"label": "1 AM",
+					"timeIso": "2026-05-10T01:00:00-04:00",
+					"temperature": 33,
+					"iconClass": "wi-night-clear",
+					"precipProbability": 10
+				},
+				{
+					"label": "5 AM",
+					"timeIso": "2026-05-10T05:00:00-04:00",
+					"temperature": 32,
+					"iconClass": "wi-cloudy",
+					"precipProbability": 12
+				},
+				{
+					"label": "9 AM",
+					"timeIso": "2026-05-10T09:00:00-04:00",
+					"temperature": 34,
+					"iconClass": "wi-snow",
+					"precipProbability": 20
+				},
+				{
+					"label": "1 PM",
+					"timeIso": "2026-05-10T13:00:00-04:00",
+					"temperature": 34,
+					"iconClass": "wi-cloudy",
+					"precipProbability": 8
+				}
+			],
+			"days": [
+				{
+					"label": "Today",
+					"dateLabel": "Mar 3",
+					"condition": "Overcast",
+					"iconClass": "wi-cloudy",
+					"high": 48,
+					"low": 35,
+					"precipProbability": 0
+				},
+				{
+					"label": "Tuesday",
+					"dateLabel": "Mar 4",
+					"condition": "Snow",
+					"iconClass": "wi-snow",
+					"high": 40,
+					"low": 31,
+					"precipProbability": 24
+				},
+				{
+					"label": "Wednesday",
+					"dateLabel": "Mar 5",
+					"condition": "Cloudy",
+					"iconClass": "wi-cloudy",
+					"high": 39,
+					"low": 29,
+					"precipProbability": 0
+				},
+				{
+					"label": "Thursday",
+					"dateLabel": "Mar 6",
+					"condition": "Clear",
+					"iconClass": "wi-day-sunny",
+					"high": 54,
+					"low": 34,
+					"precipProbability": 0
+				},
+				{
+					"label": "Friday",
+					"dateLabel": "Mar 7",
+					"condition": "Cloudy",
+					"iconClass": "wi-cloudy",
+					"high": 62,
+					"low": 39,
+					"precipProbability": 0
+				},
+				{
+					"label": "Saturday",
+					"dateLabel": "Mar 8",
+					"condition": "Cloudy",
+					"iconClass": "wi-cloudy",
+					"high": 61,
+					"low": 46,
+					"precipProbability": 12
+				}
+			]
+		},
 		"params": {
 			"location": {
 				"type": "string",
@@ -2570,7 +2696,19 @@
 				"type": "string",
 				"label": "Units",
 				"description": "Use metric or imperial.",
-				"default": "metric"
+				"default": "imperial"
+			},
+			"hours": {
+				"type": "number",
+				"label": "Hours",
+				"description": "Number of hours to show in the hourly forecast.",
+				"default": 25
+			},
+			"days": {
+				"type": "number",
+				"label": "Days",
+				"description": "Number of days to show in the daily forecast.",
+				"default": 6
 			}
 		},
 		"tags": ["weather", "forecast", "open-meteo", "live-data"],
