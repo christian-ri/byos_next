@@ -11,6 +11,18 @@ import {
 import { PreSatori } from "@/utils/pre-satori";
 import type { RecipeRouletteRecipeData } from "./getData";
 
+function formatIngredientLines(
+	ingredients: RecipeRouletteRecipeData["ingredients"],
+) {
+	return ingredients
+		.map((ingredient) =>
+			ingredient.measure
+				? `${ingredient.name}  ${ingredient.measure}`
+				: ingredient.name,
+		)
+		.join("\n");
+}
+
 export default function RecipeRoulette({
 	title,
 	label,
@@ -33,6 +45,7 @@ export default function RecipeRoulette({
 		min: 24,
 		max: 34,
 	});
+	const ingredientLines = formatIngredientLines(ingredients);
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
@@ -70,14 +83,14 @@ export default function RecipeRoulette({
 						<MetaText align="right">{`Updated ${updatedAt}`}</MetaText>
 					</div>
 				</div>
-				<div style={{ display: "flex", gap: 14, flex: 1, minHeight: 0 }}>
+
+				<div style={{ display: "flex", gap: 14, flex: 1 }}>
 					<div
 						style={{
-							flex: 1,
+							width: 492,
 							display: "flex",
 							flexDirection: "column",
 							gap: 12,
-							minWidth: 0,
 						}}
 					>
 						<div
@@ -87,26 +100,35 @@ export default function RecipeRoulette({
 								padding: "14px 16px",
 								display: "flex",
 								flexDirection: "column",
-								gap: 10,
+								gap: 12,
+								boxSizing: "border-box",
 							}}
 						>
 							<SafeTitle size={titleSize} lines={2}>
 								{mealTitle}
 							</SafeTitle>
-							<div
-								style={{
-									display: "grid",
-									gridTemplateColumns: "1fr 1fr",
-									gap: 10,
-								}}
-							>
-								<div>
+							<div style={{ display: "flex", gap: 28 }}>
+								<div
+									style={{
+										width: 180,
+										display: "flex",
+										flexDirection: "column",
+										gap: 2,
+									}}
+								>
 									<MetaText>Category</MetaText>
 									<ReadableText size={18} weight={700}>
 										{category}
 									</ReadableText>
 								</div>
-								<div>
+								<div
+									style={{
+										width: 180,
+										display: "flex",
+										flexDirection: "column",
+										gap: 2,
+									}}
+								>
 									<MetaText>Region</MetaText>
 									<ReadableText size={18} weight={700}>
 										{area}
@@ -114,6 +136,7 @@ export default function RecipeRoulette({
 								</div>
 							</div>
 						</div>
+
 						<div
 							style={{
 								border: "2px solid #111",
@@ -123,6 +146,7 @@ export default function RecipeRoulette({
 								flexDirection: "column",
 								gap: 8,
 								flex: 1,
+								boxSizing: "border-box",
 							}}
 						>
 							<div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -131,34 +155,24 @@ export default function RecipeRoulette({
 									<MetaText>{`${ingredients.length} shown`}</MetaText>
 								) : null}
 							</div>
-							{ingredients.map((ingredient, index) => (
-								<div
-									key={`${ingredient.name}-${index}`}
-									style={{
-										display: "flex",
-										justifyContent: "space-between",
-										gap: 10,
-										borderBottom:
-											index < ingredients.length - 1
-												? "1px solid #d0d0d0"
-												: "none",
-										paddingBottom: 6,
-									}}
-								>
-									<ReadableText size={18} weight={700}>
-										{ingredient.name}
-									</ReadableText>
-									<MetaText align="right">{ingredient.measure}</MetaText>
-								</div>
-							))}
-							<div style={{ marginTop: "auto" }}>
-								<MetaText>{clampText(note, 120)}</MetaText>
-							</div>
+							<ReadableText
+								size={17}
+								weight={700}
+								style={{
+									whiteSpace: "pre-wrap",
+									lineHeight: 1.45,
+									flex: 1,
+								}}
+							>
+								{ingredientLines}
+							</ReadableText>
+							<MetaText>{clampText(note, 120)}</MetaText>
 						</div>
 					</div>
+
 					<div
 						style={{
-							width: 260,
+							width: 262,
 							border: "2px solid #111",
 							backgroundColor: "#fff",
 							padding: 10,
