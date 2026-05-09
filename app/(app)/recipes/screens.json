@@ -2518,25 +2518,25 @@
 				"type": "string",
 				"label": "Location",
 				"description": "City or region name for the radar center. Used when latitude/longitude are left empty.",
-				"default": "New York"
+				"default": "Brussels"
 			},
 			"latitude": {
 				"type": "number",
 				"label": "Latitude",
 				"description": "Center latitude for the radar view.",
-				"default": 40.7128
+				"default": 50.8503
 			},
 			"longitude": {
 				"type": "number",
 				"label": "Longitude",
 				"description": "Center longitude for the radar view.",
-				"default": -74.006
+				"default": 4.3517
 			},
 			"radiusKm": {
 				"type": "number",
 				"label": "Radius (km)",
 				"description": "Traffic search radius in kilometers.",
-				"default": 80
+				"default": 90
 			}
 		},
 		"tags": ["aviation", "radar", "live-data", "community"],

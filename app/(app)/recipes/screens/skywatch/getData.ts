@@ -68,7 +68,8 @@ type MapView = {
 	centerLat: number;
 	centerLon: number;
 	zoom: number;
-	size: number;
+	width: number;
+	height: number;
 	tiles: MapTile[];
 };
 
@@ -86,7 +87,8 @@ const DEFAULT_LAT = 50.8503;
 const DEFAULT_LON = 4.3517;
 const DEFAULT_RADIUS_KM = 90;
 const DEFAULT_LOCATION = "Brussels";
-const MAP_SIZE = 360;
+const MAP_WIDTH = 800;
+const MAP_HEIGHT = 438;
 const MAP_TILE_SIZE = 256;
 const EARTH_CIRCUMFERENCE_METERS = 40075016.686;
 
@@ -112,7 +114,7 @@ function latToWorldPx(lat: number, zoom: number) {
 
 function mapZoomForRadius(lat: number, radiusKm: number) {
 	const spanMeters = radiusKm * 1000 * 2.35;
-	const metersPerPixel = spanMeters / MAP_SIZE;
+	const metersPerPixel = spanMeters / Math.min(MAP_WIDTH, MAP_HEIGHT);
 	const rawZoom = Math.log2(
 		(Math.cos((lat * Math.PI) / 180) * EARTH_CIRCUMFERENCE_METERS) /
 			(MAP_TILE_SIZE * metersPerPixel),
@@ -125,13 +127,13 @@ function buildMapView(centerLat: number, centerLon: number, radiusKm: number) {
 	const zoom = mapZoomForRadius(centerLat, radiusKm);
 	const centerWorldX = lonToWorldPx(centerLon, zoom);
 	const centerWorldY = latToWorldPx(centerLat, zoom);
-	const topLeftX = centerWorldX - MAP_SIZE / 2;
-	const topLeftY = centerWorldY - MAP_SIZE / 2;
+	const topLeftX = centerWorldX - MAP_WIDTH / 2;
+	const topLeftY = centerWorldY - MAP_HEIGHT / 2;
 	const maxTileIndex = 2 ** zoom - 1;
 	const tileStartX = Math.floor(topLeftX / MAP_TILE_SIZE);
-	const tileEndX = Math.floor((topLeftX + MAP_SIZE) / MAP_TILE_SIZE);
+	const tileEndX = Math.floor((topLeftX + MAP_WIDTH) / MAP_TILE_SIZE);
 	const tileStartY = Math.floor(topLeftY / MAP_TILE_SIZE);
-	const tileEndY = Math.floor((topLeftY + MAP_SIZE) / MAP_TILE_SIZE);
+	const tileEndY = Math.floor((topLeftY + MAP_HEIGHT) / MAP_TILE_SIZE);
 	const tiles: MapTile[] = [];
 
 	for (let tileY = tileStartY; tileY <= tileEndY; tileY += 1) {
@@ -144,7 +146,7 @@ function buildMapView(centerLat: number, centerLon: number, radiusKm: number) {
 
 			tiles.push({
 				id: `${zoom}-${wrappedX}-${tileY}`,
-				src: `https://tile.openstreetmap.org/${zoom}/${wrappedX}/${tileY}.png`,
+				src: `https://a.basemaps.cartocdn.com/dark_all/${zoom}/${wrappedX}/${tileY}.png`,
 				left: tileX * MAP_TILE_SIZE - topLeftX,
 				top: tileY * MAP_TILE_SIZE - topLeftY,
 				size: MAP_TILE_SIZE,
@@ -157,11 +159,47 @@ function buildMapView(centerLat: number, centerLon: number, radiusKm: number) {
 			centerLat,
 			centerLon,
 			zoom,
-			size: MAP_SIZE,
+			width: MAP_WIDTH,
+			height: MAP_HEIGHT,
 			tiles,
 		},
 		topLeftX,
 		topLeftY,
+	};
+}
+
+async function fetchTileAsDataUri(src: string, timeoutMs = 8000) {
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+	try {
+		const response = await fetch(src, {
+			headers: { Accept: "image/png,image/*;q=0.8,*/*;q=0.5" },
+			signal: controller.signal,
+		});
+		if (!response.ok) return src;
+
+		const buffer = Buffer.from(await response.arrayBuffer());
+		const contentType = response.headers.get("content-type") || "image/png";
+		return `data:${contentType};base64,${buffer.toString("base64")}`;
+	} catch {
+		return src;
+	} finally {
+		clearTimeout(timeout);
+	}
+}
+
+async function inlineMapTiles(map: MapView) {
+	const tiles = await Promise.all(
+		map.tiles.map(async (tile) => ({
+			...tile,
+			src: await fetchTileAsDataUri(tile.src),
+		})),
+	);
+
+	return {
+		...map,
+		tiles,
 	};
 }
 
@@ -176,8 +214,8 @@ function projectAircraftToMap(
 	const y = latToWorldPx(latitude, zoom) - topLeftY;
 
 	return {
-		x: clamp(x / MAP_SIZE, 0.04, 0.96),
-		y: clamp(y / MAP_SIZE, 0.04, 0.96),
+		x: clamp(x / MAP_WIDTH, 0.04, 0.96),
+		y: clamp(y / MAP_HEIGHT, 0.04, 0.96),
 	};
 }
 
@@ -257,6 +295,62 @@ function buildFallback(
 				heading: 76,
 				brightness: 0.7,
 			},
+			{
+				id: "sample-5",
+				callsign: "TRA33P",
+				aircraftType: "AIRBUS A-320neo",
+				routeLabel: "",
+				altitudeLabel: "31.9k ft",
+				speedLabel: "399 kt",
+				latitude: null,
+				longitude: null,
+				x: 0.41,
+				y: 0.41,
+				heading: 16,
+				brightness: 0.82,
+			},
+			{
+				id: "sample-6",
+				callsign: "WUK7JA",
+				aircraftType: "AIRBUS A-321neo",
+				routeLabel: "",
+				altitudeLabel: "36k ft",
+				speedLabel: "423 kt",
+				latitude: null,
+				longitude: null,
+				x: 0.71,
+				y: 0.72,
+				heading: 220,
+				brightness: 0.85,
+			},
+			{
+				id: "sample-7",
+				callsign: "SAS1574",
+				aircraftType: "AIRBUS A-320neo",
+				routeLabel: "ALC → ARN",
+				altitudeLabel: "35k ft",
+				speedLabel: "496 kt",
+				latitude: null,
+				longitude: null,
+				x: 0.18,
+				y: 0.52,
+				heading: 42,
+				brightness: 0.84,
+			},
+			{
+				id: "sample-8",
+				callsign: "AGR507",
+				aircraftType: "EMBRAER ERJ-135",
+				routeLabel: "",
+				altitudeLabel: "25.2k ft",
+				speedLabel: "401 kt",
+				latitude: null,
+				longitude: null,
+				x: 0.69,
+				y: 0.12,
+				heading: 160,
+				brightness: 0.8,
+			},
 		],
 	};
 }
@@ -324,7 +418,12 @@ export default async function getData(
 		160,
 	);
 	const radiusNm = Math.round(toNm(radiusKm));
-	const mapView = buildMapView(latitude, longitude, radiusKm);
+	const rawMapView = buildMapView(latitude, longitude, radiusKm);
+	const map = await inlineMapTiles(rawMapView.map);
+	const mapView = {
+		...rawMapView,
+		map,
+	};
 
 	try {
 		const response = await fetchJsonWithTimeout<AirplanesLiveResponse>(
@@ -338,7 +437,6 @@ export default async function getData(
 				?.filter(
 					(entry) => Number.isFinite(entry.lat) && Number.isFinite(entry.lon),
 				)
-				.slice(0, 12)
 				.map((entry) => {
 					const lat = Number(entry.lat);
 					const lon = Number(entry.lon);
