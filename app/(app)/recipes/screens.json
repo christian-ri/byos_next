@@ -2759,14 +2759,95 @@
 		"category": "trmnl-imports"
 	},
 	"pollen-air-quality": {
-		"title": "Pollen & Air Quality",
+		"title": "MeteoWeather",
 		"published": true,
 		"createdAt": "2026-05-04T00:00:00Z",
-		"updatedAt": "2026-05-04T00:00:00Z",
-		"description": "Open-Meteo air quality dashboard with State College defaults, optional coordinates, and per-indicator toggles.",
+		"updatedAt": "2026-05-09T00:00:00Z",
+		"description": "Open-Meteo weather, air quality, optional pollen, AQI trend, and recommendations optimized for 800x480 eInk.",
 		"componentPath": "./screens/pollen-air-quality",
 		"hasDataFetch": true,
-		"props": {},
+		"props": {
+			"title": "MeteoWeather",
+			"locationLabel": "Berlin, Germany",
+			"dateLabel": "Sat, May 24, 2025",
+			"timeLabel": "08:45",
+			"updatedAt": "May 24, 08:41 AM",
+			"timeZone": "Europe/Berlin",
+			"showPollen": true,
+			"pollenAvailable": true,
+			"currentTemp": "18°",
+			"feelsLike": "18°",
+			"humidity": "52%",
+			"windSpeed": "14 km/h",
+			"windDirection": "WNW",
+			"pressure": "1018 hPa",
+			"weatherLabel": "Sunny",
+			"aqiVisible": true,
+			"aqiValue": 42,
+			"aqiLabel": "Good",
+			"aqiBandDetail": "Air quality is satisfactory and poses little or no risk.",
+			"metrics": [
+				{ "key": "pm25", "label": "PM2.5", "value": "12", "unit": "ug/m3" },
+				{ "key": "pm10", "label": "PM10", "value": "24", "unit": "ug/m3" },
+				{ "key": "o3", "label": "O3", "value": "48", "unit": "ug/m3" },
+				{ "key": "no2", "label": "NO2", "value": "11", "unit": "ug/m3" }
+			],
+			"trendLabel": "AQI",
+			"trendUnit": "",
+			"trendPoints": [
+				{ "label": "-24h", "value": 60 },
+				{ "label": "-18h", "value": 46 },
+				{ "label": "-12h", "value": 30 },
+				{ "label": "-6h", "value": 12 },
+				{ "label": "Now", "value": 24 }
+			],
+			"pollenSummary": "Moderate pollen pressure • 5.8/12",
+			"pollenItems": [
+				{
+					"key": "tree",
+					"label": "Tree",
+					"level": "Moderate",
+					"score": 5.8,
+					"ratio": 0.48
+				},
+				{
+					"key": "grass",
+					"label": "Grass",
+					"level": "Low",
+					"score": 2.1,
+					"ratio": 0.18
+				},
+				{
+					"key": "weed",
+					"label": "Weed",
+					"level": "Moderate",
+					"score": 4.7,
+					"ratio": 0.39
+				},
+				{
+					"key": "mold",
+					"label": "Mold",
+					"level": "Low",
+					"score": 2,
+					"ratio": 0.17
+				}
+			],
+			"forecast": [
+				{ "label": "Now", "temperature": "18°", "icon": "sun" },
+				{ "label": "12:00", "temperature": "22°", "icon": "sun" },
+				{ "label": "15:00", "temperature": "24°", "icon": "cloud" },
+				{ "label": "18:00", "temperature": "23°", "icon": "cloud" },
+				{ "label": "21:00", "temperature": "17°", "icon": "fog" }
+			],
+			"sunrise": "05:14",
+			"sunset": "21:03",
+			"recommendations": [
+				"Great for outdoor activities.",
+				"Air quality is good.",
+				"Keep windows closed if you are sensitive to pollen."
+			],
+			"note": "Data from Open-Meteo."
+		},
 		"params": {
 			"location": {
 				"type": "string",
@@ -2833,13 +2914,20 @@
 				"default": true
 			},
 			"showPollen": {
-				"type": "boolean",
-				"label": "Show Pollen Summary",
-				"description": "Show pollen availability or current pollen summary when the region is supported.",
-				"default": true
+				"type": "string",
+				"label": "Show Pollen",
+				"description": "Use yes or no. When disabled, the pollen panel is fully removed and the layout expands weather, AQI, and recommendations.",
+				"default": "yes"
 			}
 		},
-		"tags": ["open-meteo", "air-quality", "pollen", "aqi", "configurable"],
+		"tags": [
+			"open-meteo",
+			"weather",
+			"air-quality",
+			"pollen",
+			"aqi",
+			"configurable"
+		],
 		"author": {
 			"name": "BYOS",
 			"github": "christian-ri"
