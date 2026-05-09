@@ -1,12 +1,11 @@
 import {
 	MetaText,
 	ReadableText,
-	SafeTitle,
 } from "@/app/(app)/recipes/screens/_shared/eink";
 import { PreSatori } from "@/utils/pre-satori";
 import type { PollenAirQualityData } from "./getData";
 
-function Section({
+function Panel({
 	title,
 	children,
 	style,
@@ -20,17 +19,21 @@ function Section({
 			style={{
 				border: "2px solid #111",
 				backgroundColor: "#fff",
-				padding: "12px 14px",
+				padding: "10px 12px",
 				display: "flex",
 				flexDirection: "column",
-				gap: 10,
 				boxSizing: "border-box",
+				overflow: "hidden",
 				...style,
 			}}
 		>
-			<SafeTitle size={22} lines={1}>
+			<div
+				className="font-blockkie"
+				style={{ fontSize: 16, lineHeight: 1, letterSpacing: 0.4 }}
+			>
 				{title}
-			</SafeTitle>
+			</div>
+			<div style={{ height: 8 }} />
 			{children}
 		</div>
 	);
@@ -38,7 +41,7 @@ function Section({
 
 function WeatherIcon({
 	type,
-	size = 96,
+	size = 88,
 }: {
 	type: "sun" | "cloud" | "rain" | "storm" | "fog" | "snow";
 	size?: number;
@@ -132,6 +135,7 @@ function WeatherIcon({
 			</svg>
 		);
 	}
+
 	return (
 		<svg viewBox="0 0 120 120" width={size} height={size} aria-hidden="true">
 			<circle
@@ -172,101 +176,132 @@ function TrendChart({
 }: {
 	points: PollenAirQualityData["trendPoints"];
 }) {
+	const width = 208;
+	const height = 80;
+	const paddingLeft = 12;
+	const paddingRight = 8;
+	const paddingTop = 10;
+	const paddingBottom = 18;
+
 	if (points.length === 0) {
 		return (
-			<div style={{ height: 106, display: "flex", alignItems: "center" }}>
+			<div
+				style={{
+					width,
+					height,
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					border: "2px solid #111",
+				}}
+			>
 				<MetaText>Trend unavailable</MetaText>
 			</div>
 		);
 	}
 
-	const width = 300;
-	const height = 110;
-	const left = 18;
-	const bottom = 18;
-	const top = 12;
 	const values = points.map((point) => point.value);
 	const min = Math.min(...values);
 	const max = Math.max(...values);
 	const spread = Math.max(1, max - min);
+	const innerWidth = width - paddingLeft - paddingRight;
+	const innerHeight = height - paddingTop - paddingBottom;
 	const mapped = points.map((point, index) => ({
 		...point,
-		x: left + (index / Math.max(1, points.length - 1)) * (width - left - 12),
-		y: top + ((max - point.value) / spread) * (height - top - bottom),
+		x: paddingLeft + (index / Math.max(1, points.length - 1)) * innerWidth,
+		y: paddingTop + ((max - point.value) / spread) * innerHeight,
 	}));
 
 	return (
-		<svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-			<title>AQI trend</title>
-			<line
-				x1={left}
-				y1={top}
-				x2={left}
-				y2={height - bottom}
-				stroke="#111"
-				strokeWidth="2"
-			/>
-			<line
-				x1={left}
-				y1={height - bottom}
-				x2={width - 8}
-				y2={height - bottom}
-				stroke="#111"
-				strokeWidth="2"
-			/>
-			<polyline
-				fill="none"
-				stroke="#111"
-				strokeWidth="4"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				points={mapped.map((point) => `${point.x},${point.y}`).join(" ")}
-			/>
-			{mapped.map((point) => (
-				<g key={point.label}>
-					<circle cx={point.x} cy={point.y} r="4" fill="#111" />
-					<text
-						x={point.x}
-						y={height - 2}
-						textAnchor="middle"
-						fontSize="12"
-						fontFamily="geneva9"
+		<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+			<svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+				<title>AQI trend</title>
+				{[0, 0.5, 1].map((ratio) => (
+					<line
+						key={ratio}
+						x1={paddingLeft}
+						y1={paddingTop + ratio * innerHeight}
+						x2={width - paddingRight}
+						y2={paddingTop + ratio * innerHeight}
+						stroke="#bdbdbd"
+						strokeWidth="1.5"
+					/>
+				))}
+				<line
+					x1={paddingLeft}
+					y1={paddingTop}
+					x2={paddingLeft}
+					y2={height - paddingBottom}
+					stroke="#111"
+					strokeWidth="2"
+				/>
+				<line
+					x1={paddingLeft}
+					y1={height - paddingBottom}
+					x2={width - paddingRight}
+					y2={height - paddingBottom}
+					stroke="#111"
+					strokeWidth="2"
+				/>
+				<polyline
+					fill="none"
+					stroke="#111"
+					strokeWidth="4"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					points={mapped.map((point) => `${point.x},${point.y}`).join(" ")}
+				/>
+				{mapped.map((point) => (
+					<circle
+						key={point.label}
+						cx={point.x}
+						cy={point.y}
+						r="4"
 						fill="#111"
+					/>
+				))}
+			</svg>
+			<div style={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
+				{points.map((point) => (
+					<MetaText
+						key={point.label}
+						size={11}
+						align="center"
+						style={{ width: 36 }}
 					>
 						{point.label}
-					</text>
-				</g>
-			))}
-		</svg>
+					</MetaText>
+				))}
+			</div>
+		</div>
 	);
 }
 
-function ForecastRow({
+function ForecastStrip({
 	forecast,
 }: {
 	forecast: PollenAirQualityData["forecast"];
 }) {
 	return (
-		<div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-			{forecast.map((point) => (
+		<div style={{ display: "flex", gap: 0, width: "100%" }}>
+			{forecast.slice(0, 5).map((point, index, items) => (
 				<div
 					key={point.label}
 					style={{
-						flex: 1,
+						width: 62,
 						display: "flex",
 						flexDirection: "column",
 						alignItems: "center",
-						gap: 6,
-						borderRight:
-							point.label !== forecast.at(-1)?.label
-								? "2px dotted #999"
-								: "none",
-						paddingRight: point.label !== forecast.at(-1)?.label ? 8 : 0,
+						gap: 4,
+						paddingRight: index < items.length - 1 ? 8 : 0,
+						marginRight: index < items.length - 1 ? 8 : 0,
+						borderRight: index < items.length - 1 ? "2px dotted #888" : "none",
+						boxSizing: "border-box",
 					}}
 				>
-					<MetaText>{point.label}</MetaText>
-					<WeatherIcon type={point.icon} size={40} />
-					<ReadableText size={22} weight={700}>
+					<MetaText size={13}>{point.label}</MetaText>
+					<WeatherIcon type={point.icon} size={36} />
+					<ReadableText size={20} weight={700}>
 						{point.temperature}
 					</ReadableText>
 				</div>
@@ -275,46 +310,115 @@ function ForecastRow({
 	);
 }
 
-function PollenBars({ items }: { items: PollenAirQualityData["pollenItems"] }) {
+function PollenRows({ items }: { items: PollenAirQualityData["pollenItems"] }) {
 	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-			{items.map((item) => (
+		<div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+			{items.slice(0, 4).map((item) => (
 				<div
 					key={item.key}
 					style={{
 						display: "grid",
-						gridTemplateColumns: "64px 1fr 80px",
+						gridTemplateColumns: "56px 1fr 70px",
 						alignItems: "center",
-						gap: 10,
+						gap: 8,
 					}}
 				>
-					<ReadableText size={18} weight={700}>
+					<ReadableText size={16} weight={700}>
 						{item.label}
 					</ReadableText>
 					<div
 						style={{
-							height: 10,
-							borderBottom: "2px solid #111",
+							height: 8,
+							border: "2px solid #111",
 							position: "relative",
+							boxSizing: "border-box",
 						}}
 					>
 						<div
 							style={{
 								position: "absolute",
 								left: 0,
-								top: -1,
-								height: 8,
-								width: `${Math.max(10, item.ratio * 100)}%`,
+								top: 0,
+								height: "100%",
+								width: `${Math.max(8, item.ratio * 100)}%`,
 								backgroundColor: "#111",
-								borderRadius: 999,
 							}}
 						/>
 					</div>
-					<ReadableText size={18} align="right">
-						{item.level}
-					</ReadableText>
+					<MetaText align="right">{item.level}</MetaText>
 				</div>
 			))}
+		</div>
+	);
+}
+
+function MetricGrid({ metrics }: { metrics: PollenAirQualityData["metrics"] }) {
+	const visible = metrics.slice(0, 4);
+
+	return (
+		<div style={{ display: "flex", gap: 6 }}>
+			{visible.map((metric) => (
+				<div
+					key={metric.key}
+					style={{
+						flex: 1,
+						border: "2px solid #111",
+						padding: "6px 4px",
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						gap: 2,
+						boxSizing: "border-box",
+					}}
+				>
+					<MetaText size={12}>{metric.label}</MetaText>
+					<ReadableText size={18} weight={700} align="center">
+						{metric.value}
+					</ReadableText>
+					{metric.unit ? (
+						<MetaText size={11} align="center">
+							{metric.unit}
+						</MetaText>
+					) : null}
+				</div>
+			))}
+		</div>
+	);
+}
+
+function WeatherStat({
+	label,
+	value,
+	subvalue,
+}: {
+	label: string;
+	value: string;
+	subvalue?: string;
+}) {
+	return (
+		<div
+			style={{
+				width: 68,
+				border: "2px solid #111",
+				padding: "6px 4px",
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				gap: 2,
+				boxSizing: "border-box",
+			}}
+		>
+			<MetaText size={11} align="center">
+				{label}
+			</MetaText>
+			<ReadableText size={16} weight={700} align="center">
+				{value}
+			</ReadableText>
+			{subvalue ? (
+				<MetaText size={10} align="center">
+					{subvalue}
+				</MetaText>
+			) : null}
 		</div>
 	);
 }
@@ -352,6 +456,10 @@ export default function PollenAirQuality({
 }: PollenAirQualityData & { width?: number; height?: number }) {
 	const showPollenPanel =
 		showPollen && pollenAvailable && pollenItems.length > 0;
+	const airPanelWidth = showPollenPanel ? 304 : 528;
+	const recommendationTitle = showPollenPanel
+		? "RECOMMENDATION"
+		: "WHAT YOU CAN DO TODAY";
 
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
@@ -360,223 +468,180 @@ export default function PollenAirQuality({
 					width: "100%",
 					height: "100%",
 					backgroundColor: "#f5f2ec",
-					padding: 10,
+					padding: 8,
 					display: "flex",
 					flexDirection: "column",
-					gap: 10,
+					gap: 8,
 					boxSizing: "border-box",
 				}}
 			>
 				<div
 					style={{
+						height: 52,
 						border: "2px solid #111",
 						backgroundColor: "#fff",
-						padding: "10px 14px",
+						padding: "0 16px",
 						display: "flex",
-						justifyContent: "space-between",
 						alignItems: "center",
+						justifyContent: "space-between",
+						boxSizing: "border-box",
 					}}
 				>
-					<SafeTitle size={28} lines={1}>
+					<div
+						className="font-blockkie"
+						style={{ fontSize: 26, lineHeight: 1 }}
+					>
 						{locationLabel.toUpperCase()}
-					</SafeTitle>
-					<div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-						<ReadableText size={20} weight={700}>
+					</div>
+					<div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+						<ReadableText size={18} weight={700}>
 							{dateLabel.toUpperCase()}
 						</ReadableText>
-						<div style={{ height: 28, borderLeft: "2px solid #111" }} />
-						<SafeTitle size={28} lines={1}>
+						<div style={{ width: 2, height: 28, backgroundColor: "#111" }} />
+						<div
+							className="font-blockkie"
+							style={{ fontSize: 28, lineHeight: 1 }}
+						>
 							{timeLabel}
-						</SafeTitle>
+						</div>
 					</div>
 				</div>
 
-				<div style={{ display: "flex", gap: 10, flex: 1 }}>
-					<Section title="CURRENT WEATHER" style={{ width: 270 }}>
-						<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-							<WeatherIcon type={currentIcon} size={92} />
-							<div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-								<div
-									className="font-blockkie"
-									style={{ fontSize: 74, lineHeight: 0.92 }}
-								>
+				<div style={{ display: "flex", gap: 8, height: 248 }}>
+					<Panel title="CURRENT WEATHER" style={{ width: 260 }}>
+						<div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+							<div
+								style={{
+									width: 92,
+									display: "flex",
+									justifyContent: "center",
+									flexShrink: 0,
+								}}
+							>
+								<WeatherIcon type={currentIcon} size={88} />
+							</div>
+							<div
+								style={{
+									width: 132,
+									display: "flex",
+									flexDirection: "column",
+									gap: 4,
+								}}
+							>
+								<ReadableText size={58} weight={700}>
 									{currentTemp}
-								</div>
-								<ReadableText size={22} weight={700}>
+								</ReadableText>
+								<ReadableText size={20} weight={700}>
 									{weatherLabel}
 								</ReadableText>
-								<ReadableText size={18}>Feels like {feelsLike}</ReadableText>
+								<MetaText>Feels like {feelsLike}</MetaText>
 							</div>
 						</div>
-						<div style={{ borderTop: "2px solid #111", paddingTop: 10 }} />
-						<div
-							style={{
-								display: "grid",
-								gridTemplateColumns: "1fr 1fr",
-								rowGap: 10,
-								columnGap: 12,
-							}}
-						>
-							<div>
-								<MetaText>Humidity</MetaText>
-								<ReadableText size={20} weight={700}>
-									{humidity}
-								</ReadableText>
-							</div>
-							<div>
-								<MetaText>Wind</MetaText>
-								<ReadableText size={20} weight={700}>
-									{windSpeed}
-								</ReadableText>
-								<MetaText>{windDirection}</MetaText>
-							</div>
-							<div>
-								<MetaText>Pressure</MetaText>
-								<ReadableText size={20} weight={700}>
-									{pressure}
-								</ReadableText>
-							</div>
-							<div>
-								<MetaText>Status</MetaText>
-								<ReadableText size={20} weight={700}>
-									{aqiLabel}
-								</ReadableText>
-							</div>
+						<div style={{ height: 10 }} />
+						<div style={{ borderTop: "2px solid #111" }} />
+						<div style={{ height: 10 }} />
+						<div style={{ display: "flex", justifyContent: "space-between" }}>
+							<WeatherStat label="Humidity" value={humidity} />
+							<WeatherStat
+								label="Wind"
+								value={windSpeed}
+								subvalue={windDirection}
+							/>
+							<WeatherStat label="Pressure" value={pressure} />
 						</div>
-					</Section>
+					</Panel>
 
-					<Section
-						title="AIR QUALITY"
-						style={{ flex: showPollenPanel ? 1 : 1.35 }}
-					>
-						<div
-							style={{
-								display: "flex",
-								justifyContent: "space-between",
-								gap: 12,
-							}}
-						>
-							<div style={{ width: 110 }}>
+					<Panel title="AIR QUALITY" style={{ width: airPanelWidth }}>
+						<div style={{ display: "flex", gap: 12 }}>
+							<div style={{ width: 72 }}>
 								<MetaText>AQI (US)</MetaText>
-								<div
-									className="font-blockkie"
-									style={{ fontSize: 72, lineHeight: 0.92 }}
-								>
+								<ReadableText size={52} weight={700}>
 									{aqiVisible && aqiValue !== null
 										? Math.round(aqiValue)
 										: "--"}
-								</div>
-								<ReadableText size={22} weight={700}>
-									{aqiLabel}
 								</ReadableText>
 							</div>
-							<div style={{ flex: 1 }}>
+							<div style={{ flex: 1, minWidth: 0 }}>
 								<MetaText>TREND (24H)</MetaText>
+								<div style={{ height: 6 }} />
 								<TrendChart points={trendPoints} />
 							</div>
 						</div>
-						<ReadableText size={18}>{aqiBandDetail}</ReadableText>
-						<div
-							style={{
-								display: "grid",
-								gridTemplateColumns: `repeat(${Math.min(metrics.length, 4)}, 1fr)`,
-								gap: 8,
-							}}
-						>
-							{metrics.slice(0, 4).map((metric) => (
-								<div
-									key={metric.key}
-									style={{
-										border: "2px solid #111",
-										padding: "10px 8px",
-										display: "flex",
-										flexDirection: "column",
-										gap: 4,
-										alignItems: "center",
-									}}
-								>
-									<MetaText>{metric.label}</MetaText>
-									<ReadableText size={22} weight={700} align="center">
-										{metric.value}
-									</ReadableText>
-									{metric.unit ? <MetaText>{metric.unit}</MetaText> : null}
-								</div>
-							))}
-						</div>
-					</Section>
+						<div style={{ height: 8 }} />
+						<ReadableText size={16}>
+							{aqiLabel}. {aqiBandDetail}
+						</ReadableText>
+						<div style={{ height: 10 }} />
+						<MetricGrid metrics={metrics} />
+					</Panel>
 
 					{showPollenPanel ? (
-						<Section title="POLLEN" style={{ width: 240 }}>
-							<ReadableText size={24} weight={700}>
+						<Panel title="POLLEN" style={{ width: 216 }}>
+							<ReadableText size={18} weight={700}>
 								{pollenSummary}
 							</ReadableText>
-							<PollenBars items={pollenItems.slice(0, 4)} />
-						</Section>
+							<div style={{ height: 10 }} />
+							<PollenRows items={pollenItems} />
+						</Panel>
 					) : null}
 				</div>
 
-				<div
-					style={{
-						display: "flex",
-						gap: 10,
-						height: showPollenPanel ? 126 : 148,
-					}}
-				>
-					<Section
-						title="TODAY'S FORECAST"
-						style={{ flex: showPollenPanel ? 1.55 : 1.35 }}
-					>
-						<ForecastRow forecast={forecast} />
-					</Section>
+				<div style={{ display: "flex", gap: 8, height: 156 }}>
+					<Panel title="TODAY'S FORECAST" style={{ width: 336 }}>
+						<ForecastStrip forecast={forecast} />
+					</Panel>
 
-					<Section title="SUN" style={{ width: 180 }}>
+					<Panel title="SUN" style={{ width: 160 }}>
 						<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 							<div>
 								<MetaText>SUNRISE</MetaText>
-								<ReadableText size={28} weight={700}>
+								<ReadableText size={24} weight={700}>
 									{sunrise}
 								</ReadableText>
 							</div>
 							<div>
 								<MetaText>SUNSET</MetaText>
-								<ReadableText size={28} weight={700}>
+								<ReadableText size={24} weight={700}>
 									{sunset}
 								</ReadableText>
 							</div>
 						</div>
-					</Section>
+					</Panel>
 
-					<Section
-						title={showPollenPanel ? "RECOMMENDATION" : "WHAT YOU CAN DO TODAY"}
-						style={{ flex: showPollenPanel ? 1.15 : 1.45 }}
-					>
-						<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-							{recommendations.map((item) => (
-								<ReadableText key={item} size={18}>
+					<Panel title={recommendationTitle} style={{ flex: 1 }}>
+						<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+							{recommendations.slice(0, 3).map((item) => (
+								<ReadableText key={item} size={17}>
 									{item}
 								</ReadableText>
 							))}
-							{!showPollenPanel && note ? <MetaText>{note}</MetaText> : null}
+							<MetaText>{note || "Data from Open-Meteo."}</MetaText>
 						</div>
-					</Section>
+					</Panel>
 				</div>
 
 				<div
 					style={{
+						height: 32,
 						border: "2px solid #111",
 						backgroundColor: "#fff",
-						padding: "8px 12px",
+						padding: "0 14px",
 						display: "flex",
-						justifyContent: "space-between",
 						alignItems: "center",
+						justifyContent: "space-between",
+						boxSizing: "border-box",
 					}}
 				>
 					<MetaText>
-						{showPollen
+						{showPollenPanel
 							? "Weather • Air Quality • Pollen"
 							: "Weather • Air Quality"}
 					</MetaText>
-					<MetaText>{note || `Last update: ${updatedAt}`}</MetaText>
+					<MetaText>
+						{showPollenPanel
+							? `Last update: ${updatedAt}`
+							: note || "Data from Open-Meteo."}
+					</MetaText>
 				</div>
 			</div>
 		</PreSatori>

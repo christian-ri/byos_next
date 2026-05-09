@@ -2775,6 +2775,7 @@
 			"timeZone": "Europe/Berlin",
 			"showPollen": true,
 			"pollenAvailable": true,
+			"currentIcon": "sun",
 			"currentTemp": "18°",
 			"feelsLike": "18°",
 			"humidity": "52%",

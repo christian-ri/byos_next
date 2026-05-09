@@ -6,6 +6,7 @@
 		"generate:sql": "node scripts/generate-sql-statements.js && pnpm format",
 		"generate:types": "kysely-codegen --dialect postgres --include-pattern='public.*' --out-file lib/database/db.d.ts",
 		"render:recipes:debug": "node scripts/render-recipe-debug.mjs",
+		"render:recipe:debug": "node scripts/render-single-recipe-debug.mjs",
 		"prebuild": "pnpm generate:sql",
 		"dev": "pnpm generate:sql && next dev --turbopack",
 		"build": "next build",
