@@ -3,13 +3,82 @@ import {
 	ReadableText,
 	SafeTitle,
 } from "@/app/(app)/recipes/screens/_shared/eink";
-import {
-	clampText,
-	getBitmapLayoutProfile,
-	scaleText,
-} from "@/app/(app)/recipes/screens/_shared/responsive-layout";
+import { clampText } from "@/app/(app)/recipes/screens/_shared/responsive-layout";
 import { PreSatori } from "@/utils/pre-satori";
 import type { MuseumPieceRecipeData } from "./getData";
+
+function FramedPanel({
+	children,
+	style,
+	padding = 16,
+}: {
+	children: React.ReactNode;
+	style?: React.CSSProperties;
+	padding?: number;
+}) {
+	return (
+		<div
+			style={{
+				position: "relative",
+				backgroundColor: "#fff",
+				padding,
+				boxSizing: "border-box",
+				...style,
+			}}
+		>
+			<div
+				style={{
+					position: "absolute",
+					left: 0,
+					right: 0,
+					top: 0,
+					height: 3,
+					backgroundColor: "#111",
+				}}
+			/>
+			<div
+				style={{
+					position: "absolute",
+					left: 0,
+					right: 0,
+					bottom: 0,
+					height: 3,
+					backgroundColor: "#111",
+				}}
+			/>
+			<div
+				style={{
+					position: "absolute",
+					top: 0,
+					bottom: 0,
+					left: 0,
+					width: 3,
+					backgroundColor: "#111",
+				}}
+			/>
+			<div
+				style={{
+					position: "absolute",
+					top: 0,
+					bottom: 0,
+					right: 0,
+					width: 3,
+					backgroundColor: "#111",
+				}}
+			/>
+			<div
+				style={{
+					position: "relative",
+					display: "flex",
+					flexDirection: "column",
+					height: "100%",
+				}}
+			>
+				{children}
+			</div>
+		</div>
+	);
+}
 
 export default function MuseumPieceOfTheDay({
 	title,
@@ -29,15 +98,6 @@ export default function MuseumPieceOfTheDay({
 	width = 800,
 	height = 480,
 }: MuseumPieceRecipeData & { width?: number; height?: number }) {
-	const profile = getBitmapLayoutProfile(width, height);
-	const imageWidth = preferPortrait ? 290 : 350;
-	const titleSize = scaleText(28, profile, {
-		compactBase: 24,
-		denseBase: 20,
-		min: 20,
-		max: 28,
-	});
-
 	return (
 		<PreSatori useDoubling={true} width={width} height={height}>
 			<div
@@ -45,10 +105,11 @@ export default function MuseumPieceOfTheDay({
 					width: "100%",
 					height: "100%",
 					backgroundColor: "#f5f2ec",
-					padding: profile.padding,
+					padding: 18,
 					display: "flex",
 					flexDirection: "column",
 					gap: 12,
+					boxSizing: "border-box",
 				}}
 			>
 				<div
@@ -57,26 +118,31 @@ export default function MuseumPieceOfTheDay({
 						justifyContent: "space-between",
 						alignItems: "flex-start",
 						gap: 12,
-						borderBottom: "2px solid #111",
-						paddingBottom: 10,
+						paddingBottom: 12,
 					}}
 				>
 					<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-						<MetaText>{title}</MetaText>
-						<SafeTitle size={30} lines={1}>
+						<MetaText size={15}>{title}</MetaText>
+						<SafeTitle size={31} lines={1}>
 							{label}
 						</SafeTitle>
 					</div>
-					<MetaText align="right">{`Updated ${updatedAt}`}</MetaText>
+					<MetaText size={15} align="right">{`Updated ${updatedAt}`}</MetaText>
 				</div>
-				<div style={{ display: "flex", gap: 14, flex: 1, minHeight: 0 }}>
-					<div
+				<div
+					style={{
+						height: 3,
+						width: "100%",
+						backgroundColor: "#111",
+					}}
+				/>
+				<div style={{ display: "flex", gap: 20, flex: 1, minHeight: 0 }}>
+					<FramedPanel
+						padding={14}
 						style={{
-							width: imageWidth,
-							border: "2px solid #111",
-							backgroundColor: "#fff",
-							padding: 10,
-							boxSizing: "border-box",
+							width: preferPortrait ? 320 : 365,
+							flexShrink: 0,
+							overflow: "hidden",
 							display: "flex",
 							alignItems: "center",
 							justifyContent: "center",
@@ -87,88 +153,114 @@ export default function MuseumPieceOfTheDay({
 							src={imageUrl}
 							alt={artworkTitle}
 							style={{
+								maxWidth: "100%",
+								maxHeight: "100%",
 								width: "100%",
 								height: "100%",
 								objectFit: preferPortrait ? "contain" : "cover",
 								display: "block",
 							}}
 						/>
-					</div>
+					</FramedPanel>
 					<div
 						style={{
 							flex: 1,
 							display: "flex",
 							flexDirection: "column",
-							gap: 12,
+							gap: 18,
 							minWidth: 0,
 						}}
 					>
-						<div
+						<FramedPanel
+							padding={20}
 							style={{
-								border: "2px solid #111",
-								backgroundColor: "#fff",
-								padding: "14px 16px",
 								display: "flex",
 								flexDirection: "column",
-								gap: 10,
+								gap: 14,
 							}}
 						>
-							<SafeTitle size={titleSize} lines={3}>
+							<SafeTitle size={31} lines={3}>
 								{artworkTitle}
 							</SafeTitle>
 							{showArtist ? (
-								<ReadableText size={20} weight={700}>
+								<ReadableText size={21} weight={700}>
 									{artist}
 								</ReadableText>
 							) : null}
-							<div
-								style={{
-									display: "grid",
-									gridTemplateColumns: "1fr 1fr",
-									gap: 10,
-								}}
-							>
-								<div>
-									<MetaText>Date</MetaText>
-									<ReadableText size={18} weight={700}>
-										{dateLabel}
-									</ReadableText>
+							<div style={{ display: "flex", gap: 18 }}>
+								<div
+									style={{
+										flex: 1,
+										display: "flex",
+										flexDirection: "column",
+										gap: 4,
+									}}
+								>
+									<div style={{ display: "block" }}>
+										<MetaText size={14}>Date</MetaText>
+									</div>
+									<div style={{ display: "block" }}>
+										<ReadableText size={19} weight={700}>
+											{dateLabel}
+										</ReadableText>
+									</div>
 								</div>
-								<div>
-									<MetaText>Department</MetaText>
-									<ReadableText size={18} weight={700}>
-										{department}
-									</ReadableText>
+								<div
+									style={{
+										flex: 1,
+										display: "flex",
+										flexDirection: "column",
+										gap: 4,
+									}}
+								>
+									<div style={{ display: "block" }}>
+										<MetaText size={14}>Department</MetaText>
+									</div>
+									<div style={{ display: "block" }}>
+										<ReadableText size={19} weight={700}>
+											{department}
+										</ReadableText>
+									</div>
 								</div>
 							</div>
-						</div>
-						<div
+						</FramedPanel>
+						<FramedPanel
+							padding={20}
 							style={{
-								border: "2px solid #111",
-								backgroundColor: "#fff",
-								padding: "12px 16px",
 								display: "flex",
 								flexDirection: "column",
-								gap: 8,
+								gap: 14,
 								flex: 1,
 							}}
 						>
-							<div>
-								<MetaText>Medium</MetaText>
-								<ReadableText size={18}>{clampText(medium, 110)}</ReadableText>
+							<div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+								<div style={{ display: "block" }}>
+									<MetaText size={14}>Medium</MetaText>
+								</div>
+								<div style={{ display: "block" }}>
+									<ReadableText size={19}>
+										{clampText(medium, 110)}
+									</ReadableText>
+								</div>
 							</div>
 							{showCulture ? (
-								<div>
-									<MetaText>Culture</MetaText>
-									<ReadableText size={18}>{culture}</ReadableText>
+								<div
+									style={{ display: "flex", flexDirection: "column", gap: 4 }}
+								>
+									<div style={{ display: "block" }}>
+										<MetaText size={14}>Culture</MetaText>
+									</div>
+									<div style={{ display: "block" }}>
+										<ReadableText size={19}>{culture}</ReadableText>
+									</div>
 								</div>
 							) : null}
-							<div style={{ marginTop: "auto" }}>
-								<MetaText>
+							<div style={{ marginTop: "auto", paddingTop: 8 }}>
+								<MetaText size={14}>
 									{note || "Open-access artwork selected for today."}
 								</MetaText>
 							</div>
-						</div>
+						</FramedPanel>
 					</div>
 				</div>
 			</div>
