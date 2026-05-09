@@ -2561,15 +2561,15 @@
 		"props": {
 			"title": "LP Weather",
 			"locationLabel": "Boston, United States",
-			"temperatureUnit": "F",
-			"windUnit": "mph",
-			"currentTemp": 48,
-			"feelsLike": 38,
-			"condition": "Overcast",
-			"iconClass": "wi-cloudy",
-			"windSpeed": 17,
-			"windDirection": "W",
-			"humidity": 35,
+			"temperatureUnit": "C",
+			"windUnit": "km/h",
+			"currentTemp": 7,
+			"feelsLike": 2,
+			"condition": "Clear",
+			"iconClass": "wi-day-sunny",
+			"windSpeed": 26,
+			"windDirection": "NE",
+			"humidity": 58,
 			"sunrise": "6:15 AM",
 			"sunset": "7:15 PM",
 			"sunriseIso": "2026-05-09T06:15:00-04:00",
@@ -2581,107 +2581,111 @@
 				{
 					"label": "Now",
 					"timeIso": "2026-05-09T15:00:00-04:00",
-					"temperature": 47,
-					"iconClass": "wi-cloudy",
+					"temperature": 7,
+					"iconClass": "wi-day-sunny",
 					"precipProbability": 0
 				},
 				{
-					"label": "5 PM",
-					"timeIso": "2026-05-09T17:00:00-04:00",
-					"temperature": 47,
+					"label": "2pm",
+					"timeIso": "2026-05-09T18:00:00-04:00",
+					"temperature": 7,
+					"iconClass": "wi-day-sunny",
+					"precipProbability": 0
+				},
+				{
+					"label": "6pm",
+					"timeIso": "2026-05-09T22:00:00-04:00",
+					"temperature": 3,
+					"iconClass": "wi-rain",
+					"precipProbability": 22
+				},
+				{
+					"label": "10pm",
+					"timeIso": "2026-05-10T02:00:00-04:00",
+					"temperature": 6,
 					"iconClass": "wi-day-cloudy",
-					"precipProbability": 0
+					"precipProbability": 8
 				},
 				{
-					"label": "9 PM",
-					"timeIso": "2026-05-09T21:00:00-04:00",
-					"temperature": 38,
-					"iconClass": "wi-night-clear",
-					"precipProbability": 24
+					"label": "2am",
+					"timeIso": "2026-05-10T06:00:00-04:00",
+					"temperature": 14,
+					"iconClass": "wi-night-partly-cloudy",
+					"precipProbability": 34
 				},
 				{
-					"label": "1 AM",
-					"timeIso": "2026-05-10T01:00:00-04:00",
-					"temperature": 33,
-					"iconClass": "wi-night-clear",
+					"label": "6am",
+					"timeIso": "2026-05-10T10:00:00-04:00",
+					"temperature": 15,
+					"iconClass": "wi-night-partly-cloudy",
 					"precipProbability": 10
 				},
 				{
-					"label": "5 AM",
-					"timeIso": "2026-05-10T05:00:00-04:00",
-					"temperature": 32,
-					"iconClass": "wi-cloudy",
+					"label": "10am",
+					"timeIso": "2026-05-10T14:00:00-04:00",
+					"temperature": 12,
+					"iconClass": "wi-day-cloudy",
 					"precipProbability": 12
-				},
-				{
-					"label": "9 AM",
-					"timeIso": "2026-05-10T09:00:00-04:00",
-					"temperature": 34,
-					"iconClass": "wi-snow",
-					"precipProbability": 20
-				},
-				{
-					"label": "1 PM",
-					"timeIso": "2026-05-10T13:00:00-04:00",
-					"temperature": 34,
-					"iconClass": "wi-cloudy",
-					"precipProbability": 8
 				}
 			],
 			"days": [
 				{
 					"label": "Today",
 					"dateLabel": "Mar 3",
-					"condition": "Overcast",
-					"iconClass": "wi-cloudy",
-					"high": 48,
-					"low": 35,
-					"precipProbability": 0
-				},
-				{
-					"label": "Tuesday",
-					"dateLabel": "Mar 4",
-					"condition": "Snow",
-					"iconClass": "wi-snow",
-					"high": 40,
-					"low": 31,
-					"precipProbability": 24
-				},
-				{
-					"label": "Wednesday",
-					"dateLabel": "Mar 5",
-					"condition": "Cloudy",
-					"iconClass": "wi-cloudy",
-					"high": 39,
-					"low": 29,
-					"precipProbability": 0
+					"condition": "Rain",
+					"iconClass": "wi-rain",
+					"high": 11,
+					"low": 3,
+					"precipProbability": 86,
+					"sunrise": "2026-05-09T06:15:00-04:00",
+					"sunset": "2026-05-09T19:15:00-04:00"
 				},
 				{
 					"label": "Thursday",
-					"dateLabel": "Mar 6",
-					"condition": "Clear",
-					"iconClass": "wi-day-sunny",
-					"high": 54,
-					"low": 34,
-					"precipProbability": 0
+					"dateLabel": "Mar 4",
+					"condition": "Rain",
+					"iconClass": "wi-rain",
+					"high": 16,
+					"low": 1,
+					"precipProbability": 29,
+					"sunrise": "2026-05-10T06:14:00-04:00",
+					"sunset": "2026-05-10T19:16:00-04:00"
 				},
 				{
 					"label": "Friday",
-					"dateLabel": "Mar 7",
-					"condition": "Cloudy",
-					"iconClass": "wi-cloudy",
-					"high": 62,
-					"low": 39,
-					"precipProbability": 0
+					"dateLabel": "Mar 5",
+					"condition": "Rain",
+					"iconClass": "wi-rain",
+					"high": 5,
+					"low": -1,
+					"precipProbability": 21
 				},
 				{
 					"label": "Saturday",
+					"dateLabel": "Mar 6",
+					"condition": "Rain",
+					"iconClass": "wi-rain",
+					"high": 7,
+					"low": 0,
+					"precipProbability": 21
+				},
+				{
+					"label": "Sunday",
+					"dateLabel": "Mar 7",
+					"condition": "Snow",
+					"iconClass": "wi-snow",
+					"high": 3,
+					"low": -1,
+					"precipProbability": 29
+				},
+				{
+					"label": "Monday",
 					"dateLabel": "Mar 8",
-					"condition": "Cloudy",
-					"iconClass": "wi-cloudy",
-					"high": 61,
-					"low": 46,
-					"precipProbability": 12
+					"condition": "Partly Cloudy",
+					"iconClass": "wi-day-cloudy",
+					"high": 14,
+					"low": 3,
+					"precipProbability": 83
 				}
 			]
 		},
@@ -2696,7 +2700,7 @@
 				"type": "string",
 				"label": "Units",
 				"description": "Use metric or imperial.",
-				"default": "imperial"
+				"default": "metric"
 			},
 			"hours": {
 				"type": "number",

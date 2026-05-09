@@ -101,7 +101,7 @@ const DEFAULT_LON = -71.0589;
 const DEFAULT_LOCATION = "Boston, United States";
 
 function normalizeUnits(value?: string) {
-	return String(value || "imperial")
+	return String(value || "metric")
 		.trim()
 		.toLowerCase() === "metric"
 		? "metric"
@@ -216,7 +216,11 @@ function formatHourLabel(value: string, timeZone?: string) {
 	return new Intl.DateTimeFormat("en-US", {
 		timeZone,
 		hour: "numeric",
-	}).format(new Date(value));
+		hour12: true,
+	})
+		.format(new Date(value))
+		.replace(/\s/g, "")
+		.toLowerCase();
 }
 
 function formatWeekday(value: string, timeZone?: string) {
@@ -282,71 +286,105 @@ function buildFallback(
 	hours: number,
 	days: number,
 ): LpWeatherRecipeData {
-	const now = new Date().toISOString();
+	const nowDate = new Date();
+	const sunriseDate = new Date(nowDate);
+	sunriseDate.setHours(6, 15, 0, 0);
+	const sunsetDate = new Date(nowDate);
+	sunsetDate.setHours(19, 15, 0, 0);
+	const now = nowDate.toISOString();
 	return {
 		title: "LP Weather",
 		locationLabel: DEFAULT_LOCATION,
 		temperatureUnit: units === "imperial" ? "F" : "C",
 		windUnit: units === "imperial" ? "mph" : "km/h",
-		currentTemp: units === "imperial" ? 48 : 9,
-		feelsLike: units === "imperial" ? 38 : 3,
-		condition: "Overcast",
-		iconClass: "wi-cloudy",
-		windSpeed: units === "imperial" ? 17 : 27,
-		windDirection: "W",
-		humidity: 35,
+		currentTemp: units === "imperial" ? 45 : 7,
+		feelsLike: units === "imperial" ? 35 : 2,
+		condition: "Clear",
+		iconClass: "wi-day-sunny",
+		windSpeed: units === "imperial" ? 16 : 26,
+		windDirection: "NE",
+		humidity: 58,
 		sunrise: "6:15 AM",
 		sunset: "7:15 PM",
-		sunriseIso: now,
-		sunsetIso: now,
+		sunriseIso: sunriseDate.toISOString(),
+		sunsetIso: sunsetDate.toISOString(),
 		currentTimeIso: now,
 		updatedAt: formatUpdatedAt(new Date()),
 		note: "Live forecast failed, so this preview is showing sample weather.",
-		hourly: Array.from({ length: Math.min(hours, 8) }, (_, index) => ({
-			label: index === 0 ? "Now" : `${index * 4 + 1} PM`,
-			timeIso: now,
-			temperature: (units === "imperial" ? 47 : 8) + Math.max(-4, 2 - index),
-			iconClass:
-				index < 2
-					? "wi-cloudy"
-					: index < 4
-						? "wi-day-cloudy"
-						: "wi-night-clear",
-			precipProbability: [0, 0, 24, 18, 10, 4, 0, 0][index] || 0,
-		})),
-		days: Array.from({ length: days }, (_, index) => ({
-			label:
-				index === 0
-					? "Today"
+		hourly: Array.from({ length: Math.min(hours, 25) }, (_, index) => {
+			const time = new Date(nowDate.getTime() + index * 60 * 60 * 1000);
+			const tempSeries =
+				units === "imperial"
+					? [
+							45, 45, 44, 44, 43, 42, 38, 39, 38, 43, 48, 53, 57, 57, 59, 59,
+							53, 53, 53, 52, 51, 51, 50, 49, 48,
+						]
 					: [
-							"Tuesday",
-							"Wednesday",
-							"Thursday",
-							"Friday",
-							"Saturday",
-							"Sunday",
-						][index - 1] || "Next",
-			dateLabel:
-				["Mar 3", "Mar 4", "Mar 5", "Mar 6", "Mar 7", "Mar 8"][index] ||
-				"Mar 9",
-			condition:
-				["Overcast", "Snow", "Cloudy", "Clear", "Cloudy", "Cloudy"][index] ||
-				"Mixed",
-			iconClass:
-				[
-					"wi-cloudy",
-					"wi-snow",
-					"wi-cloudy",
-					"wi-day-sunny",
-					"wi-cloudy",
-					"wi-cloudy",
-				][index] || "wi-cloudy",
-			high: (units === "imperial" ? 48 : 9) + index * 2,
-			low: (units === "imperial" ? 35 : 2) + index,
-			precipProbability: [0, 24, 0, 0, 0, 12][index] || 0,
-			sunrise: now,
-			sunset: now,
-		})),
+							7, 7, 7, 7, 6, 6, 3, 4, 3, 6, 9, 12, 14, 14, 15, 15, 12, 12, 12,
+							11, 11, 11, 10, 9, 9,
+						];
+			const precipSeries = [
+				0, 0, 0, 0, 0, 0, 12, 18, 12, 8, 22, 18, 30, 16, 34, 28, 10, 8, 6, 12,
+				14, 12, 16, 14, 12,
+			];
+			return {
+				label: index === 0 ? "Now" : formatHourLabel(time.toISOString()),
+				timeIso: time.toISOString(),
+				temperature: tempSeries[index] ?? tempSeries[tempSeries.length - 1],
+				iconClass:
+					index < 6
+						? "wi-day-sunny"
+						: index < 10
+							? "wi-rain"
+							: index < 16
+								? "wi-night-partly-cloudy"
+								: "wi-day-cloudy",
+				precipProbability:
+					precipSeries[index] ?? precipSeries[precipSeries.length - 1],
+			};
+		}),
+		days: Array.from({ length: days }, (_, index) => {
+			const dayDate = new Date(nowDate.getTime() + index * 24 * 60 * 60 * 1000);
+			return {
+				label:
+					index === 0
+						? "Today"
+						: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(
+								dayDate,
+							),
+				dateLabel: new Intl.DateTimeFormat("en-US", {
+					month: "short",
+					day: "numeric",
+				}).format(dayDate),
+				condition:
+					["Clear", "Rain", "Rain", "Rain", "Snow", "Partly Cloudy"][index] ||
+					"Mixed",
+				iconClass:
+					[
+						"wi-rain",
+						"wi-rain",
+						"wi-rain",
+						"wi-rain",
+						"wi-snow",
+						"wi-day-cloudy",
+					][index] || "wi-cloudy",
+				high:
+					(units === "imperial"
+						? [51, 60, 41, 44, 37, 57]
+						: [11, 16, 5, 7, 3, 14])[index] || 0,
+				low:
+					(units === "imperial"
+						? [38, 33, 30, 32, 31, 38]
+						: [3, 1, -1, 0, -1, 3])[index] || 0,
+				precipProbability: [86, 29, 21, 21, 29, 83][index] || 0,
+				sunrise: new Date(
+					sunriseDate.getTime() + index * 24 * 60 * 60 * 1000,
+				).toISOString(),
+				sunset: new Date(
+					sunsetDate.getTime() + index * 24 * 60 * 60 * 1000,
+				).toISOString(),
+			};
+		}),
 	};
 }
 
@@ -369,20 +407,38 @@ export default async function getData(
 		const currentTime = forecast.current?.time;
 		const sunriseToday = forecast.daily?.sunrise?.[0];
 		const sunsetToday = forecast.daily?.sunset?.[0];
-		const hourly = (forecast.hourly?.time || [])
-			.slice(0, hours)
-			.map((time, index) => ({
-				label: index === 0 ? "Now" : formatHourLabel(time, timeZone),
-				timeIso: time,
-				temperature: Math.round(forecast.hourly?.temperature_2m?.[index] || 0),
-				iconClass: iconClassForWeather(
-					forecast.hourly?.weather_code?.[index],
-					isDaytime(time, sunriseToday, sunsetToday),
+		const hourlyTimes = forecast.hourly?.time || [];
+		const startIndex = currentTime
+			? Math.max(
+					0,
+					hourlyTimes.findIndex(
+						(time) => new Date(time) >= new Date(currentTime),
+					),
+				)
+			: 0;
+		const slicedTimes = hourlyTimes.slice(startIndex, startIndex + hours);
+		const hourly = slicedTimes.map((time, index) => ({
+			label: index === 0 ? "Now" : formatHourLabel(time, timeZone),
+			timeIso: time,
+			temperature: Math.round(
+				forecast.hourly?.temperature_2m?.[startIndex + index] || 0,
+			),
+			iconClass: iconClassForWeather(
+				forecast.hourly?.weather_code?.[startIndex + index],
+				isDaytime(
+					time,
+					forecast.daily?.sunrise?.find(
+						(sunrise) => sunrise?.slice(0, 10) === time.slice(0, 10),
+					),
+					forecast.daily?.sunset?.find(
+						(sunset) => sunset?.slice(0, 10) === time.slice(0, 10),
+					),
 				),
-				precipProbability: Math.round(
-					forecast.hourly?.precipitation_probability?.[index] || 0,
-				),
-			}));
+			),
+			precipProbability: Math.round(
+				forecast.hourly?.precipitation_probability?.[startIndex + index] || 0,
+			),
+		}));
 
 		const forecastDays =
 			forecast.daily?.time?.slice(0, days).map((date, index) => {

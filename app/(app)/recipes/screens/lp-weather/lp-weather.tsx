@@ -47,7 +47,22 @@ function WeatherIcon({ iconClass, size }: { iconClass: string; size: number }) {
 	);
 }
 
-function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
+function formatSunEventLabel(value?: string) {
+	if (!value) return "";
+	return new Intl.DateTimeFormat("en-US", {
+		hour: "numeric",
+		minute: "2-digit",
+		hour12: true,
+	})
+		.format(new Date(value))
+		.toLowerCase()
+		.replace(" ", "");
+}
+
+function HourlyChart({
+	hourly,
+	days,
+}: Pick<LpWeatherRecipeData, "hourly" | "days">) {
 	const points = hourly.slice(0, 25);
 	if (points.length === 0) {
 		return <div />;
@@ -71,6 +86,73 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 		y: top + ((max - point.temperature) / spread) * chartHeight,
 		showLabel: index % 4 === 0 || index === points.length - 1,
 	}));
+	const sunTransitions = days
+		.slice(0, 2)
+		.flatMap((day) => [
+			day.sunrise
+				? {
+						iso: day.sunrise,
+						label: formatSunEventLabel(day.sunrise),
+						kind: "sunrise" as const,
+					}
+				: null,
+			day.sunset
+				? {
+						iso: day.sunset,
+						label: formatSunEventLabel(day.sunset),
+						kind: "sunset" as const,
+					}
+				: null,
+		])
+		.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+		.map((entry) => {
+			const pointIndex = points.findIndex(
+				(point, index) =>
+					index < points.length - 1 &&
+					new Date(point.timeIso) <= new Date(entry.iso) &&
+					new Date(points[index + 1].timeIso) >= new Date(entry.iso),
+			);
+			if (pointIndex === -1) return null;
+			const start = new Date(points[pointIndex].timeIso).getTime();
+			const end = new Date(
+				points[Math.min(pointIndex + 1, points.length - 1)].timeIso,
+			).getTime();
+			const ratio =
+				end === start
+					? 0
+					: (new Date(entry.iso).getTime() - start) / (end - start);
+			const x =
+				mapped[pointIndex].x +
+				Math.max(0, Math.min(1, ratio)) *
+					(mapped[Math.min(pointIndex + 1, mapped.length - 1)].x -
+						mapped[pointIndex].x);
+			return { ...entry, x };
+		})
+		.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+	const nightBands = (() => {
+		const bands: Array<{ from: number; to: number }> = [];
+		const endTime = new Date(points[points.length - 1].timeIso).getTime();
+		const sunrises = sunTransitions
+			.filter((entry) => entry.kind === "sunrise")
+			.map((entry) => ({ ...entry, time: new Date(entry.iso).getTime() }))
+			.sort((a, b) => a.time - b.time);
+		const sunsets = sunTransitions
+			.filter((entry) => entry.kind === "sunset")
+			.map((entry) => ({ ...entry, time: new Date(entry.iso).getTime() }))
+			.sort((a, b) => a.time - b.time);
+		if (
+			sunsets[0] &&
+			sunrises[0] &&
+			sunsets[0].time < endTime &&
+			sunrises[0].time < sunsets[0].time
+		) {
+			bands.push({ from: left, to: sunsets[0].x });
+		}
+		if (sunsets[0] && sunrises[0] && sunsets[0].time < sunrises[0].time) {
+			bands.push({ from: sunsets[0].x, to: sunrises[0].x });
+		}
+		return bands.filter((band) => band.to - band.from > 4);
+	})();
 	const precipBaseY = height - bottom;
 	const precipAreaPoints = mapped
 		.map((point) => {
@@ -84,6 +166,28 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 		<div style={{ width: width, height: height, position: "relative" }}>
 			<svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
 				<title>Hourly weather chart</title>
+				<defs>
+					<pattern
+						id="lp-weather-night"
+						patternUnits="userSpaceOnUse"
+						width="6"
+						height="6"
+					>
+						<rect width="6" height="6" fill="#f5f2ec" />
+						<circle cx="1.25" cy="1.25" r="0.7" fill="#999" />
+						<circle cx="4.25" cy="4.25" r="0.7" fill="#999" />
+					</pattern>
+				</defs>
+				{nightBands.map((band) => (
+					<rect
+						key={`night-${band.from}`}
+						x={band.from}
+						y={top}
+						width={band.to - band.from}
+						height={chartHeight}
+						fill="url(#lp-weather-night)"
+					/>
+				))}
 				{[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
 					<line
 						key={ratio}
@@ -92,6 +196,18 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 						x2={width - right}
 						y2={top + ratio * chartHeight}
 						stroke="#777"
+						strokeDasharray="2 4"
+						strokeWidth="1"
+					/>
+				))}
+				{sunTransitions.map((entry) => (
+					<line
+						key={`${entry.kind}-${entry.iso}`}
+						x1={entry.x}
+						y1={top}
+						x2={entry.x}
+						y2={precipBaseY}
+						stroke="#999"
 						strokeDasharray="2 4"
 						strokeWidth="1"
 					/>
@@ -119,37 +235,6 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 						fill="#111"
 					/>
 				))}
-				{mapped
-					.filter((point) => point.showLabel)
-					.map((point) => (
-						<text
-							key={`temp-${point.label}`}
-							x={point.x}
-							y={point.y - 26}
-							textAnchor="middle"
-							fontFamily="geneva9"
-							fontSize="16"
-							fontWeight="700"
-							fill="#111"
-						>
-							{point.temperature}°
-						</text>
-					))}
-				{mapped
-					.filter((point) => point.showLabel)
-					.map((point) => (
-						<text
-							key={`label-${point.label}`}
-							x={point.x}
-							y={height - 8}
-							textAnchor="middle"
-							fontFamily="geneva9"
-							fontSize="14"
-							fill="#111"
-						>
-							{point.label}
-						</text>
-					))}
 			</svg>
 
 			{mapped
@@ -160,7 +245,7 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 						style={{
 							position: "absolute",
 							left: point.x - 12,
-							top: point.y - 22,
+							top: point.y - 20,
 							width: 24,
 							height: 24,
 						}}
@@ -168,6 +253,66 @@ function HourlyChart({ hourly }: Pick<LpWeatherRecipeData, "hourly">) {
 						<WeatherIcon iconClass={point.iconClass} size={24} />
 					</div>
 				))}
+			{mapped
+				.filter((point) => point.showLabel)
+				.map((point) => (
+					<div
+						key={`temp-overlay-${point.label}`}
+						style={{
+							position: "absolute",
+							left: point.x - 18,
+							top: point.y - 42,
+							width: 36,
+							height: 18,
+							backgroundColor: "#f5f2ec",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+						}}
+					>
+						<MetaText size={13} weight={700} align="center">
+							{point.temperature}°
+						</MetaText>
+					</div>
+				))}
+			{mapped
+				.filter((point) => point.showLabel)
+				.map((point) => (
+					<div
+						key={`time-overlay-${point.label}`}
+						style={{
+							position: "absolute",
+							left: point.x - 22,
+							top: height - 20,
+							width: 44,
+							display: "flex",
+							justifyContent: "center",
+						}}
+					>
+						<MetaText size={12} align="center">
+							{point.label}
+						</MetaText>
+					</div>
+				))}
+			{sunTransitions.map((entry) => (
+				<div
+					key={`sun-overlay-${entry.iso}`}
+					style={{
+						position: "absolute",
+						left: entry.x + 2,
+						top: 0,
+						display: "flex",
+						alignItems: "center",
+						gap: 4,
+						backgroundColor: "#f5f2ec",
+						paddingLeft: 2,
+						paddingRight: 2,
+					}}
+				>
+					<MetaText size={12}>{entry.kind === "sunrise" ? "↑" : "↓"}</MetaText>
+					<MetaText size={12}>{entry.label}</MetaText>
+				</div>
+			))}
 		</div>
 	);
 }
@@ -281,6 +426,8 @@ function DailyBars({
 									border: "1px solid #111",
 									position: "relative",
 									minWidth: 0,
+									borderRadius: 999,
+									overflow: "hidden",
 								}}
 							>
 								<div
@@ -290,7 +437,7 @@ function DailyBars({
 										width: `${width}%`,
 										top: 0,
 										bottom: 0,
-										backgroundColor: "#d0d0d0",
+										backgroundColor: "#111",
 									}}
 								/>
 							</div>
@@ -311,6 +458,7 @@ export default function LpWeather({
 	feelsLike,
 	condition,
 	iconClass,
+	temperatureUnit,
 	windSpeed,
 	windDirection,
 	windUnit,
@@ -366,7 +514,7 @@ export default function LpWeather({
 									className="font-blockkie"
 									style={{ fontSize: 82, lineHeight: 0.9 }}
 								>
-									{currentTemp}°
+									{currentTemp}°{temperatureUnit}
 								</div>
 								<div
 									style={{
@@ -387,7 +535,7 @@ export default function LpWeather({
 						</div>
 
 						<div style={{ paddingBottom: 4 }}>
-							<HourlyChart hourly={hourly} />
+							<HourlyChart hourly={hourly} days={days} />
 						</div>
 					</div>
 
