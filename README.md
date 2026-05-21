@@ -137,6 +137,14 @@ If a recipe looks good in the browser but bad on-device, the problem is usually 
 ## Recipes
 Visit `/recipes` to browse screens, configure params, and compare preview modes.
 
+### Recipe baseline
+- `Pixel Perfect` is the baseline design documentation for all newly added recipes in this fork.
+- Any existing recipe that is substantially adjusted should also be refactored to follow the same layout discipline and pixel-aligned text approach used by the `Pixel Perfect` documentation.
+- In this repo that means:
+  - explicit widths and heights for dense e-ink layouts
+  - bitmap-safe typography and spacing
+  - TRMNL Pixel Perfect-inspired text containers for titles, labels, values, and key agenda content
+
 ### Core recipes
 - `simple-text` - base text recipe with crisp bitmap typography
 - `album` - photo plus clock
@@ -151,6 +159,8 @@ Visit `/recipes` to browse screens, configure params, and compare preview modes.
 - `calendar-apple`
 - `calendar-google`
 - `calendar-outlook`
+- `calendar-today`
+- `pp-calendar-today`
 
 Common calendar params:
 - `icsUrl`
@@ -277,6 +287,7 @@ For this fork, recipe work should be validated against the renderer path, not ju
   - `app/api/setup/`
   - `app/api/log/`
   - `utils/pre-satori.tsx`
+  - `TRMNL Pixel Perfect Documentation`
 
 ## Notes on divergence from upstream
 Compared with the upstream `usetrmnl/byos_next` project, this fork currently differs in these major areas:

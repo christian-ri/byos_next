@@ -424,6 +424,179 @@
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
+	"pp-calendar-today": {
+		"title": "PP Calendar Today",
+		"published": true,
+		"createdAt": "2026-05-21T00:00:00Z",
+		"updatedAt": "2026-05-21T00:00:00Z",
+		"description": "Pixel-perfect day view based on Calendar Today and aligned to the TRMNL Pixel Perfect text rules.",
+		"componentPath": "./screens/pp-calendar-today",
+		"hasDataFetch": true,
+		"props": {
+			"providerLabel": "Calendar",
+			"title": "PP Calendar Today",
+			"subtitle": "Christian's Kalender",
+			"timeZone": "America/New_York",
+			"updatedAt": "May 21, 02:24 PM",
+			"note": "Preview - your device will show actual data once an ICS feed is configured.",
+			"eventLayout": "default",
+			"includeDescription": true,
+			"includeEventTime": true,
+			"firstDay": 1,
+			"defaultDays": [
+				{
+					"key": "2026-05-21",
+					"isoDate": "2026-05-21",
+					"label": "May 21",
+					"shortLabel": "Thu",
+					"dayNumber": "21",
+					"isToday": true,
+					"isCurrentMonth": true,
+					"eventCount": 5,
+					"events": [
+						{
+							"id": "today-1",
+							"summary": "Lunchbreak",
+							"description": "",
+							"location": "",
+							"allDay": false,
+							"multiDay": false,
+							"startsToday": true,
+							"endsToday": true,
+							"continuesBefore": false,
+							"continuesAfter": false,
+							"timeLabel": "13:00 - 14:00",
+							"startDateTime": "2026-05-21T13:00:00-04:00",
+							"endDateTime": "2026-05-21T14:00:00-04:00",
+							"startMinute": 780,
+							"endMinute": 840
+						},
+						{
+							"id": "today-2",
+							"summary": "Customer Call",
+							"description": "",
+							"location": "",
+							"allDay": false,
+							"multiDay": false,
+							"startsToday": true,
+							"endsToday": true,
+							"continuesBefore": false,
+							"continuesAfter": false,
+							"timeLabel": "15:00 - 16:30",
+							"startDateTime": "2026-05-21T15:00:00-04:00",
+							"endDateTime": "2026-05-21T16:30:00-04:00",
+							"startMinute": 900,
+							"endMinute": 990
+						},
+						{
+							"id": "today-3",
+							"summary": "Spaziergang",
+							"description": "",
+							"location": "",
+							"allDay": false,
+							"multiDay": false,
+							"startsToday": true,
+							"endsToday": true,
+							"continuesBefore": false,
+							"continuesAfter": false,
+							"timeLabel": "17:00 - 18:00",
+							"startDateTime": "2026-05-21T17:00:00-04:00",
+							"endDateTime": "2026-05-21T18:00:00-04:00",
+							"startMinute": 1020,
+							"endMinute": 1080
+						},
+						{
+							"id": "today-4",
+							"summary": "Feierabend",
+							"description": "",
+							"location": "",
+							"allDay": false,
+							"multiDay": false,
+							"startsToday": true,
+							"endsToday": true,
+							"continuesBefore": false,
+							"continuesAfter": false,
+							"timeLabel": "19:30 - 20:30",
+							"startDateTime": "2026-05-21T19:30:00-04:00",
+							"endDateTime": "2026-05-21T20:30:00-04:00",
+							"startMinute": 1170,
+							"endMinute": 1230
+						}
+					]
+				}
+			],
+			"weekDays": [],
+			"monthWeeks": [],
+			"monthLabel": "May 2026"
+		},
+		"params": {
+			"icsUrl": {
+				"type": "multiline",
+				"label": "ICS URL(s)",
+				"description": "Published ICS URL. Multiple feeds may be entered on separate lines. Replace webcal:// with https://.",
+				"default": "",
+				"placeholder": "https://example.com/calendar.ics"
+			},
+			"calendarName": {
+				"type": "string",
+				"label": "Calendar Name",
+				"description": "Name shown in the header.",
+				"default": "Personal Calendar"
+			},
+			"headers": {
+				"type": "multiline",
+				"label": "Headers",
+				"description": "Optional request headers in key=value or Header: Value format, one per line.",
+				"default": ""
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Time Zone",
+				"description": "IANA time zone used for display.",
+				"default": "America/New_York"
+			},
+			"timeFormat": {
+				"type": "string",
+				"label": "Time Format",
+				"description": "Use 12h or 24h.",
+				"default": "12h"
+			},
+			"includeDescription": {
+				"type": "string",
+				"label": "Include Description",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"includeEventTime": {
+				"type": "string",
+				"label": "Include Event Time",
+				"description": "Use yes or no.",
+				"default": "yes"
+			},
+			"ignoredPhrases": {
+				"type": "multiline",
+				"label": "Ignored Phrases",
+				"description": "Events whose title or description includes these phrases will be ignored. One phrase per line.",
+				"default": ""
+			},
+			"maxEventsPerDay": {
+				"type": "number",
+				"label": "Max Events Per Day",
+				"description": "Caps visible events shown for today.",
+				"default": 6
+			}
+		},
+		"tags": ["calendar", "ics", "today", "agenda", "pixel-perfect"],
+		"author": {
+			"name": "TRMNL",
+			"github": "usetrmnl"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
 	"iss-position": {
 		"title": "ISS Position",
 		"published": true,
