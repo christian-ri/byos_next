@@ -962,6 +962,8 @@ function buildDay(
 	const dayStart = zonedStartOfDayUtc(dayDate, options.timeZone);
 	const dayEnd = zonedEndOfDayUtc(dayDate, options.timeZone);
 	const now = zonedCalendarDate(new Date(), options.timeZone);
+	const isToday =
+		dayKey(dayDate, options.timeZone) === dayKey(now, options.timeZone);
 
 	const matchingEvents = events
 		.filter((event) => {
@@ -970,7 +972,14 @@ function buildDay(
 		})
 		.sort((a, b) => a.start.getTime() - b.start.getTime());
 
-	const dayEvents = matchingEvents
+	const visibleSource =
+		isToday && matchingEvents.length > options.maxEventsPerDay
+			? matchingEvents.filter(
+					(event) => eventEndInclusive(event).getTime() >= Date.now(),
+				)
+			: matchingEvents;
+
+	const dayEvents = visibleSource
 		.slice(0, options.maxEventsPerDay)
 		.map((event) => buildEventForDay(event, dayDate, options));
 
@@ -980,8 +989,7 @@ function buildDay(
 		label: shortDateLabel(dayDate, options.timeZone),
 		shortLabel: weekdayShort(dayDate, options.timeZone),
 		dayNumber: dayNumber(dayDate, options.timeZone),
-		isToday:
-			dayKey(dayDate, options.timeZone) === dayKey(now, options.timeZone),
+		isToday,
 		isCurrentMonth:
 			options.currentMonth === undefined ||
 			dayDate.getMonth() === options.currentMonth,
