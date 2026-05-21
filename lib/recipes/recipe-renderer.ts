@@ -7,8 +7,15 @@ import NotFoundScreen from "@/app/(app)/recipes/screens/not-found/not-found";
 import screens from "@/app/(app)/recipes/screens.json";
 import { getScreenParams } from "@/app/actions/screens-params";
 import { getTakumiFonts } from "@/lib/fonts";
+import { getLegacyRendererEnabled, getTrmnlRenderer } from "@/lib/renderer/env";
 import { DitheringMethod, renderBmp } from "@/utils/render-bmp";
 
+/**
+ * @deprecated Legacy React-to-image renderer compatibility layer.
+ *
+ * New TRMNL recipes should use the Chromium HTML/CSS renderer path.
+ * This file is retained for existing Satori/Takumi screens during migration.
+ */
 // Logging utility shared between recipe renderers
 export const logger = {
 	info: (message: string) => {
@@ -95,6 +102,11 @@ export const addDimensionsToProps = (
 
 // Default renderer for all screens
 export const getRendererType = (): "takumi" | "satori" => {
+	const configured = getTrmnlRenderer();
+	if (configured === "satori" && getLegacyRendererEnabled()) {
+		return "satori";
+	}
+
 	return "takumi";
 };
 

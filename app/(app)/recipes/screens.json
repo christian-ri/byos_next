@@ -21,6 +21,27 @@
 		"version": "0.1.0",
 		"category": "display-components"
 	},
+	"chromium-simple-text": {
+		"title": "Chromium Simple Text",
+		"published": true,
+		"createdAt": "2026-05-21T00:00:00Z",
+		"updatedAt": "2026-05-21T00:00:00Z",
+		"description": "Proof-of-concept HTML/CSS recipe rendered through Chromium at exactly 800x480.",
+		"componentPath": "./screens/chromium-simple-text",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {},
+		"tags": ["chromium", "html", "pixel-perfect", "experimental"],
+		"author": {
+			"name": "BYOS",
+			"github": "christian-ri"
+		},
+		"renderSettings": {
+			"renderer": "chromium"
+		},
+		"version": "0.1.0",
+		"category": "experimental"
+	},
 	"album": {
 		"title": "Album",
 		"published": true,
@@ -137,7 +158,8 @@
 			"github": "ghcpuman902"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "display-components"
@@ -161,7 +183,8 @@
 			"github": "ghcpuman902"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "display-components"
@@ -193,7 +216,8 @@
 			"github": "ghcpuman902"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.2.0",
 		"category": "display-components"
@@ -225,7 +249,8 @@
 			"github": ""
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "display-components"
@@ -246,7 +271,8 @@
 			"github": ""
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "display-components"
@@ -419,7 +445,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -592,7 +619,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -649,7 +677,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -716,7 +745,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -801,7 +831,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -1348,7 +1379,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -1891,7 +1923,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2434,7 +2467,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"

@@ -118,7 +118,11 @@ function CalendarGlyph({ size = 26 }: { size?: number }) {
 				stroke="#111"
 				strokeWidth="1.8"
 			/>
-			<path d="M7 2.8v4.4M17 2.8v4.4M3 9.4h18" stroke="#111" strokeWidth="1.8" />
+			<path
+				d="M7 2.8v4.4M17 2.8v4.4M3 9.4h18"
+				stroke="#111"
+				strokeWidth="1.8"
+			/>
 			<circle cx="8" cy="13" r="1.1" fill="#111" />
 			<circle cx="12" cy="13" r="1.1" fill="#111" />
 			<circle cx="16" cy="13" r="1.1" fill="#111" />
@@ -214,16 +218,16 @@ function TimelineRow({
 				/>
 			</div>
 			<div
-					style={{
-						flex: 1,
-						minWidth: 0,
-						padding: "8px 12px",
-						boxSizing: "border-box",
-						display: "flex",
-						alignItems: "center",
-						gap: 10,
-					}}
-				>
+				style={{
+					flex: 1,
+					minWidth: 0,
+					padding: "8px 12px",
+					boxSizing: "border-box",
+					display: "flex",
+					alignItems: "center",
+					gap: 10,
+				}}
+			>
 				{isCurrent ? <CurrentBadge label="Aktuell" /> : null}
 				<ReadableText
 					size={18}
@@ -262,7 +266,9 @@ export default function CalendarToday(
 	const allEvents = today?.events || [];
 	const maxTimelineRows = height <= 480 ? 4 : 5;
 	const timelineEvents = allEvents.slice(0, maxTimelineRows);
-	const currentEvent = timelineEvents.find((event) => isEventActive(event, now));
+	const currentEvent = timelineEvents.find((event) =>
+		isEventActive(event, now),
+	);
 	const nextEvent = timelineEvents.find((event) => isEventUpcoming(event, now));
 	const featuredEvent = currentEvent || nextEvent;
 	const featuredLabel = currentEvent
@@ -270,7 +276,10 @@ export default function CalendarToday(
 		: nextEvent
 			? "Als Nächstes"
 			: "Frei";
-	const hiddenCount = Math.max(0, (today?.eventCount || 0) - timelineEvents.length);
+	const hiddenCount = Math.max(
+		0,
+		(today?.eventCount || 0) - timelineEvents.length,
+	);
 	const emptyStateLabel =
 		(today?.eventCount || 0) > 0
 			? "Alle verbleibenden Termine für heute sind vorbei."
@@ -340,68 +349,68 @@ export default function CalendarToday(
 							boxSizing: "border-box",
 						}}
 					>
-					<div
-						style={{
-							width: 210,
-							display: "flex",
-							flexDirection: "column",
-							justifyContent: "space-between",
-							paddingRight: 18,
-							boxSizing: "border-box",
-						}}
-					>
-						<CurrentBadge label="Heute" />
-						<SafeTitle size={34} lines={2}>
-							{formatDayTitle(today)}
-						</SafeTitle>
-						<ReadableText size={22} weight={500}>
-							{formatDayDate(today)}
-						</ReadableText>
-					</div>
-					<div style={{ width: 2, backgroundColor: "#111", flexShrink: 0 }} />
+						<div
+							style={{
+								width: 210,
+								display: "flex",
+								flexDirection: "column",
+								justifyContent: "space-between",
+								paddingRight: 18,
+								boxSizing: "border-box",
+							}}
+						>
+							<CurrentBadge label="Heute" />
+							<SafeTitle size={34} lines={2}>
+								{formatDayTitle(today)}
+							</SafeTitle>
+							<ReadableText size={22} weight={500}>
+								{formatDayDate(today)}
+							</ReadableText>
+						</div>
+						<div style={{ width: 2, backgroundColor: "#111", flexShrink: 0 }} />
 
-					<div
-						style={{
-							flex: 1,
-							minWidth: 0,
-							display: "flex",
-							flexDirection: "column",
-							justifyContent: "center",
-							gap: 8,
-						}}
-					>
-						<MetaText uppercase={true}>{featuredLabel}</MetaText>
-						<SafeTitle size={30} lines={1}>
-							{featuredEvent?.summary || "Keine anstehenden Termine"}
-						</SafeTitle>
-						<ReadableText size={20} weight={500}>
-							{featuredEvent
-								? eventTimeLabel(featuredEvent, includeEventTime)
-								: "Der Rest des Tages ist frei"}
-						</ReadableText>
-					</div>
+						<div
+							style={{
+								flex: 1,
+								minWidth: 0,
+								display: "flex",
+								flexDirection: "column",
+								justifyContent: "center",
+								gap: 8,
+							}}
+						>
+							<MetaText uppercase={true}>{featuredLabel}</MetaText>
+							<SafeTitle size={30} lines={1}>
+								{featuredEvent?.summary || "Keine anstehenden Termine"}
+							</SafeTitle>
+							<ReadableText size={20} weight={500}>
+								{featuredEvent
+									? eventTimeLabel(featuredEvent, includeEventTime)
+									: "Der Rest des Tages ist frei"}
+							</ReadableText>
+						</div>
 
-					<div
-						style={{
-							width: 142,
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							justifyContent: "center",
-							gap: 6,
-							paddingLeft: 18,
-							boxSizing: "border-box",
-						}}
-					>
-						<CalendarGlyph size={32} />
-						<ReadableText size={32} weight={700} style={{ lineHeight: 1 }}>
-							{String(today?.eventCount || 0)}
-						</ReadableText>
-						<ReadableText size={18} weight={500} align="center">
-							{eventCountLabel(today?.eventCount || 0)}
-						</ReadableText>
+						<div
+							style={{
+								width: 142,
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+								justifyContent: "center",
+								gap: 6,
+								paddingLeft: 18,
+								boxSizing: "border-box",
+							}}
+						>
+							<CalendarGlyph size={32} />
+							<ReadableText size={32} weight={700} style={{ lineHeight: 1 }}>
+								{String(today?.eventCount || 0)}
+							</ReadableText>
+							<ReadableText size={18} weight={500} align="center">
+								{eventCountLabel(today?.eventCount || 0)}
+							</ReadableText>
+						</div>
 					</div>
-				</div>
 				</div>
 
 				<div
@@ -446,7 +455,9 @@ export default function CalendarToday(
 								</MetaText>
 							) : null}
 						</div>
-						<div style={{ height: 2, backgroundColor: "#111", flexShrink: 0 }} />
+						<div
+							style={{ height: 2, backgroundColor: "#111", flexShrink: 0 }}
+						/>
 
 						<div
 							style={{
@@ -483,7 +494,6 @@ export default function CalendarToday(
 						</div>
 					</div>
 				</div>
-
 			</div>
 		</PreSatori>
 	);

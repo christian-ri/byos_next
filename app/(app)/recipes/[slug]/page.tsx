@@ -30,6 +30,23 @@ import {
 	renderRecipeOutputs,
 } from "@/lib/recipes/recipe-renderer";
 
+const getChromiumRenderHref = (slug: string) => {
+	return `/api/render/${slug}`;
+};
+
+const getChromiumBitmapHref = (
+	slug: string,
+	imageWidth: number,
+	imageHeight: number,
+) => {
+	const params = new URLSearchParams({
+		width: String(imageWidth),
+		height: String(imageHeight),
+		grayscale: "2",
+	});
+	return `/api/bitmap/${slug}?${params.toString()}`;
+};
+
 export async function generateMetadata() {
 	// This empty function enables streaming for this route
 	return {};
@@ -131,6 +148,7 @@ const RenderComponent = ({
 	// Now we have valid config and component
 	const config = configResult;
 	const Component = componentResult;
+	const isChromiumRecipe = config.renderSettings?.renderer === "chromium";
 
 	const propsResult = use(Promise.resolve(fetchRecipeProps(slug, config)));
 	const propsWithDimensions = addDimensionsToProps(
@@ -156,6 +174,43 @@ const RenderComponent = ({
 				<Component {...propsWithDimensions} />
 			</div>
 		);
+	}
+
+	if (isChromiumRecipe) {
+		const chromiumPngHref = getChromiumRenderHref(slug);
+		const chromiumBitmapHref = getChromiumBitmapHref(
+			slug,
+			imageWidth,
+			imageHeight,
+		);
+
+		if (format === "bitmap") {
+			return (
+				<Image
+					width={imageWidth}
+					height={imageHeight}
+					src={chromiumBitmapHref}
+					unoptimized
+					style={{ imageRendering: "pixelated" }}
+					alt={`${title} Chromium BMP render`}
+					className="w-full object-cover"
+				/>
+			);
+		}
+
+		if (format === "png") {
+			return (
+				<Image
+					width={imageWidth}
+					height={imageHeight}
+					src={chromiumPngHref}
+					unoptimized
+					style={{ imageRendering: "pixelated" }}
+					alt={`${title} Chromium PNG render`}
+					className="w-full object-cover"
+				/>
+			);
+		}
 	}
 
 	// Get all rendered formats
@@ -241,6 +296,8 @@ export default async function RecipePage({
 		notFound();
 	}
 
+	const isChromiumRecipe = config.renderSettings?.renderer === "chromium";
+
 	const screenParams = config.params
 		? await getScreenParams(slug, config.params)
 		: {};
@@ -252,6 +309,12 @@ export default async function RecipePage({
 		bitmapParams.set("_owner", userId);
 	}
 	const bitmapHref = `/api/bitmap/${slug}.bmp?${bitmapParams.toString()}`;
+	const chromiumBitmapHref = getChromiumBitmapHref(
+		slug,
+		imageWidth,
+		imageHeight,
+	);
+	const chromiumRenderHref = getChromiumRenderHref(slug);
 
 	return (
 		<div className="@container">
@@ -266,6 +329,13 @@ export default async function RecipePage({
 								might cause issues with the layout, for example overflow hidden
 								is known to have issues with double size. change the setting in
 								screens.json.
+							</p>
+						)}
+						{isChromiumRecipe && (
+							<p className="text-sm text-gray-500 max-w-prose">
+								This screen uses the Chromium HTML/CSS renderer path. Browser
+								preview and image output should converge on the same `800x480`
+								HTML snapshot.
 							</p>
 						)}
 						<div className="mt-4">
@@ -362,26 +432,51 @@ export default async function RecipePage({
 					}
 					bmpLinkComponent={
 						<p className="leading-7 text-xs">
-							JSX → utils/pre-satori.tsx → {getRendererType()} PNG →
-							utils/render-bmp.ts →
-							<Link
-								href={bitmapHref}
-								className="hover:underline text-blue-600 dark:text-blue-400"
-							>
-								/api/bitmap/{slug}.bmp?{bitmapParams.toString()}
-							</Link>
+							{isChromiumRecipe ? (
+								<>
+									HTML/CSS → Chromium PNG → utils/render-bmp.ts →{" "}
+									<Link
+										href={chromiumBitmapHref}
+										className="hover:underline text-blue-600 dark:text-blue-400"
+									>
+										{chromiumBitmapHref}
+									</Link>
+								</>
+							) : (
+								<>
+									JSX → utils/pre-satori.tsx → {getRendererType()} PNG →
+									utils/render-bmp.ts →{" "}
+									<Link
+										href={bitmapHref}
+										className="hover:underline text-blue-600 dark:text-blue-400"
+									>
+										/api/bitmap/{slug}.bmp?{bitmapParams.toString()}
+									</Link>
+								</>
+							)}
 						</p>
 					}
 					pngLinkComponent={
 						<p className="leading-7 text-xs">
-							JSX → utils/pre-satori.tsx →{" "}
-							<span className="text-blue-600 dark:text-blue-400">
-								{getRendererType()} PNG
-							</span>{" "}
-							→ utils/render-bmp.ts →
-							<Link href={bitmapHref} className="hover:underline">
-								/api/bitmap/{slug}.bmp?{bitmapParams.toString()}
-							</Link>
+							{isChromiumRecipe ? (
+								<>
+									HTML/CSS → Chromium PNG →{" "}
+									<Link href={chromiumRenderHref} className="hover:underline">
+										{chromiumRenderHref}
+									</Link>
+								</>
+							) : (
+								<>
+									JSX → utils/pre-satori.tsx →{" "}
+									<span className="text-blue-600 dark:text-blue-400">
+										{getRendererType()} PNG
+									</span>{" "}
+									→ utils/render-bmp.ts →{" "}
+									<Link href={bitmapHref} className="hover:underline">
+										/api/bitmap/{slug}.bmp?{bitmapParams.toString()}
+									</Link>
+								</>
+							)}
 						</p>
 					}
 					reactLinkComponent={
