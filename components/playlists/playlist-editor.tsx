@@ -91,10 +91,12 @@ export function PlaylistEditor({
 		loadItems();
 
 		setScreenOptions(
-			Object.entries(screens).map(([id, config]) => ({
-				id,
-				name: config.title,
-			})),
+			Object.entries(screens)
+				.map(([id, config]) => ({
+					id,
+					name: config.title,
+				}))
+				.sort((a, b) => a.name.localeCompare(b.name)),
 		);
 	}, [playlist?.id, playlist?.items]);
 

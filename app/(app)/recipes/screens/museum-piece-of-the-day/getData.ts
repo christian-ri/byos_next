@@ -99,8 +99,11 @@ export default async function getData(
 	const showCulture = parseBoolean(params?.showCulture, true);
 	const preferPortrait = parseBoolean(params?.preferPortrait, false);
 	const seedStrategy =
-		String(params?.seedStrategy || "daily").trim() || "daily";
-	const dateKey = dateSeedKey("UTC");
+		String(params?.seedStrategy || "hourly").trim() || "hourly";
+	const dateKey =
+		seedStrategy === "daily"
+			? dateSeedKey("UTC")
+			: new Date().toISOString().slice(0, 13);
 
 	try {
 		const objectsUrl = Number.isFinite(departmentId)
@@ -156,7 +159,10 @@ export default async function getData(
 				showArtist,
 				showCulture,
 				preferPortrait,
-				note: "Daily selection from The Met Open Access collection.",
+				note:
+					seedStrategy === "daily"
+						? "Daily selection from The Met Open Access collection."
+						: "Rotating selection from The Met Open Access collection.",
 			};
 		}
 

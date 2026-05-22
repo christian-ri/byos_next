@@ -78,7 +78,7 @@ export async function getChromiumBrowser() {
 		const message =
 			error instanceof Error ? error.message : "Unknown Chromium launch error";
 		throw new Error(
-			`Failed to launch Chromium renderer. Verify puppeteer-core and @sparticuz/chromium are installed and compatible with the deployment runtime, or set CHROMIUM_EXECUTABLE_PATH for local development. ${message}`,
+			`Failed to launch Chromium renderer. Verify puppeteer-core and @sparticuz/chromium are installed and compatible with the deployment runtime, ensure the chromium bin payload is traced for deployment, or set CHROMIUM_EXECUTABLE_PATH for local development. ${message}`,
 		);
 	}
 }

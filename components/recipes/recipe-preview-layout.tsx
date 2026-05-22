@@ -12,10 +12,8 @@ type RecipePreviewLayoutProps = {
 	children?: React.ReactNode;
 	bmpComponent?: React.ReactNode;
 	pngComponent?: React.ReactNode;
-	reactComponent?: React.ReactNode;
 	bmpLinkComponent?: React.ReactNode;
 	pngLinkComponent?: React.ReactNode;
-	reactLinkComponent?: React.ReactNode;
 	defaultLayout?: "columns" | "rows";
 	defaultScale?: "full" | "half";
 	defaultRenderType?: "bmp" | "png";
@@ -26,10 +24,8 @@ const RecipePreviewLayout = ({
 	children,
 	bmpComponent,
 	pngComponent,
-	reactComponent,
 	bmpLinkComponent,
 	pngLinkComponent,
-	reactLinkComponent,
 	defaultLayout = "rows",
 	defaultScale = "full",
 	defaultRenderType = "bmp",
@@ -205,7 +201,7 @@ const RecipePreviewLayout = ({
 	// Determine what to render based on provided components or children
 	const renderContent = () => {
 		// If specific components are provided, use them
-		if (bmpComponent || pngComponent || reactComponent) {
+		if (bmpComponent || pngComponent) {
 			let imageComponent: React.ReactNode | undefined;
 			let linkComponent: React.ReactNode | undefined;
 
@@ -228,20 +224,6 @@ const RecipePreviewLayout = ({
 						</p>
 						{imageComponent}
 						{linkComponent && <div className="mt-1">{linkComponent}</div>}
-					</div>,
-				);
-			}
-
-			if (reactComponent) {
-				componentsToRender.push(
-					<div key="react" className="flex flex-col gap-0">
-						<p className="mb-1 text-xs font-medium text-muted-foreground">
-							Direct browser preview
-						</p>
-						{reactComponent}
-						{reactLinkComponent && (
-							<div className="mt-1">{reactLinkComponent}</div>
-						)}
 					</div>,
 				);
 			}

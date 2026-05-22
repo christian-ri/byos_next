@@ -16,7 +16,7 @@
 		},
 		"renderSettings": {
 			"doubleSizeForSharperText": true,
-			"renderer": "satori"
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "display-components"
@@ -67,7 +67,7 @@
 		},
 		"renderSettings": {
 			"doubleSizeForSharperText": true,
-			"renderer": "satori"
+			"renderer": "chromium"
 		},
 		"version": "0.2.0",
 		"category": "display-components"
@@ -137,7 +137,7 @@
 		},
 		"renderSettings": {
 			"doubleSizeForSharperText": true,
-			"renderer": "satori"
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -908,7 +908,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2529,7 +2530,8 @@
 			"github": "usetrmnl"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2591,7 +2593,8 @@
 			"github": "schrockwell"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2648,7 +2651,8 @@
 			"github": "alexvarney"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2686,7 +2690,8 @@
 			"github": "sriniketh"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2707,6 +2712,9 @@
 		"author": {
 			"name": "System",
 			"github": ""
+		},
+		"renderSettings": {
+			"renderer": "chromium"
 		},
 		"version": "1.0.0",
 		"category": "system-components"
@@ -2752,7 +2760,8 @@
 			"github": "ExcuseMi"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2928,7 +2937,8 @@
 			"github": "lucaspimentel"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2949,7 +2959,8 @@
 			"github": "br-g"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2970,7 +2981,8 @@
 			"github": "br-g"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -2998,7 +3010,8 @@
 			"github": "lanrat"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -3032,7 +3045,8 @@
 			"github": "christian-ri"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -3102,7 +3116,8 @@
 			"github": "christian-ri"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"
@@ -3283,7 +3298,8 @@
 			"github": "christian-ri"
 		},
 		"renderSettings": {
-			"doubleSizeForSharperText": true
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
 		},
 		"version": "0.1.0",
 		"category": "trmnl-imports"

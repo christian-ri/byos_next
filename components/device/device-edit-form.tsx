@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, Search } from "lucide-react";
+import { RefreshCw, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type React from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -78,6 +78,7 @@ interface DeviceEditFormProps {
 	onRegenerateApiKey: () => void;
 	onRegenerateFriendlyId: () => void;
 	onAddTimeRange: () => void;
+	onRemoveTimeRange: (index: number) => void;
 	onSubmit: (e: React.FormEvent) => void;
 	onCancel: () => void;
 }
@@ -108,6 +109,7 @@ export default function DeviceEditForm({
 	onRegenerateApiKey,
 	onRegenerateFriendlyId,
 	onAddTimeRange,
+	onRemoveTimeRange,
 	onSubmit,
 	onCancel,
 }: DeviceEditFormProps) {
@@ -576,67 +578,87 @@ export default function DeviceEditForm({
 
 										{editedDevice?.refresh_schedule?.time_ranges?.map(
 											(range, index) => (
-												<div
-													key={index}
-													className="grid grid-cols-1 md:grid-cols-3 gap-3 rounded-md border p-3"
-												>
-													<div className="space-y-1">
-														<Label
-															htmlFor={`start_time_${index}`}
-															className="text-xs"
+												<div key={index} className="rounded-md border p-3">
+													<div className="mb-3 flex items-center justify-between gap-3">
+														<div>
+															<p className="text-sm font-medium">
+																Time range {index + 1}
+															</p>
+															<p className="text-xs text-muted-foreground">
+																Overrides the default refresh interval in this
+																window.
+															</p>
+														</div>
+														<Button
+															type="button"
+															variant="ghost"
+															size="sm"
+															onClick={() => onRemoveTimeRange(index)}
+															className="text-destructive hover:text-destructive"
 														>
-															Start Time
-														</Label>
-														<Input
-															id={`start_time_${index}`}
-															name={`start_time_${index}`}
-															value={range.start_time}
-															onChange={(e) =>
-																onNestedInputChange(
-																	`refresh_schedule.time_ranges.${index}.start_time`,
-																	e.target.value,
-																)
-															}
-														/>
+															<Trash2 className="mr-2 h-4 w-4" />
+															Remove
+														</Button>
 													</div>
-													<div className="space-y-1">
-														<Label
-															htmlFor={`end_time_${index}`}
-															className="text-xs"
-														>
-															End Time
-														</Label>
-														<Input
-															id={`end_time_${index}`}
-															name={`end_time_${index}`}
-															value={range.end_time}
-															onChange={(e) =>
-																onNestedInputChange(
-																	`refresh_schedule.time_ranges.${index}.end_time`,
-																	e.target.value,
-																)
-															}
-														/>
-													</div>
-													<div className="space-y-1">
-														<Label
-															htmlFor={`refresh_rate_${index}`}
-															className="text-xs"
-														>
-															Refresh Rate (seconds)
-														</Label>
-														<Input
-															id={`refresh_rate_${index}`}
-															name={`refresh_schedule.time_ranges.${index}.refresh_rate`}
-															type="number"
-															value={range.refresh_rate}
-															onChange={(e) =>
-																onNestedInputChange(
-																	`refresh_schedule.time_ranges.${index}.refresh_rate`,
-																	e.target.value,
-																)
-															}
-														/>
+													<div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+														<div className="space-y-1">
+															<Label
+																htmlFor={`start_time_${index}`}
+																className="text-xs"
+															>
+																Start Time
+															</Label>
+															<Input
+																id={`start_time_${index}`}
+																name={`start_time_${index}`}
+																value={range.start_time}
+																onChange={(e) =>
+																	onNestedInputChange(
+																		`refresh_schedule.time_ranges.${index}.start_time`,
+																		e.target.value,
+																	)
+																}
+															/>
+														</div>
+														<div className="space-y-1">
+															<Label
+																htmlFor={`end_time_${index}`}
+																className="text-xs"
+															>
+																End Time
+															</Label>
+															<Input
+																id={`end_time_${index}`}
+																name={`end_time_${index}`}
+																value={range.end_time}
+																onChange={(e) =>
+																	onNestedInputChange(
+																		`refresh_schedule.time_ranges.${index}.end_time`,
+																		e.target.value,
+																	)
+																}
+															/>
+														</div>
+														<div className="space-y-1">
+															<Label
+																htmlFor={`refresh_rate_${index}`}
+																className="text-xs"
+															>
+																Refresh Rate (seconds)
+															</Label>
+															<Input
+																id={`refresh_rate_${index}`}
+																name={`refresh_schedule.time_ranges.${index}.refresh_rate`}
+																type="number"
+																value={range.refresh_rate}
+																onChange={(e) =>
+																	onNestedInputChange(
+																		`refresh_schedule.time_ranges.${index}.refresh_rate`,
+																		e.target.value,
+																	)
+																}
+															/>
+														</div>
 													</div>
 												</div>
 											),
