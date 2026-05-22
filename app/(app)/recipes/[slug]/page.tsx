@@ -120,7 +120,7 @@ const RenderComponent = ({
 	imageHeight,
 }: {
 	slug: string;
-	format: "bitmap" | "png" | "react";
+	format: "bitmap" | "png";
 	title: string;
 	imageWidth: number;
 	imageHeight: number;
@@ -151,30 +151,8 @@ const RenderComponent = ({
 	const isChromiumRecipe = config.renderSettings?.renderer === "chromium";
 
 	const propsResult = use(Promise.resolve(fetchRecipeProps(slug, config)));
-	const propsWithDimensions = addDimensionsToProps(
-		propsResult,
-		imageWidth,
-		imageHeight,
-	);
-
 	// Use doubleSizeForSharperText as the single source of truth for doubling
 	const useDoubling = config.renderSettings?.doubleSizeForSharperText ?? false;
-
-	// For React component rendering
-	if (format === "react") {
-		return (
-			<div
-				style={{
-					transform: useDoubling ? "scale(0.5)" : "none",
-					transformOrigin: "top left",
-					width: useDoubling ? "200%" : "100%",
-					height: useDoubling ? "200%" : "100%",
-				}}
-			>
-				<Component {...propsWithDimensions} />
-			</div>
-		);
-	}
 
 	if (isChromiumRecipe) {
 		const chromiumPngHref = getChromiumRenderHref(slug);
@@ -403,33 +381,6 @@ export default async function RecipePage({
 							</AspectRatio>
 						</div>
 					}
-					reactComponent={
-						<div
-							style={{ width: `${imageWidth}px`, height: `${imageHeight}px` }}
-							className="border border-gray-200 overflow-hidden rounded-sm"
-						>
-							<AspectRatio
-								ratio={imageWidth / imageHeight}
-								style={{ width: `${imageWidth}px`, height: `${imageHeight}px` }}
-							>
-								<Suspense
-									fallback={
-										<div className="w-full h-full flex items-center justify-center">
-											Rendering recipe...
-										</div>
-									}
-								>
-									<RenderComponent
-										slug={slug}
-										format="react"
-										title={config.title}
-										imageWidth={imageWidth}
-										imageHeight={imageHeight}
-									/>
-								</Suspense>
-							</AspectRatio>
-						</div>
-					}
 					bmpLinkComponent={
 						<p className="leading-7 text-xs">
 							{isChromiumRecipe ? (
@@ -477,11 +428,6 @@ export default async function RecipePage({
 									</Link>
 								</>
 							)}
-						</p>
-					}
-					reactLinkComponent={
-						<p className="leading-7 text-xs">
-							/recipes/screens/{slug}/{slug}.tsx
 						</p>
 					}
 				/>

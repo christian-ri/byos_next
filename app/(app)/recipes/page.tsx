@@ -18,6 +18,57 @@ const getPublishedComponents = () => {
 		: componentEntries;
 };
 
+type RecipeEntry = [string, (typeof screens)[keyof typeof screens]];
+
+const RENDERER_SECTIONS = [
+	{
+		key: "chromium",
+		label: "Chromium",
+		description: "Future HTML/CSS renderer path.",
+	},
+	{
+		key: "takumi",
+		label: "Takumi",
+		description: "Legacy renderer path still awaiting migration.",
+	},
+	{
+		key: "satori",
+		label: "Satori",
+		description: "Oldest legacy renderer path.",
+	},
+	{
+		key: "unspecified",
+		label: "Unspecified",
+		description: "Renderer not explicitly declared yet.",
+	},
+] as const;
+
+type RendererKey = (typeof RENDERER_SECTIONS)[number]["key"];
+
+const getRendererKey = (
+	config: (typeof screens)[keyof typeof screens],
+): RendererKey => {
+	const renderer =
+		"renderSettings" in config &&
+		config.renderSettings &&
+		"renderer" in config.renderSettings
+			? config.renderSettings.renderer
+			: undefined;
+
+	if (
+		renderer === "chromium" ||
+		renderer === "takumi" ||
+		renderer === "satori"
+	) {
+		return renderer;
+	}
+	return "unspecified";
+};
+
+const formatCategoryLabel = (category: string) => {
+	return category.replace(/-/g, " ");
+};
+
 // Component to display a preview with Suspense
 const ComponentPreview = ({
 	slug,
@@ -73,6 +124,14 @@ const RecipeCard = ({
 				</p>
 
 				<div className="flex flex-wrap gap-2 mt-auto">
+					<Badge variant="secondary">
+						{RENDERER_SECTIONS.find(
+							(section) => section.key === getRendererKey(config),
+						)?.label || "Renderer"}
+					</Badge>
+					<Badge variant="outline">
+						{formatCategoryLabel(config.category)}
+					</Badge>
 					{config.tags.slice(0, 3).map((tag: string) => (
 						<Badge key={tag} variant="outline">
 							{tag}
@@ -97,12 +156,12 @@ const CategorySection = ({
 	components,
 }: {
 	category: string;
-	components: Array<[string, (typeof screens)[keyof typeof screens]]>;
+	components: RecipeEntry[];
 }) => {
 	return (
 		<div key={category} className="mb-8">
 			<h3 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-4">
-				{category.replace(/-/g, " ")}
+				{formatCategoryLabel(category)}
 			</h3>
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{components.map(([slug, config]) => (
@@ -113,12 +172,41 @@ const CategorySection = ({
 	);
 };
 
-// Main component that organizes recipes by category
-const RecipesGrid = () => {
-	const publishedComponents = getPublishedComponents();
+const RendererSummary = ({ components }: { components: RecipeEntry[] }) => {
+	const counts = RENDERER_SECTIONS.map((section) => ({
+		...section,
+		count: components.filter(
+			([, config]) => getRendererKey(config) === section.key,
+		).length,
+	}));
 
-	// Group components by category
-	const componentsByCategory = publishedComponents.reduce(
+	return (
+		<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+			{counts.map((section) => (
+				<div key={section.key} className="rounded-lg border p-4">
+					<div className="flex items-center justify-between gap-3">
+						<div>
+							<p className="text-sm font-medium">{section.label}</p>
+							<p className="text-xs text-muted-foreground">
+								{section.description}
+							</p>
+						</div>
+						<Badge variant="secondary">{section.count}</Badge>
+					</div>
+				</div>
+			))}
+		</div>
+	);
+};
+
+const RendererSection = ({
+	renderer,
+	components,
+}: {
+	renderer: (typeof RENDERER_SECTIONS)[number];
+	components: RecipeEntry[];
+}) => {
+	const componentsByCategory = components.reduce(
 		(acc, [slug, config]) => {
 			const category = config.category || "uncategorized";
 			if (!acc[category]) {
@@ -127,22 +215,55 @@ const RecipesGrid = () => {
 			acc[category].push([slug, config]);
 			return acc;
 		},
-		{} as Record<
-			string,
-			Array<[string, (typeof screens)[keyof typeof screens]]>
-		>,
+		{} as Record<string, RecipeEntry[]>,
 	);
 
-	// Sort categories alphabetically
-	const sortedCategories = Object.keys(componentsByCategory).sort();
+	const sortedCategories = Object.keys(componentsByCategory).sort((a, b) =>
+		formatCategoryLabel(a).localeCompare(formatCategoryLabel(b)),
+	);
 
 	return (
-		<div className="flex flex-col">
-			{sortedCategories.map((category) => (
-				<CategorySection
-					key={category}
-					category={category}
-					components={componentsByCategory[category]}
+		<section className="space-y-5">
+			<div className="space-y-1">
+				<div className="flex items-center gap-3">
+					<h2 className="text-2xl font-semibold tracking-tight">
+						{renderer.label}
+					</h2>
+					<Badge variant="secondary">{components.length}</Badge>
+				</div>
+				<p className="text-sm text-muted-foreground">{renderer.description}</p>
+			</div>
+			<div className="space-y-8">
+				{sortedCategories.map((category) => (
+					<CategorySection
+						key={`${renderer.key}-${category}`}
+						category={category}
+						components={componentsByCategory[category]}
+					/>
+				))}
+			</div>
+		</section>
+	);
+};
+
+// Main component that organizes recipes by renderer and category
+const RecipesGrid = () => {
+	const publishedComponents = getPublishedComponents();
+	const componentsByRenderer = RENDERER_SECTIONS.map((renderer) => ({
+		renderer,
+		components: publishedComponents
+			.filter(([, config]) => getRendererKey(config) === renderer.key)
+			.sort((a, b) => a[1].title.localeCompare(b[1].title)),
+	})).filter((section) => section.components.length > 0);
+
+	return (
+		<div className="flex flex-col gap-10">
+			<RendererSummary components={publishedComponents} />
+			{componentsByRenderer.map((section) => (
+				<RendererSection
+					key={section.renderer.key}
+					renderer={section.renderer}
+					components={section.components}
 				/>
 			))}
 		</div>
@@ -155,7 +276,8 @@ export default function RecipesIndex() {
 			<div className="space-y-2">
 				<h1 className="text-3xl font-bold">Recipes</h1>
 				<p className="text-muted-foreground">
-					Browse and customize ready-to-use recipes for your TRMNL device.
+					Browse recipes by renderer status first, then by content category, so
+					it stays obvious which screens still need Chromium migration.
 				</p>
 			</div>
 			<Suspense fallback={<div>Loading recipes...</div>}>

@@ -473,7 +473,7 @@ const CALENDAR_CSS = `
 		gap: 10px;
 		padding: 12px;
 		border-bottom: 2px solid #111;
-		background: #f8f8f8;
+		background: #d9d9d9;
 	}
 
 	.cal-day-card__meta {
@@ -573,7 +573,7 @@ const CALENDAR_CSS = `
 	}
 
 	.cal-week__day--today {
-		background: #f5f5f5;
+		background: #d7d7d7;
 	}
 
 	.cal-week__day-header {
@@ -628,7 +628,7 @@ const CALENDAR_CSS = `
 	}
 
 	.cal-month__day--today {
-		background: #f2f2f2;
+		background: #d1d1d1;
 	}
 
 	.cal-month__day--muted {
@@ -672,7 +672,7 @@ const CALENDAR_CSS = `
 	}
 
 	.cal-today-hero--pp {
-		background: linear-gradient(180deg, #fff 0%, #f7f7f7 100%);
+		background: linear-gradient(180deg, #ffffff 0%, #e0e0e0 100%);
 		padding: 12px;
 		border: 2px solid #111;
 	}
@@ -710,7 +710,7 @@ const CALENDAR_CSS = `
 	}
 
 	.cal-today-row--active {
-		background: #f6f6f6;
+		background: #dcdcdc;
 	}
 
 	.cal-today-row__dot {

@@ -32,7 +32,7 @@ const loadChromiumRecipeModule = cache(
 	},
 );
 
-const getChromiumRecipeHtml = async ({
+export const getChromiumRecipeHtml = async ({
 	slug,
 	userId,
 	paramOverrides,
