@@ -12,6 +12,22 @@ This repository is a TRMNL BYOS fork built around:
 - a larger local recipe gallery, including several TRMNL-inspired imports
 - stricter debugging and observability for `/api/setup`, `/api/display`, and `/api/log`
 
+## Current rendering direction: Vercel-only Chromium renderer
+This project remains a complete Next.js BYOS server and keeps Vercel as the production target. Existing Satori/Takumi renderers remain in place as legacy compatibility paths, but new recipes should move to the Chromium HTML/CSS renderer. The preferred recipe format is TRMNL Pixel Perfect / TRMNL Framework-compatible HTML rendered at exactly `800x480`, captured by Chromium, and only then postprocessed with Sharp/Jimp for PNG/BMP output.
+
+### Test the new renderer
+```bash
+pnpm install
+pnpm dev
+curl http://localhost:3000/api/render/chromium-simple-text --output chromium-simple-text.png
+curl http://localhost:3000/api/bitmap/chromium-simple-text --output chromium-simple-text.bmp
+```
+
+Migration note:
+Existing recipes should be migrated one by one. This PR introduces the canonical Chromium proof of concept and keeps the existing gallery intact instead of rewriting everything at once.
+
+For local macOS/Linux development, the Chromium route can also use an installed browser binary. If auto-detection is not enough, set `CHROMIUM_EXECUTABLE_PATH` in `.env.local`.
+
 ## Overview
 **BYOS (Build Your Own Server) Next.js** is a Next.js implementation that powers:
 - device registration and identity management
@@ -54,6 +70,7 @@ This repository is a TRMNL BYOS fork built around:
 - Playlist-based screen rotation with time and weekday rules
 - Single-screen fallback flow for debugging or simple TRMNL device setups
 - On-demand screen rendering to 1-bit BMP via Takumi/Satori
+- Future-facing HTML/CSS screenshot rendering via Chromium for new recipes
 - Postgres-backed persistence for devices, logs, playlists, mixups, and recipe configs
 - Recipe gallery to compare direct browser preview vs. renderer PNG/BMP output
 - Parameter-driven recipes, including booleans rendered as actual checkboxes in the recipe config UI
@@ -88,12 +105,20 @@ Common variables:
 DATABASE_URL=
 POSTGRES_PASSWORD=
 AUTH_ENABLED=false
+TRMNL_RENDERER=chromium
+LEGACY_RENDERER_ENABLED=true
+CHROMIUM_RENDERER_ENABLED=true
+CHROMIUM_RENDER_TIMEOUT_MS=25000
+CHROMIUM_RENDER_CACHE_SECONDS=300
+TRMNL_RENDER_WIDTH=800
+TRMNL_RENDER_HEIGHT=480
 REACT_RENDERER=takumi
 ```
 
 Notes:
 - `AUTH_ENABLED=false` is useful for local BYOS-style setups.
-- `REACT_RENDERER` can be switched, but this fork has primarily been hardened around real Takumi bitmap output.
+- `TRMNL_RENDERER=chromium` is the future default for new recipes.
+- `REACT_RENDERER` remains as a legacy selector during migration, and this fork has primarily been hardened around real Takumi bitmap output for existing screens.
 
 ## Project structure
 - `app/` - Next.js routes, API endpoints, and recipes
@@ -132,6 +157,11 @@ The recipe page shows multiple render stages:
 - `Renderer PNG` is the real server-side recipe render path
 - `BMP` is derived from that renderer output for the device
 
+For new Chromium recipes, the goal is different:
+- Browser preview and rendered PNG should share the same HTML/CSS truth
+- Chromium is the canonical renderer
+- Sharp/Jimp are postprocessors, not renderers
+
 If a recipe looks good in the browser but bad on-device, the problem is usually in renderer constraints, not in the browser preview.
 
 ## Recipes
@@ -146,6 +176,7 @@ Visit `/recipes` to browse screens, configure params, and compare preview modes.
   - TRMNL Pixel Perfect-inspired text containers for titles, labels, values, and key agenda content
 
 ### Core recipes
+- `chromium-simple-text` - proof-of-concept Chromium HTML/CSS renderer route
 - `simple-text` - base text recipe with crisp bitmap typography
 - `album` - photo plus clock
 - `apple-photos` - random iCloud shared album photo with clock and album metadata

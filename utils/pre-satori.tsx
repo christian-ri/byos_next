@@ -8,6 +8,12 @@ import {
 	processResponsive,
 } from "./pre-satori-tailwind";
 
+/**
+ * @deprecated Legacy React-to-image renderer compatibility layer.
+ *
+ * New TRMNL recipes should use the Chromium HTML/CSS renderer path.
+ * This file is retained for existing Satori/Takumi screens during migration.
+ */
 export type RendererType = "takumi" | "satori";
 
 interface PreSatoriProps {

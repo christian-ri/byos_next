@@ -114,7 +114,11 @@ function CalendarGlyph({ size = 26 }: { size?: number }) {
 				stroke="#111"
 				strokeWidth="1.8"
 			/>
-			<path d="M7 2.8v4.4M17 2.8v4.4M3 9.4h18" stroke="#111" strokeWidth="1.8" />
+			<path
+				d="M7 2.8v4.4M17 2.8v4.4M3 9.4h18"
+				stroke="#111"
+				strokeWidth="1.8"
+			/>
 			<circle cx="8" cy="13" r="1.1" fill="#111" />
 			<circle cx="12" cy="13" r="1.1" fill="#111" />
 			<circle cx="16" cy="13" r="1.1" fill="#111" />
@@ -124,13 +128,7 @@ function CalendarGlyph({ size = 26 }: { size?: number }) {
 	);
 }
 
-function Badge({
-	label,
-	width,
-}: {
-	label: string;
-	width: number;
-}) {
+function Badge({ label, width }: { label: string; width: number }) {
 	return (
 		<div
 			data-pixel-perfect="true"
@@ -268,7 +266,9 @@ export default function PpCalendarToday(
 	const allEvents = today?.events || [];
 	const maxTimelineRows = height <= 480 ? 4 : 5;
 	const timelineEvents = allEvents.slice(0, maxTimelineRows);
-	const currentEvent = timelineEvents.find((event) => isEventActive(event, now));
+	const currentEvent = timelineEvents.find((event) =>
+		isEventActive(event, now),
+	);
 	const nextEvent = timelineEvents.find((event) => isEventUpcoming(event, now));
 	const featuredEvent = currentEvent || nextEvent;
 	const featuredLabel = currentEvent
@@ -276,7 +276,10 @@ export default function PpCalendarToday(
 		: nextEvent
 			? "Als Nächstes"
 			: "Frei";
-	const hiddenCount = Math.max(0, (today?.eventCount || 0) - timelineEvents.length);
+	const hiddenCount = Math.max(
+		0,
+		(today?.eventCount || 0) - timelineEvents.length,
+	);
 	const emptyStateLabel =
 		(today?.eventCount || 0) > 0
 			? "Alle verbleibenden Termine für heute sind vorbei."
@@ -500,7 +503,9 @@ export default function PpCalendarToday(
 								/>
 							) : null}
 						</div>
-						<div style={{ height: 2, backgroundColor: "#111", flexShrink: 0 }} />
+						<div
+							style={{ height: 2, backgroundColor: "#111", flexShrink: 0 }}
+						/>
 
 						<div
 							style={{

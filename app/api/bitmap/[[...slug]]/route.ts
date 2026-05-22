@@ -6,10 +6,18 @@ import {
 	buildRecipeElement,
 	DEFAULT_IMAGE_HEIGHT,
 	DEFAULT_IMAGE_WIDTH,
+	fetchRecipeConfig,
 	logger,
 	renderRecipeOutputs,
 } from "@/lib/recipes/recipe-renderer";
+import { renderChromiumRecipeBitmap } from "@/lib/renderer/chromium/recipe";
 
+/**
+ * @deprecated Legacy bitmap route for Satori/Takumi-backed recipe rendering.
+ *
+ * New TRMNL recipes should use the Chromium HTML/CSS renderer path.
+ * This route is retained for existing screens during migration.
+ */
 export async function GET(
 	req: NextRequest,
 	{ params }: { params: Promise<{ slug?: string[] }> },
@@ -107,6 +115,17 @@ const renderRecipeBitmap = async (
 	grayscaleLevels: number = 2,
 	userId: string | null = null,
 ) => {
+	const recipeConfig = fetchRecipeConfig(recipeId);
+	if (recipeConfig?.renderSettings?.renderer === "chromium") {
+		return renderChromiumRecipeBitmap({
+			slug: recipeId,
+			width,
+			height,
+			grayscale: grayscaleLevels,
+			userId,
+		});
+	}
+
 	const { config, Component, props, element } = await buildRecipeElement({
 		slug: recipeId,
 		userId,

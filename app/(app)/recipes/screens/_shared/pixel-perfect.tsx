@@ -1,5 +1,3 @@
-import React from "react";
-
 type PixelPerfectTextProps = {
 	text: string;
 	width: number;

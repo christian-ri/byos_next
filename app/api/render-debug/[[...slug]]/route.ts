@@ -10,6 +10,12 @@ import {
 } from "@/lib/recipes/recipe-renderer";
 import { renderPng } from "@/utils/render-png";
 
+/**
+ * @deprecated Legacy debug route for Satori/Takumi-backed render inspection.
+ *
+ * New TRMNL recipes should use the Chromium HTML/CSS renderer path.
+ * This route is retained for existing screens during migration.
+ */
 export async function GET(
 	req: NextRequest,
 	{ params }: { params: Promise<{ slug?: string[] }> },
