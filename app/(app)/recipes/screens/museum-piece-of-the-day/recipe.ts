@@ -121,8 +121,8 @@ export async function renderHtml(data: MuseumPieceRecipeData) {
 
 			.museum-main {
 				display: grid;
-				grid-template-columns: 296px 1fr;
-				gap: 16px;
+				grid-template-columns: 278px 1fr;
+				gap: 12px;
 				min-height: 0;
 			}
 
@@ -156,8 +156,8 @@ export async function renderHtml(data: MuseumPieceRecipeData) {
 
 			.museum-copy {
 				display: grid;
-				grid-template-rows: auto auto 1fr;
-				gap: 12px;
+				grid-template-rows: auto auto auto;
+				gap: 10px;
 				min-height: 0;
 			}
 
@@ -167,16 +167,16 @@ export async function renderHtml(data: MuseumPieceRecipeData) {
 			}
 
 			.museum-artwork-title {
-				font-size: 30px;
-				line-height: 1.02;
+				font-size: 21px;
+				line-height: 1.06;
 				font-weight: 800;
 				letter-spacing: -0.03em;
-				max-height: 126px;
+				max-height: 76px;
 				overflow: hidden;
 			}
 
 			.museum-artist {
-				font-size: 20px;
+				font-size: 16px;
 				line-height: 1.15;
 				font-weight: 700;
 			}
@@ -191,6 +191,19 @@ export async function renderHtml(data: MuseumPieceRecipeData) {
 			.museum-note {
 				background: #fff;
 				gap: 8px;
+			}
+
+			.museum-meta-card .description,
+			.museum-note .description {
+				font-size: 14px;
+				line-height: 1.18;
+			}
+
+			.museum-note .description {
+				display: -webkit-box;
+				-webkit-line-clamp: 3;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
 			}
 		`,
 	});

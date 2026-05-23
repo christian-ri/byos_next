@@ -26,6 +26,24 @@ function weatherGlyph(type: PollenAirQualityData["currentIcon"]) {
 	}
 }
 
+function weatherIconSvg(type: PollenAirQualityData["currentIcon"], size = 40) {
+	const common = `fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
+	switch (type) {
+		case "rain":
+			return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true"><path d="M19 43h23c7 0 12-4.7 12-11.1S49 20 42.5 20c-1.7-6.6-7.2-10-14-10-8 0-14 5.8-15.3 13.5C8.6 24.5 5 28.4 5 33c0 5.5 4.4 10 10 10h4" ${common}></path><path d="M23 47l-3 7M34 47l-3 7M45 47l-3 7" ${common}></path></svg>`;
+		case "storm":
+			return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true"><path d="M19 41h24c6.7 0 11-4.4 11-10.2S49.6 21 43.5 21c-1.8-6.4-7.3-10-14.2-10-8 0-13.8 5.7-15.1 13.1C8.9 25 5 28.7 5 33.6 5 38.2 8.8 41 14 41h5" ${common}></path><path d="M31 44l-5 10h6l-4 8 12-14h-7l4-8z" fill="#111"></path></svg>`;
+		case "snow":
+			return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true"><path d="M19 40h24c6.7 0 11-4.4 11-10.2S49.6 20 43.5 20c-1.8-6.4-7.3-10-14.2-10-8 0-13.8 5.7-15.1 13.1C8.9 24 5 27.7 5 32.6 5 37.2 8.8 40 14 40h5" ${common}></path><path d="M24 47h8M28 43v8M40 48h8M44 44v8" ${common}></path></svg>`;
+		case "fog":
+			return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true"><path d="M16 24h30c6 0 10 4 10 9.2 0 4.8-4 8.8-9.5 8.8H16c-6 0-10-4-10-9.2C6 28 10 24 16 24Z" ${common}></path><path d="M10 47h38M16 53h30" ${common}></path></svg>`;
+		case "cloud":
+			return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true"><path d="M18 43h27c8 0 13-5.1 13-12 0-6.4-4.9-11.4-11.7-11.4-1.9-7.1-7.8-11.6-15.5-11.6-8.7 0-15 5.9-16.4 13.8C8.7 23 5 27.3 5 32.5 5 38.3 9.7 43 16 43h2" ${common}></path></svg>`;
+		default:
+			return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true"><circle cx="32" cy="32" r="11" ${common}></circle><path d="M32 7v9M32 48v9M7 32h9M48 32h9M14.5 14.5l6.4 6.4M43.1 43.1l6.4 6.4M14.5 49.5l6.4-6.4M43.1 20.9l6.4-6.4" ${common}></path></svg>`;
+	}
+}
+
 function renderMetric(metric: PollenAirQualityData["metrics"][number]) {
 	return `<div class="paq-metric"><div class="meta">${escapeHtml(metric.label)}</div><div class="paq-metric__value">${escapeHtml(metric.value)}</div>${metric.unit ? `<div class="footer">${escapeHtml(metric.unit)}</div>` : ""}</div>`;
 }
@@ -67,7 +85,7 @@ export function renderHtml(data: PollenAirQualityData) {
 				<div class="paq-top">
 					${renderPanel(
 						"CURRENT WEATHER",
-						`<div class="paq-current"><div class="paq-current__icon">${escapeHtml(weatherGlyph(data.currentIcon))}</div><div class="paq-current__copy"><div class="paq-current__temp">${escapeHtml(data.currentTemp)}</div><div class="description">${escapeHtml(data.weatherLabel)}</div><div class="meta">Feels like ${escapeHtml(data.feelsLike)}</div></div></div><div class="paq-separator"></div><div class="paq-weather-stats"><div class="paq-weather-stat"><div class="meta">Humidity</div><div class="description">${escapeHtml(data.humidity)}</div></div><div class="paq-weather-stat"><div class="meta">Wind</div><div class="description">${escapeHtml(data.windSpeed)}</div><div class="footer">${escapeHtml(data.windDirection)}</div></div><div class="paq-weather-stat"><div class="meta">Pressure</div><div class="description">${escapeHtml(data.pressure)}</div></div></div>`,
+						`<div class="paq-current"><div class="paq-current__icon">${weatherIconSvg(data.currentIcon, 54)}</div><div class="paq-current__copy"><div class="paq-current__temp">${escapeHtml(data.currentTemp)}</div><div class="description">${escapeHtml(data.weatherLabel)}</div><div class="meta">Feels like ${escapeHtml(data.feelsLike)}</div></div></div><div class="paq-separator"></div><div class="paq-weather-stats"><div class="paq-weather-stat"><div class="meta">Hum.</div><div class="description">${escapeHtml(data.humidity)}</div></div><div class="paq-weather-stat"><div class="meta">Wind</div><div class="description">${escapeHtml(data.windSpeed)}</div><div class="footer">${escapeHtml(data.windDirection)}</div></div><div class="paq-weather-stat"><div class="meta">Press.</div><div class="description">${escapeHtml(data.pressure)}</div></div></div>`,
 						"paq-panel--weather",
 					)}
 					${renderPanel(
@@ -143,42 +161,45 @@ export function renderHtml(data: PollenAirQualityData) {
 			.paq-top, .paq-bottom { display: flex; gap: 8px; }
 			.paq-panel { padding: 10px 12px; display: flex; flex-direction: column; overflow: hidden; }
 			.paq-panel__title { font-size: 16px; line-height: 1; font-weight: 800; margin-bottom: 8px; }
-			.paq-panel--weather { width: 260px; }
-			.paq-panel--air { width: 304px; }
-			.paq-panel--air-wide { width: 528px; }
-			.paq-panel--pollen { width: 216px; }
-			.paq-panel--forecast { width: 336px; }
-			.paq-panel--sun { width: 160px; }
+			.paq-panel--weather { width: 230px; }
+			.paq-panel--air { width: 348px; }
+			.paq-panel--air-wide { width: 546px; }
+			.paq-panel--pollen { width: 190px; }
+			.paq-panel--forecast { width: 326px; }
+			.paq-panel--sun { width: 150px; }
 			.paq-panel--recommendation { flex: 1; }
 			.paq-current { display: flex; gap: 10px; align-items: center; }
-			.paq-current__icon { width: 92px; display: flex; justify-content: center; flex-shrink: 0; font-size: 28px; line-height: 1; font-weight: 800; }
-			.paq-current__copy { width: 132px; display: grid; gap: 4px; }
-			.paq-current__temp { font-size: 58px; line-height: 0.9; font-weight: 800; }
+			.paq-current__icon { width: 58px; display: flex; justify-content: center; flex-shrink: 0; }
+			.paq-current__copy { width: 128px; display: grid; gap: 3px; }
+			.paq-current__temp { font-size: 46px; line-height: 0.9; font-weight: 800; }
 			.paq-separator { height: 10px; border-top: 2px solid #111; margin-top: 10px; }
 			.paq-weather-stats { display: flex; justify-content: space-between; }
-			.paq-weather-stat, .paq-metric { border: 2px solid #111; padding: 6px 4px; display: grid; justify-items: center; gap: 2px; box-sizing: border-box; }
-			.paq-weather-stat { width: 68px; }
+			.paq-weather-stat, .paq-metric { border: 2px solid #111; padding: 6px 4px; display: grid; justify-items: center; gap: 2px; box-sizing: border-box; overflow: hidden; }
+			.paq-weather-stat { width: 50px; }
 			.paq-air-row { display: flex; gap: 12px; }
 			.paq-aqi { width: 72px; }
-			.paq-aqi__value { font-size: 52px; line-height: 0.9; font-weight: 800; }
+			.paq-aqi__value { font-size: 40px; line-height: 0.9; font-weight: 800; }
 			.paq-trend { flex: 1; min-width: 0; }
 			.paq-trend__bars { margin-top: 6px; height: 92px; display: flex; align-items: end; justify-content: space-between; gap: 6px; border-left: 2px solid #111; border-bottom: 2px solid #111; padding: 10px 8px 8px 10px; box-sizing: border-box; }
 			.paq-trend__bar-wrap { display: grid; justify-items: center; align-items: end; gap: 4px; }
 			.paq-trend__bar { width: 16px; background: #111; }
 			.paq-metrics { margin-top: 10px; display: flex; gap: 6px; }
 			.paq-metric { flex: 1; }
-			.paq-metric__value { font-size: 18px; line-height: 1; font-weight: 800; }
+			.paq-metric__value { font-size: 14px; line-height: 1.05; font-weight: 800; text-align: center; }
 			.paq-pollen-list { margin-top: 10px; display: grid; gap: 10px; }
-			.paq-pollen-row { display: grid; grid-template-columns: 56px 1fr 70px; align-items: center; gap: 8px; }
+			.paq-pollen-row { display: grid; grid-template-columns: 50px 1fr 56px; align-items: center; gap: 6px; }
 			.paq-pollen-row__bar { height: 8px; border: 2px solid #111; position: relative; box-sizing: border-box; }
 			.paq-pollen-row__fill { position: absolute; left: 0; top: 0; height: 100%; background: #111; }
 			.paq-forecast-strip { display: flex; width: 100%; }
-			.paq-forecast { width: 62px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-right: 8px; margin-right: 8px; box-sizing: border-box; }
+			.paq-forecast { width: 58px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-right: 6px; margin-right: 6px; box-sizing: border-box; }
 			.paq-forecast--divider { border-right: 2px dotted #888; }
 			.paq-forecast__icon { font-size: 18px; line-height: 1; font-weight: 800; }
 			.paq-sun-block { display: grid; gap: 12px; }
-			.paq-sun-block__value { font-size: 24px; line-height: 1; font-weight: 800; }
-			.paq-recommendations { display: grid; gap: 8px; }
+			.paq-sun-block__value { font-size: 22px; line-height: 1; font-weight: 800; }
+			.paq-recommendations { display: grid; gap: 6px; }
+			.paq-panel .description { font-size: 14px; line-height: 1.18; }
+			.paq-panel .meta { font-size: 11px; line-height: 1.05; }
+			.paq-footer .meta { font-size: 11px; line-height: 1; }
 			.paq-footer { padding: 0 14px; display: flex; align-items: center; justify-content: space-between; }
 		`,
 	});

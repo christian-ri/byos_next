@@ -1,6 +1,7 @@
 import type { IssPositionRecipeData } from "@/app/(app)/recipes/screens/iss-position/getData";
 import { escapeHtml } from "@/lib/renderer/chromium/escape-html";
 import { buildTrmnlHtmlShell } from "@/lib/renderer/chromium/html-shell";
+import { publicAssetToDataUri } from "@/lib/renderer/chromium/image-data-uri";
 import getData from "./getData";
 
 export const id = "iss-position";
@@ -8,24 +9,6 @@ export const title = "ISS Position";
 export const renderer = "chromium";
 
 export { getData };
-
-function renderGridlines() {
-	return [0.25, 0.5, 0.75]
-		.map(
-			(ratio) =>
-				`<div class="iss-map__grid iss-map__grid--vertical" style="left:${(ratio * 100).toFixed(2)}%"></div>`,
-		)
-		.join("");
-}
-
-function renderLatLines() {
-	return [0.33, 0.66]
-		.map(
-			(ratio) =>
-				`<div class="iss-map__grid iss-map__grid--horizontal" style="top:${(ratio * 100).toFixed(2)}%"></div>`,
-		)
-		.join("");
-}
 
 function renderStat(label: string, value: string) {
 	return `
@@ -36,10 +19,11 @@ function renderStat(label: string, value: string) {
 	`;
 }
 
-export function renderHtml(data: IssPositionRecipeData) {
+export async function renderHtml(data: IssPositionRecipeData) {
 	const markerLeft = `${Math.min(94, Math.max(6, data.mapX * 100)).toFixed(2)}%`;
 	const markerTop = `${Math.min(90, Math.max(10, data.mapY * 100)).toFixed(2)}%`;
 	const footprintSize = `${Math.min(34, Math.max(14, data.footprintPercent * 100)).toFixed(2)}%`;
+	const worldMapDataUri = await publicAssetToDataUri("/world.svg");
 
 	const bodyHtml = `
 		<section class="screen iss-screen">
@@ -57,16 +41,18 @@ export function renderHtml(data: IssPositionRecipeData) {
 				<div class="iss-main">
 					<section class="item iss-map-card">
 						<div class="iss-map">
-							<div class="iss-map__globe"></div>
-							${renderGridlines()}
-							${renderLatLines()}
+							${
+								worldMapDataUri
+									? `<img src="${worldMapDataUri}" alt="" class="iss-map__world" />`
+									: ""
+							}
 							${
 								data.showFootprint
 									? `<div class="iss-map__footprint" style="left:${markerLeft}; top:${markerTop}; width:${footprintSize}; height:${footprintSize};"></div>`
 									: ""
 							}
 							<div class="iss-map__marker" style="left:${markerLeft}; top:${markerTop};">
-								<div class="iss-map__marker-core">ISS</div>
+								<span>ISS</span>
 							</div>
 						</div>
 						<div class="iss-map__coords">
@@ -136,7 +122,7 @@ export function renderHtml(data: IssPositionRecipeData) {
 
 			.iss-main {
 				display: grid;
-				grid-template-columns: 376px 1fr;
+				grid-template-columns: 360px 1fr;
 				gap: 14px;
 				min-height: 0;
 			}
@@ -148,64 +134,48 @@ export function renderHtml(data: IssPositionRecipeData) {
 
 			.iss-map {
 				position: relative;
-				height: 222px;
+				height: 214px;
 				border: 2px solid #111;
 				overflow: hidden;
-				background: #fafafa;
+				background: #f7f7f7;
 			}
 
-			.iss-map__globe {
+			.iss-map__world {
 				position: absolute;
-				inset: 10px;
-				border: 2px solid #111;
-				border-radius: 999px;
-			}
-
-			.iss-map__grid {
-				position: absolute;
-				background: #c8c3b8;
-			}
-
-			.iss-map__grid--vertical {
-				top: 14px;
-				bottom: 14px;
-				width: 1px;
-				transform: translateX(-50%);
-			}
-
-			.iss-map__grid--horizontal {
-				left: 14px;
-				right: 14px;
-				height: 1px;
-				transform: translateY(-50%);
+				left: 10px;
+				right: 10px;
+				top: 18px;
+				bottom: 18px;
+				width: calc(100% - 20px);
+				height: calc(100% - 36px);
+				object-fit: contain;
+				display: block;
+				opacity: 0.62;
+				filter: grayscale(1) contrast(1.15);
 			}
 
 			.iss-map__footprint {
 				position: absolute;
 				transform: translate(-50%, -50%);
 				border-radius: 999px;
-				border: 2px solid #cac6bc;
+				border: 2px solid #a6a6a6;
 			}
 
 			.iss-map__marker {
 				position: absolute;
 				transform: translate(-50%, -50%);
-				width: 44px;
-				height: 44px;
-				border-radius: 999px;
-				border: 2px solid #111;
-				background: #fff;
+				width: 34px;
+				height: 34px;
 				display: flex;
 				align-items: center;
 				justify-content: center;
-			}
-
-			.iss-map__marker-core {
-				font-size: 11px;
+				border-radius: 999px;
+				border: 2px solid #111;
+				background: rgba(255,255,255,0.94);
+				font-size: 10px;
 				line-height: 1;
 				font-weight: 800;
-				letter-spacing: 0.12em;
-				text-transform: uppercase;
+				letter-spacing: 0.08em;
 			}
 
 			.iss-map__coords {
@@ -228,7 +198,7 @@ export function renderHtml(data: IssPositionRecipeData) {
 			}
 
 			.iss-stat__value {
-				font-size: 21px;
+				font-size: 19px;
 				line-height: 1.05;
 				font-weight: 800;
 				word-break: break-word;
@@ -238,6 +208,11 @@ export function renderHtml(data: IssPositionRecipeData) {
 				grid-column: 1 / span 2;
 				background: #fff;
 				gap: 10px;
+			}
+
+			.iss-note .description {
+				font-size: 15px;
+				line-height: 1.3;
 			}
 		`,
 	});

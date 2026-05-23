@@ -87,9 +87,9 @@ export function renderHtml(data: VercelOverviewRecipeData) {
 			.vercel-title { margin: 0; font-size: 28px; line-height: 1; font-weight: 800; }
 			.vercel-header__status-dot { width: 18px; height: 18px; border-radius: 9px; border: 2px solid #111; }
 			.vercel-kpis { display: flex; gap: 10px; }
-			.vercel-metric-card { width: 118px; height: 78px; border: 2px solid #111; border-radius: 12px; background: #fff; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
+			.vercel-metric-card { width: 118px; height: 78px; border: 2px solid #111; border-radius: 12px; background: #fff; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
 			.vercel-metric-card__label { font-size: 15px; line-height: 1; font-weight: 700; }
-			.vercel-metric-card__value { font-size: 32px; line-height: 0.9; font-weight: 800; }
+			.vercel-metric-card__value { font-size: 30px; line-height: 0.9; font-weight: 800; }
 			.vercel-metric-card__secondary { font-size: 14px; line-height: 1.05; color: #444; }
 			.vercel-main { display: flex; gap: 12px; }
 			.vercel-panel { height: 206px; border: 2px solid #111; border-radius: 12px; background: #fff; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; }
@@ -104,13 +104,18 @@ export function renderHtml(data: VercelOverviewRecipeData) {
 			.vercel-production-list { display: flex; flex-direction: column; gap: 8px; flex: 1; }
 			.vercel-production-row { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid #bdbdbd; }
 			.vercel-production-row--last { border-bottom: none; }
-			.vercel-production-row__main { width: 176px; display: grid; gap: 3px; min-width: 0; }
-			.vercel-production-row__side { width: 60px; display: grid; justify-items: end; gap: 3px; }
+			.vercel-production-row__main { width: 168px; display: grid; gap: 3px; min-width: 0; }
+			.vercel-production-row__main .footer { font-size: 12px; line-height: 1.15; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+			.vercel-production-row__side { width: 72px; display: grid; justify-items: end; gap: 3px; align-content: start; }
+			.vercel-production-row__side .footer { font-size: 12px; line-height: 1.1; }
+			.vercel-production-row__side .description { font-size: 16px; line-height: 1; }
 			.vercel-footer-cards { height: 58px; border: 2px solid #111; border-radius: 12px; background: #fff; display: flex; align-items: center; }
 			.vercel-footer-card { width: 187px; height: 60px; padding: 0 12px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
 			.vercel-footer-card--divider { border-right: 2px solid #111; }
 			.vercel-footer-card__label { font-size: 14px; line-height: 1; color: #444; }
 			.vercel-footer-card__value { font-size: 24px; line-height: 0.95; font-weight: 800; }
+			.vercel-metric-card:nth-child(5) .vercel-metric-card__value { font-size: 24px; }
+			.vercel-metric-card:nth-child(5) .vercel-metric-card__secondary { font-size: 12px; }
 		`,
 	});
 }

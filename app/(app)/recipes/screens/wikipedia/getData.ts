@@ -155,9 +155,9 @@ export interface WikipediaData {
 const DEFAULT_FALLBACK_DATA: WikipediaData = {
 	pageid: 1234567,
 	ns: 0,
-	title: sanitizeRtlText("Electronic Paper Display"),
+	title: sanitizeRtlText("Elektronisches Papier"),
 	extract: sanitizeRtlText(
-		"Electronic paper, also sometimes called e-paper, is a display technology designed to mimic the appearance of ordinary ink on paper. Unlike conventional flat panel displays that emit light, electronic paper displays reflect light like paper. This may make them more comfortable to read, and provide a wider viewing angle than most light-emitting displays.",
+		"Elektronisches Papier, auch E-Paper genannt, ist eine Anzeigetechnologie, die das Erscheinungsbild von Tinte auf Papier nachahmt. Im Gegensatz zu leuchtenden Flachbildschirmen reflektiert ein E-Paper-Display Licht wie Papier und ist dadurch besonders gut für längeres Lesen geeignet.",
 	),
 	thumbnail: {
 		source:
@@ -166,25 +166,25 @@ const DEFAULT_FALLBACK_DATA: WikipediaData = {
 		height: 240,
 	},
 	contentmodel: "wikitext",
-	pagelanguage: "en",
+	pagelanguage: "de",
 	pagelanguagedir: "ltr",
 	touched: "2025-03-06T03:31:30Z",
 	lastrevid: 1234567890,
 	length: 12345,
-	fullurl: "https://en.wikipedia.org/wiki/Electronic_paper",
+	fullurl: "https://de.wikipedia.org/wiki/Elektronisches_Papier",
 	editurl:
-		"https://en.wikipedia.org/w/index.php?title=Electronic_paper&action=edit",
-	canonicalurl: "https://en.wikipedia.org/wiki/Electronic_paper",
-	displaytitle: sanitizeRtlText("Electronic Paper Display"),
+		"https://de.wikipedia.org/w/index.php?title=Elektronisches_Papier&action=edit",
+	canonicalurl: "https://de.wikipedia.org/wiki/Elektronisches_Papier",
+	displaytitle: sanitizeRtlText("Elektronisches Papier"),
 	description: sanitizeRtlText(
-		"Display technology that mimics the appearance of ink on paper",
+		"Anzeigetechnologie, die das Erscheinungsbild von Tinte auf Papier nachahmt",
 	),
 	content_urls: {
 		desktop: {
-			page: "https://en.wikipedia.org/wiki/Electronic_paper",
+			page: "https://de.wikipedia.org/wiki/Elektronisches_Papier",
 		},
 	},
-	categories: ["Display technology", "Electronic paper technology"],
+	categories: ["Anzeigetechnologie", "Elektronisches Papier"],
 	type: "standard",
 };
 
@@ -194,21 +194,21 @@ const DEFAULT_FALLBACK_DATA: WikipediaData = {
 function getRandomFallbackArticleTitle(): string {
 	// Curated list of non-disambiguation articles that are reliable and informative
 	const fallbackArticles = [
-		"Electronic_paper",
-		"Internet_of_things",
-		"Computer_terminal",
-		"London_Underground",
+		"Elektronisches_Papier",
+		"Internet_der_Dinge",
+		"Computerterminal",
+		"Berliner_U-Bahn",
 		"Wikipedia",
 		"Raspberry_Pi",
-		"E-ink",
-		"Kindle_(Amazon)", // Specified to avoid disambiguation
-		"Digital_display",
-		"Smart_home",
-		"Artificial_intelligence",
-		"Cloud_computing",
-		"Quantum_computing",
-		"Virtual_reality",
-		"Augmented_reality",
+		"E-Ink",
+		"Kindle",
+		"Anzeige_(Technik)",
+		"Smart_Home",
+		"Künstliche_Intelligenz",
+		"Cloud-Computing",
+		"Quantencomputer",
+		"Virtuelle_Realität",
+		"Erweiterte_Realität",
 	];
 	return fallbackArticles[Math.floor(Math.random() * fallbackArticles.length)];
 }
@@ -325,7 +325,7 @@ async function fetchRandomArticles(count = 10): Promise<WikipediaData[]> {
 			"User-Agent": "trmnl-byos-nextjs (ghcpuman902@gmail.com)",
 		});
 
-		const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=${count}&prop=pageimages|extracts|categories|info&exintro=true&explaintext=true&piprop=thumbnail&pithumbsize=300&inprop=url|displaytitle&format=json&origin=*`;
+		const apiUrl = `https://de.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0&grnlimit=${count}&prop=pageimages|extracts|categories|info&exintro=true&explaintext=true&piprop=thumbnail&pithumbsize=360&inprop=url|displaytitle&format=json&origin=*`;
 
 		console.log(`Fetching random articles from: ${apiUrl}`);
 
@@ -437,7 +437,7 @@ async function fetchRandomArticles(count = 10): Promise<WikipediaData[]> {
 				desktop: {
 					page:
 						page.fullurl ||
-						`https://en.wikipedia.org/wiki/${encodeURIComponent(article.title.replace(/ /g, "_"))}`,
+						`https://de.wikipedia.org/wiki/${encodeURIComponent(article.title.replace(/ /g, "_"))}`,
 				},
 			};
 
@@ -747,7 +747,7 @@ async function getFallbackArticle(): Promise<WikipediaData> {
 		}
 
 		const response = await fetchWithRetry(
-			`https://en.wikipedia.org/api/rest_v1/page/summary/${encodedTitle}`,
+			`https://de.wikipedia.org/api/rest_v1/page/summary/${encodedTitle}`,
 			{
 				headers,
 				next: { revalidate: 0 },
@@ -798,7 +798,7 @@ async function getFallbackArticle(): Promise<WikipediaData> {
 		// Try one more time with a specific fallback article
 		try {
 			console.log("Attempting direct fallback fetch...");
-			const directFallbackArticle = "Electronic_paper"; // Most reliable fallback
+			const directFallbackArticle = "Elektronisches_Papier"; // Most reliable fallback
 			const encodedTitle = encodeURIComponent(directFallbackArticle);
 			const headers = new Headers({
 				Accept: "application/json",
@@ -813,7 +813,7 @@ async function getFallbackArticle(): Promise<WikipediaData> {
 			}
 
 			const response = await fetchWithRetry(
-				`https://en.wikipedia.org/api/rest_v1/page/summary/${encodedTitle}`,
+				`https://de.wikipedia.org/api/rest_v1/page/summary/${encodedTitle}`,
 				{
 					headers,
 					next: { revalidate: 0 },

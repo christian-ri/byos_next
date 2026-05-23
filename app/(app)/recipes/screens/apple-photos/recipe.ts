@@ -55,11 +55,7 @@ export async function renderHtml(data: ApplePhotosRecipeData) {
 												? `<div class="apple-photos-clock__time">${escapeHtml(data.currentTime)}</div>`
 												: ""
 										}
-										<div class="footer">${escapeHtml(
-											[data.timeZoneLabel, data.updatedAt]
-												.filter(Boolean)
-												.join(" · "),
-										)}</div>
+										<div class="footer">${escapeHtml(data.timeZoneLabel || "")}</div>
 									</div>
 								</div>
 							</div>`
@@ -148,15 +144,16 @@ export async function renderHtml(data: ApplePhotosRecipeData) {
 			}
 
 			.apple-photos-clock__row {
-				min-width: 184px;
-				max-width: 208px;
+				min-width: 158px;
+				max-width: 176px;
 			}
 
 			.apple-photos-meta__row {
-				min-width: 196px;
-				max-width: 226px;
+				min-width: 124px;
+				max-width: 144px;
 				justify-content: flex-end;
 				text-align: right;
+				padding: 12px 12px 10px;
 			}
 
 			.apple-photos-clock__icon,
@@ -190,6 +187,17 @@ export async function renderHtml(data: ApplePhotosRecipeData) {
 			.apple-photos-meta .footer,
 			.apple-photos-clock .footer {
 				color: #fff;
+			}
+
+			.apple-photos-meta .description {
+				font-size: 16px;
+				line-height: 1.2;
+			}
+
+			.apple-photos-meta .footer {
+				font-size: 13px;
+				line-height: 1.15;
+				opacity: 0.88;
 			}
 		`,
 	});

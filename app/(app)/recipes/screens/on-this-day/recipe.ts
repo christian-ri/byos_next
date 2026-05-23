@@ -25,7 +25,7 @@ function renderItem(
 			<div class="otd-item__year ${showYearLarge ? "otd-item__year--large" : ""}">${escapeHtml(item.year)}</div>
 			<div class="otd-item__copy">
 				<div class="otd-item__text">${escapeHtml(
-					truncateText(item.text, mode === "highlight" ? 180 : 110),
+					truncateText(item.text, mode === "highlight" ? 150 : 92),
 				)}</div>
 				<div class="meta">${escapeHtml(item.context || `Entry ${index + 1}`)}</div>
 			</div>
@@ -79,11 +79,11 @@ export function renderHtml(data: OnThisDayRecipeData) {
 			.otd-shell {
 				height: 100%;
 				border: 2px solid #111;
-				padding: 18px;
+				padding: 16px;
 				background: linear-gradient(180deg, #fbfaf7 0%, #f0ece3 100%);
 				display: grid;
 				grid-template-rows: auto 1fr auto;
-				gap: 14px;
+				gap: 10px;
 			}
 
 			.otd-header {
@@ -119,8 +119,10 @@ export function renderHtml(data: OnThisDayRecipeData) {
 				background: #fff;
 				display: grid;
 				grid-template-columns: ${data.showYearLarge ? "118px" : "82px"} 1fr;
-				gap: 16px;
+				gap: 12px;
 				align-items: start;
+				padding: 12px;
+				min-height: 0;
 			}
 
 			.otd-item--highlight {
@@ -141,12 +143,12 @@ export function renderHtml(data: OnThisDayRecipeData) {
 
 			.otd-item__copy {
 				display: grid;
-				gap: 10px;
+				gap: 6px;
 			}
 
 			.otd-item__text {
-				font-size: ${data.mode === "highlight" ? "20px" : "17px"};
-				line-height: 1.22;
+				font-size: ${data.mode === "highlight" ? "18px" : "15px"};
+				line-height: 1.18;
 				font-weight: 700;
 			}
 

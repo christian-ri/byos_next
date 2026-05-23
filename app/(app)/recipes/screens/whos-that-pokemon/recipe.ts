@@ -70,7 +70,7 @@ export async function renderHtml(data: PokemonRecipeData) {
 			.pokemon-shell {
 				height: 100%;
 				display: grid;
-				grid-template-columns: 300px 1fr;
+				grid-template-columns: 392px 1fr;
 				gap: 14px;
 			}
 
@@ -91,8 +91,8 @@ export async function renderHtml(data: PokemonRecipeData) {
 			}
 
 			.pokemon-art {
-				width: 260px;
-				height: 260px;
+				width: 352px;
+				height: 352px;
 				object-fit: contain;
 				display: block;
 			}
@@ -134,16 +134,16 @@ export async function renderHtml(data: PokemonRecipeData) {
 			.pokemon-stats {
 				display: grid;
 				grid-template-columns: 1fr 1fr;
-				gap: 12px;
+				gap: 10px;
 			}
 
 			.pokemon-stat {
-				padding: 14px;
+				padding: 12px;
 			}
 
 			.pokemon-stat__value {
 				margin-top: 6px;
-				font-size: 32px;
+				font-size: 28px;
 				line-height: 1;
 				font-weight: 800;
 			}

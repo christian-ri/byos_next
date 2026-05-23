@@ -9,8 +9,8 @@ export const renderer = "chromium";
 
 export { getData };
 
-const LABEL_WIDTH = 152;
-const LABEL_HEIGHT = 58;
+const LABEL_WIDTH = 176;
+const LABEL_HEIGHT = 72;
 const MAP_WIDTH = 800;
 const MAP_HEIGHT = 438;
 
@@ -57,9 +57,9 @@ function renderPlane(
 		<div class="sky-plane">
 			<div class="sky-plane__connector" style="left:${connectorStartX}px; top:${connectorStartY}px; width:${connectorWidth}px; transform: rotate(${Math.atan2(dy, dx)}rad);"></div>
 			<div class="sky-plane__icon" style="left:${connectorStartX - 18}px; top:${connectorStartY - 18}px; transform: rotate(${plane.heading + 45}deg); opacity:${Math.max(0.55, plane.brightness)};">
-				<svg viewBox="0 0 238.45445 228.24998" width="34" height="34" aria-hidden="true">
-					<path fill="#ffffff" fill-rule="evenodd" d="M194.67321 0 70.641958 53.625c-10.38227-6.92107-34.20058-21.27539-38.90545-23.44898-39.4400301-18.22079-36.9454001 14.73107-20.34925 24.6052 4.53917 2.70065 27.72352 17.17823 43.47345 26.37502l17.90625 133.9375 22.21875 13.15625 11.531252-120.9375 71.53125 36.6875 3.84375 39.21875 14.53125 8.625 11.09375-42.40625.125.0625 30.8125-31.53125-14.875-8-35.625 16.90625-68.28125-42.4375L217.36071 12.25 194.67321 0z"/>
-				</svg>
+						<svg viewBox="0 0 238.45445 228.24998" width="34" height="34" aria-hidden="true">
+							<path fill="#111111" fill-rule="evenodd" d="M194.67321 0 70.641958 53.625c-10.38227-6.92107-34.20058-21.27539-38.90545-23.44898-39.4400301-18.22079-36.9454001 14.73107-20.34925 24.6052 4.53917 2.70065 27.72352 17.17823 43.47345 26.37502l17.90625 133.9375 22.21875 13.15625 11.531252-120.9375 71.53125 36.6875 3.84375 39.21875 14.53125 8.625 11.09375-42.40625.125.0625 30.8125-31.53125-14.875-8-35.625 16.90625-68.28125-42.4375L217.36071 12.25 194.67321 0z"/>
+						</svg>
 			</div>
 			<div class="sky-plane__label sky-plane__label--${label.align}" style="left:${label.left}px; top:${label.top}px;">
 				<div class="sky-plane__callsign">${escapeHtml(plane.callsign)}</div>
@@ -116,8 +116,8 @@ export function renderHtml(data: SkyWatchRecipeData) {
 					<div class="sky-axis sky-axis--v"></div>
 					<div class="sky-crosshair">
 						<svg viewBox="0 0 40 40" width="22" height="22" aria-hidden="true">
-							<circle cx="20" cy="20" r="7.5" fill="none" stroke="#fff" stroke-width="2.6"></circle>
-							<path d="M20 3.5v8M20 28.5v8M3.5 20h8M28.5 20h8" stroke="#fff" stroke-width="2.6" stroke-linecap="round"></path>
+							<circle cx="20" cy="20" r="7.5" fill="none" stroke="#111" stroke-width="2.6"></circle>
+							<path d="M20 3.5v8M20 28.5v8M3.5 20h8M28.5 20h8" stroke="#111" stroke-width="2.6" stroke-linecap="round"></path>
 						</svg>
 					</div>
 					<div class="sky-radius">${escapeHtml(data.radiusLabel)}</div>
@@ -129,7 +129,7 @@ export function renderHtml(data: SkyWatchRecipeData) {
 				<footer class="sky-footer">
 					<div class="sky-footer__brand">
 						<svg viewBox="0 0 238.45445 228.24998" width="20" height="20" aria-hidden="true">
-							<path fill="#ffffff" fill-rule="evenodd" d="M194.67321 0 70.641958 53.625c-10.38227-6.92107-34.20058-21.27539-38.90545-23.44898-39.4400301-18.22079-36.9454001 14.73107-20.34925 24.6052 4.53917 2.70065 27.72352 17.17823 43.47345 26.37502l17.90625 133.9375 22.21875 13.15625 11.531252-120.9375 71.53125 36.6875 3.84375 39.21875 14.53125 8.625 11.09375-42.40625.125.0625 30.8125-31.53125-14.875-8-35.625 16.90625-68.28125-42.4375L217.36071 12.25 194.67321 0z"/>
+							<path fill="#111111" fill-rule="evenodd" d="M194.67321 0 70.641958 53.625c-10.38227-6.92107-34.20058-21.27539-38.90545-23.44898-39.4400301-18.22079-36.9454001 14.73107-20.34925 24.6052 4.53917 2.70065 27.72352 17.17823 43.47345 26.37502l17.90625 133.9375 22.21875 13.15625 11.531252-120.9375 71.53125 36.6875 3.84375 39.21875 14.53125 8.625 11.09375-42.40625.125.0625 30.8125-31.53125-14.875-8-35.625 16.90625-68.28125-42.4375L217.36071 12.25 194.67321 0z"/>
 						</svg>
 						<div class="sky-footer__title">${escapeHtml(data.title)}</div>
 					</div>
@@ -148,15 +148,15 @@ export function renderHtml(data: SkyWatchRecipeData) {
 		bodyHtml,
 		extraCss: `
 			.sky-screen {
-				background: #1b1b1b;
-				color: #fff;
+				background: #d1d1d1;
+				color: #111;
 			}
 
 			.sky-shell {
 				height: 100%;
 				position: relative;
 				overflow: hidden;
-				background: #1b1b1b;
+				background: #d1d1d1;
 			}
 
 			.sky-map {
@@ -172,19 +172,20 @@ export function renderHtml(data: SkyWatchRecipeData) {
 				position: absolute;
 				background-size: cover;
 				background-position: center;
-				opacity: 0.34;
+				opacity: 0.08;
+				filter: grayscale(1) contrast(0.9) brightness(1.12);
 			}
 
 			.sky-map__shade {
 				position: absolute;
 				inset: 0;
-				background: rgba(0,0,0,0.34);
+				background: rgba(255,255,255,0.34);
 			}
 
 			.sky-map__grid,
 			.sky-axis {
 				position: absolute;
-				background: rgba(255,255,255,0.06);
+				background: rgba(0,0,0,0.08);
 			}
 
 			.sky-map__grid--v {
@@ -205,7 +206,7 @@ export function renderHtml(data: SkyWatchRecipeData) {
 				top: 50%;
 				transform: translate(-50%, -50%);
 				border-radius: 999px;
-				border: 1px solid rgba(255,255,255,0.12);
+				border: 1px solid rgba(0,0,0,0.16);
 			}
 
 			.sky-ring--1 { width: 360px; height: 360px; opacity: 0.4; }
@@ -217,7 +218,7 @@ export function renderHtml(data: SkyWatchRecipeData) {
 				right: 0;
 				height: 1px;
 				top: 219px;
-				background: rgba(255,255,255,0.14);
+				background: rgba(0,0,0,0.15);
 			}
 
 			.sky-axis--v {
@@ -225,7 +226,7 @@ export function renderHtml(data: SkyWatchRecipeData) {
 				bottom: 0;
 				width: 1px;
 				left: 400px;
-				background: rgba(255,255,255,0.14);
+				background: rgba(0,0,0,0.15);
 			}
 
 			.sky-crosshair {
@@ -247,13 +248,13 @@ export function renderHtml(data: SkyWatchRecipeData) {
 				line-height: 1;
 				letter-spacing: 1.2px;
 				text-transform: uppercase;
-				color: rgba(255,255,255,0.9);
+				color: rgba(0,0,0,0.82);
 			}
 
 			.sky-plane__connector {
 				position: absolute;
 				height: 1px;
-				border-top: 1px solid rgba(255,255,255,0.12);
+				border-top: 1px solid rgba(0,0,0,0.14);
 				transform-origin: 0 0;
 			}
 
@@ -268,14 +269,15 @@ export function renderHtml(data: SkyWatchRecipeData) {
 
 			.sky-plane__label {
 				position: absolute;
-				width: 168px;
-				height: 64px;
-				padding: 6px 8px;
+				width: 176px;
+				height: 72px;
+				padding: 8px 10px;
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
-				background: rgba(17,17,17,0.66);
-				border-bottom: 1px solid rgba(255,255,255,0.28);
+				background: rgba(255,255,255,0.92);
+				border: 1px solid rgba(0,0,0,0.18);
+				box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset;
 			}
 
 			.sky-plane__label--right {
@@ -283,36 +285,38 @@ export function renderHtml(data: SkyWatchRecipeData) {
 			}
 
 			.sky-plane__callsign {
-				font-size: 12px;
-				line-height: 1.1;
+				font-size: 14px;
+				line-height: 1.15;
 				font-weight: 800;
-				letter-spacing: 0.7px;
+				letter-spacing: 0.2px;
 				text-transform: uppercase;
 			}
 
 			.sky-plane__type,
 			.sky-plane__route {
-				margin-top: 2px;
-				font-size: 9px;
-				line-height: 1.1;
-				text-transform: uppercase;
+				margin-top: 3px;
+				font-size: 11px;
+				line-height: 1.15;
+				text-transform: none;
 				white-space: nowrap;
 				overflow: hidden;
 			}
 
 			.sky-plane__type {
-				opacity: 0.92;
+				opacity: 0.96;
+				font-weight: 700;
 			}
 
 			.sky-plane__route {
-				opacity: 0.68;
+				opacity: 0.8;
 			}
 
 			.sky-plane__meta {
-				margin-top: 3px;
-				font-size: 10px;
-				line-height: 1.1;
-				text-transform: uppercase;
+				margin-top: 4px;
+				font-size: 11px;
+				line-height: 1.15;
+				text-transform: none;
+				font-weight: 700;
 				display: flex;
 				gap: 4px;
 				justify-content: inherit;
@@ -333,8 +337,8 @@ export function renderHtml(data: SkyWatchRecipeData) {
 				right: 0;
 				bottom: 0;
 				height: 42px;
-				border-top: 1px solid rgba(255,255,255,0.18);
-				background: rgba(255,255,255,0.08);
+				border-top: 1px solid rgba(0,0,0,0.14);
+				background: rgba(255,255,255,0.5);
 				display: flex;
 				align-items: center;
 				justify-content: space-between;

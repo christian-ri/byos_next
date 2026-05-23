@@ -83,7 +83,7 @@ function metricCards(data: GitHubMonitorData) {
 function footerCards(data: GitHubMonitorData) {
 	return [
 		{
-			label: "AKTIVE BRANCHES",
+			label: "AKTIV",
 			value:
 				data.footer.activeBranches === null
 					? "n/a"

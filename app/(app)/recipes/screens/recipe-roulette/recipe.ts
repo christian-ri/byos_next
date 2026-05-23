@@ -55,7 +55,7 @@ export async function renderHtml(data: RecipeRouletteRecipeData) {
 							</div>
 							<div class="rr-ingredients__list">
 								${data.ingredients
-									.slice(0, 6)
+									.slice(0, 5)
 									.map(
 										(ingredient) =>
 											`<div class="rr-ingredient">${escapeHtml(ingredientLine(ingredient))}</div>`,
@@ -136,6 +136,7 @@ export async function renderHtml(data: RecipeRouletteRecipeData) {
 			.rr-ingredients {
 				background: #fff;
 				gap: 12px;
+				overflow: hidden;
 			}
 
 			.rr-title {
@@ -166,11 +167,14 @@ export async function renderHtml(data: RecipeRouletteRecipeData) {
 			}
 
 			.rr-ingredient {
-				font-size: 16px;
-				line-height: 1.2;
+				font-size: 15px;
+				line-height: 1.15;
 				font-weight: 700;
 				padding-bottom: 7px;
 				border-bottom: 1px solid #c7c2b8;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
 
 			.rr-image-card {
