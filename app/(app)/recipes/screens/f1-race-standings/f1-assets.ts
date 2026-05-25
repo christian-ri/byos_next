@@ -1,9 +1,18 @@
 const TRACK_BASE_URL =
 	"https://raw.githubusercontent.com/julesr0y/f1-circuits-svg/main/circuits/minimal/black";
 
-function normalizeKey(value: string) {
-	return value
-		.toLowerCase()
+export function safeLower(value: unknown) {
+	if (typeof value === "string") {
+		return value.toLowerCase();
+	}
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value).toLowerCase();
+	}
+	return "";
+}
+
+function normalizeKey(value: unknown) {
+	return safeLower(value)
 		.normalize("NFKD")
 		.replace(/[\u0300-\u036f]/g, "")
 		.replace(/[^a-z0-9]+/g, " ")
@@ -70,7 +79,9 @@ const TEAM_BADGE_BY_NAME: Record<string, string> = {
 	williams: "W",
 };
 
-export function getTrackImageUrl(...candidates: Array<string | undefined>) {
+export function getTrackImageUrl(
+	...candidates: Array<string | null | undefined>
+) {
 	for (const candidate of candidates) {
 		if (!candidate) continue;
 		const key = normalizeKey(candidate);
@@ -85,5 +96,6 @@ export function getTrackImageUrl(...candidates: Array<string | undefined>) {
 
 export function getTeamBadgeLabel(teamName: string) {
 	const key = normalizeKey(teamName);
-	return TEAM_BADGE_BY_NAME[key] || teamName.slice(0, 2).toUpperCase();
+	const fallbackLabel = String(teamName || "").trim().slice(0, 2).toUpperCase();
+	return TEAM_BADGE_BY_NAME[key] || fallbackLabel || "??";
 }

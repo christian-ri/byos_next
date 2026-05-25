@@ -31,7 +31,7 @@ export function renderHtml(data: VercelOverviewRecipeData) {
 			<div class="vercel-shell">
 				<header class="vercel-header">
 					<div class="vercel-header__brand"><div class="vercel-mark"></div><h1 class="vercel-title">${escapeHtml(data.title)}</h1></div>
-					<div class="vercel-header__updated">Last updated ${escapeHtml(data.updatedAt)}</div>
+					<div class="vercel-header__updated">${escapeHtml(data.usageLabel)}<br />Updated ${escapeHtml(data.updatedAt)}</div>
 					<div class="vercel-header__status"><div class="vercel-header__status-dot" style="background:${statusFill(data.globalStatus)}"></div><div class="description">${escapeHtml(data.globalStatusLabel)}</div></div>
 				</header>
 				<section class="vercel-kpis">${data.metrics.map((metric) => metricCard(metric)).join("")}</section>
@@ -86,25 +86,25 @@ export function renderHtml(data: VercelOverviewRecipeData) {
 			.vercel-mark { width: 28px; height: 24px; background: #111; clip-path: polygon(50% 0%, 100% 100%, 0% 100%); }
 			.vercel-title { margin: 0; font-size: 28px; line-height: 1; font-weight: 800; }
 			.vercel-header__status-dot { width: 18px; height: 18px; border-radius: 9px; border: 2px solid #111; }
-			.vercel-kpis { display: flex; gap: 10px; }
-			.vercel-metric-card { width: 118px; height: 78px; border: 2px solid #111; border-radius: 12px; background: #fff; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+			.vercel-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+			.vercel-metric-card { height: 88px; border: 2px solid #111; border-radius: 12px; background: #fff; padding: 8px 10px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
 			.vercel-metric-card__label { font-size: 15px; line-height: 1; font-weight: 700; }
-			.vercel-metric-card__value { font-size: 30px; line-height: 0.9; font-weight: 800; }
-			.vercel-metric-card__secondary { font-size: 14px; line-height: 1.05; color: #444; }
+			.vercel-metric-card__value { font-size: 28px; line-height: 0.9; font-weight: 800; }
+			.vercel-metric-card__secondary { font-size: 13px; line-height: 1.05; color: #444; }
 			.vercel-main { display: flex; gap: 12px; }
-			.vercel-panel { height: 206px; border: 2px solid #111; border-radius: 12px; background: #fff; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; }
-			.vercel-panel--deployments { width: 474px; }
-			.vercel-panel--production { width: 280px; }
+			.vercel-panel { height: 196px; border: 2px solid #111; border-radius: 12px; background: #fff; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; }
+			.vercel-panel--deployments { width: 428px; }
+			.vercel-panel--production { width: 326px; }
 			.vercel-panel__title { font-size: 20px; line-height: 1; font-weight: 700; margin-bottom: 8px; }
 			.vercel-table { display: grid; align-items: center; }
-			.vercel-table--deployments { grid-template-columns: 132px 86px 104px 64px 56px; }
-			.vercel-table__head { padding-bottom: 6px; border-bottom: 2px solid #111; font-size: 16px; line-height: 1; font-weight: 700; }
-			.vercel-table__row { height: 24px; border-bottom: 1px solid #bdbdbd; font-size: 15px; line-height: 1; }
+			.vercel-table--deployments { grid-template-columns: 118px 74px 88px 58px 46px; }
+			.vercel-table__head { padding-bottom: 6px; border-bottom: 2px solid #111; font-size: 14px; line-height: 1; font-weight: 700; }
+			.vercel-table__row { height: 22px; border-bottom: 1px solid #bdbdbd; font-size: 13px; line-height: 1; }
 			.vercel-table__row--last { border-bottom: none; }
 			.vercel-production-list { display: flex; flex-direction: column; gap: 8px; flex: 1; }
 			.vercel-production-row { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid #bdbdbd; }
 			.vercel-production-row--last { border-bottom: none; }
-			.vercel-production-row__main { width: 168px; display: grid; gap: 3px; min-width: 0; }
+			.vercel-production-row__main { width: 210px; display: grid; gap: 3px; min-width: 0; }
 			.vercel-production-row__main .footer { font-size: 12px; line-height: 1.15; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 			.vercel-production-row__side { width: 72px; display: grid; justify-items: end; gap: 3px; align-content: start; }
 			.vercel-production-row__side .footer { font-size: 12px; line-height: 1.1; }
@@ -114,8 +114,6 @@ export function renderHtml(data: VercelOverviewRecipeData) {
 			.vercel-footer-card--divider { border-right: 2px solid #111; }
 			.vercel-footer-card__label { font-size: 14px; line-height: 1; color: #444; }
 			.vercel-footer-card__value { font-size: 24px; line-height: 0.95; font-weight: 800; }
-			.vercel-metric-card:nth-child(5) .vercel-metric-card__value { font-size: 24px; }
-			.vercel-metric-card:nth-child(5) .vercel-metric-card__secondary { font-size: 12px; }
 		`,
 	});
 }

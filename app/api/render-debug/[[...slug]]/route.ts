@@ -6,8 +6,13 @@ import {
 	buildRecipeElement,
 	DEFAULT_IMAGE_HEIGHT,
 	DEFAULT_IMAGE_WIDTH,
+	fetchRecipeConfig,
 	renderRecipeOutputs,
 } from "@/lib/recipes/recipe-renderer";
+import {
+	renderChromiumRecipeBitmap,
+	renderChromiumRecipePng,
+} from "@/lib/renderer/chromium/recipe";
 import { renderPng } from "@/utils/render-png";
 
 /**
@@ -31,8 +36,53 @@ export async function GET(
 			([key]) => !["format", "width", "height"].includes(key),
 		),
 	);
+	const config = fetchRecipeConfig(recipeSlug);
+	const isChromiumRecipe = config?.renderSettings?.renderer === "chromium";
 
-	const { config, Component, props, element } = await buildRecipeElement({
+	if (isChromiumRecipe) {
+		try {
+			if (format === "renderer-png") {
+				const png = await renderChromiumRecipePng({
+					slug: recipeSlug,
+					width,
+					height,
+					paramOverrides,
+				});
+				return new Response(new Uint8Array(png), {
+					headers: { "Content-Type": "image/png" },
+				});
+			}
+
+			const bitmap = await renderChromiumRecipeBitmap({
+				slug: recipeSlug,
+				width,
+				height,
+				grayscale: 2,
+				paramOverrides,
+			});
+
+			if (format === "bitmap") {
+				return new Response(new Uint8Array(bitmap), {
+					headers: { "Content-Type": "image/bmp" },
+				});
+			}
+
+			const finalPng = await renderPng(bitmap);
+			if (!finalPng) {
+				return new Response("Final 1-bit PNG render failed", { status: 500 });
+			}
+			return new Response(new Uint8Array(finalPng), {
+				headers: { "Content-Type": "image/png" },
+			});
+		} catch (error) {
+			return new Response(
+				`Chromium render-debug failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+				{ status: 500 },
+			);
+		}
+	}
+
+	const { config: legacyConfig, Component, props, element } = await buildRecipeElement({
 		slug: recipeSlug,
 		paramOverrides,
 	});
@@ -46,7 +96,7 @@ export async function GET(
 		slug: recipeSlug,
 		Component: ComponentToRender,
 		props: addDimensionsToProps(props, width, height),
-		config,
+		config: legacyConfig,
 		imageWidth: width,
 		imageHeight: height,
 		formats: ["bitmap", "png"],

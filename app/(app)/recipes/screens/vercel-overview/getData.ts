@@ -50,6 +50,8 @@ type DashboardMetric = {
 	secondary?: string;
 };
 
+type BillingChargeRecord = Record<string, unknown>;
+
 type DashboardDeployment = {
 	project: string;
 	branch: string;
@@ -68,6 +70,7 @@ type DashboardProduction = {
 
 export type VercelOverviewRecipeData = {
 	title: string;
+	usageLabel: string;
 	currentTime: string;
 	updatedAt: string;
 	globalStatus: "ok" | "warning" | "error";
@@ -83,6 +86,26 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const STALE_PRODUCTION_MS = 14 * DAY_MS;
 const ACTIVE_STATES = new Set(["BUILDING", "QUEUED", "INITIALIZING"]);
 const FAILURE_STATES = new Set(["ERROR", "CANCELED"]);
+const BILLING_RANGE_DAYS = 30;
+
+const USAGE_TARGETS = [
+	{
+		label: "Fluid Active CPU",
+		aliases: ["fluid active cpu", "active cpu"],
+	},
+	{
+		label: "Function Invocations",
+		aliases: ["function invocations", "invocations"],
+	},
+	{
+		label: "Edge Requests",
+		aliases: ["edge requests", "edge request"],
+	},
+	{
+		label: "Fast Origin Transfer",
+		aliases: ["fast origin transfer"],
+	},
+] as const;
 
 function extractProjects(response: VercelProjectsResponse): VercelProject[] {
 	if (Array.isArray(response)) {
@@ -106,6 +129,18 @@ function appendTeamId(url: string, teamId?: string) {
 	return `${url}${join}teamId=${encodeURIComponent(teamId)}`;
 }
 
+function appendTeamQuery(
+	url: string,
+	options: { teamId?: string; teamSlug?: string } = {},
+) {
+	const withTeamId = appendTeamId(url, options.teamId);
+	if (!options.teamSlug) {
+		return withTeamId;
+	}
+	const join = withTeamId.includes("?") ? "&" : "?";
+	return `${withTeamId}${join}slug=${encodeURIComponent(options.teamSlug)}`;
+}
+
 function formatClock(value: Date) {
 	return formatDateTime(
 		value,
@@ -116,6 +151,10 @@ function formatClock(value: Date) {
 		},
 		"America/New_York",
 	);
+}
+
+function formatIsoDate(value: Date) {
+	return value.toISOString();
 }
 
 function formatShortTime(timestamp?: number) {
@@ -166,6 +205,271 @@ function formatDuration(durationMs?: number) {
 	return `${minutes}m`;
 }
 
+function formatCompactCount(value: number) {
+	if (!Number.isFinite(value)) {
+		return "n/a";
+	}
+	if (value >= 1_000_000_000) {
+		return `${(value / 1_000_000_000).toFixed(value >= 10_000_000_000 ? 0 : 1)}B`;
+	}
+	if (value >= 1_000_000) {
+		return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`;
+	}
+	if (value >= 1_000) {
+		return `${(value / 1_000).toFixed(value >= 100_000 ? 0 : 1)}K`;
+	}
+	return String(Math.round(value));
+}
+
+function formatBytes(value: number) {
+	if (!Number.isFinite(value)) {
+		return "n/a";
+	}
+	if (value >= 1024 ** 3) {
+		return `${(value / 1024 ** 3).toFixed(value >= 10 * 1024 ** 3 ? 0 : 1)} GB`;
+	}
+	if (value >= 1024 ** 2) {
+		return `${(value / 1024 ** 2).toFixed(value >= 10 * 1024 ** 2 ? 0 : 1)} MB`;
+	}
+	if (value >= 1024) {
+		return `${Math.round(value / 1024)} KB`;
+	}
+	return `${Math.round(value)} B`;
+}
+
+function formatHoursMinutes(totalMinutes: number) {
+	if (!Number.isFinite(totalMinutes)) {
+		return "n/a";
+	}
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = Math.round(totalMinutes % 60);
+	if (hours <= 0) {
+		return `${minutes}m`;
+	}
+	return `${hours}h ${minutes}m`;
+}
+
+function normalizeMetricName(value: string) {
+	return value.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function flattenStrings(input: unknown, target: string[] = []): string[] {
+	if (typeof input === "string") {
+		target.push(input);
+		return target;
+	}
+	if (Array.isArray(input)) {
+		for (const item of input) {
+			flattenStrings(item, target);
+		}
+		return target;
+	}
+	if (input && typeof input === "object") {
+		for (const value of Object.values(input)) {
+			flattenStrings(value, target);
+		}
+	}
+	return target;
+}
+
+function deepFindNumber(input: unknown, keys: string[]): number | undefined {
+	if (!input || typeof input !== "object") {
+		return undefined;
+	}
+
+	for (const [key, value] of Object.entries(input)) {
+		const normalized = key.toLowerCase();
+		if (keys.some((candidate) => normalized.includes(candidate))) {
+			if (typeof value === "number" && Number.isFinite(value)) {
+				return value;
+			}
+			if (typeof value === "string") {
+				const parsed = Number(value.replace(/,/g, ""));
+				if (Number.isFinite(parsed)) {
+					return parsed;
+				}
+			}
+		}
+
+		if (value && typeof value === "object") {
+			const nested = deepFindNumber(value, keys);
+			if (typeof nested === "number") {
+				return nested;
+			}
+		}
+	}
+
+	return undefined;
+}
+
+function deepFindString(input: unknown, keys: string[]): string | undefined {
+	if (!input || typeof input !== "object") {
+		return undefined;
+	}
+
+	for (const [key, value] of Object.entries(input)) {
+		const normalized = key.toLowerCase();
+		if (keys.some((candidate) => normalized.includes(candidate))) {
+			if (typeof value === "string" && value.trim()) {
+				return value.trim();
+			}
+		}
+
+		if (value && typeof value === "object") {
+			const nested = deepFindString(value, keys);
+			if (nested) {
+				return nested;
+			}
+		}
+	}
+
+	return undefined;
+}
+
+function metricMatches(row: BillingChargeRecord, aliases: readonly string[]) {
+	const haystack = flattenStrings(row)
+		.map((entry) => normalizeMetricName(entry))
+		.join(" ");
+	return aliases.some((alias) => haystack.includes(normalizeMetricName(alias)));
+}
+
+function extractUsageQuantity(row: BillingChargeRecord) {
+	return (
+		deepFindNumber(row, [
+			"consumedquantity",
+			"usagequantity",
+			"billedquantity",
+			"quantity",
+			"effectivequantity",
+			"amount",
+		]) ?? 0
+	);
+}
+
+function extractLimitQuantity(row: BillingChargeRecord) {
+	return deepFindNumber(row, [
+		"limit",
+		"quota",
+		"includedquantity",
+		"planquantity",
+		"pricingquantity",
+		"commitmentquantity",
+	]);
+}
+
+function extractUsageUnit(row: BillingChargeRecord) {
+	return (
+		deepFindString(row, ["usageunit", "pricingunit", "meterunit", "unit"]) || ""
+	);
+}
+
+function formatUsageMetric(
+	label: string,
+	used: number,
+	limit: number | undefined,
+	unit: string,
+): DashboardMetric {
+	const normalizedUnit = unit.toLowerCase();
+
+	const formatQuantity = (value: number) => {
+		if (label === "Fluid Active CPU") {
+			const minutes =
+				normalizedUnit.includes("millisecond") || normalizedUnit === "ms"
+					? value / 1000 / 60
+					: normalizedUnit.includes("second") || normalizedUnit === "s"
+						? value / 60
+						: normalizedUnit.includes("minute")
+							? value
+							: normalizedUnit.includes("hour") || normalizedUnit === "h"
+								? value * 60
+								: value < 100
+									? value * 60
+									: value / 1000 / 60;
+			return formatHoursMinutes(minutes);
+		}
+
+		if (label === "Fast Origin Transfer") {
+			const bytes = normalizedUnit.includes("gb")
+				? value * 1024 ** 3
+				: normalizedUnit.includes("mb")
+					? value * 1024 ** 2
+					: normalizedUnit.includes("kb")
+						? value * 1024
+						: normalizedUnit.includes("byte") || normalizedUnit === "b"
+							? value
+							: value > 10_000
+								? value
+								: value * 1024 ** 2;
+			return formatBytes(bytes);
+		}
+
+		return formatCompactCount(value);
+	};
+
+	return {
+		label,
+		value: formatQuantity(used),
+		secondary:
+			typeof limit === "number" && Number.isFinite(limit) && limit > 0
+				? `${formatQuantity(used)} / ${formatQuantity(limit)}`
+				: "Last 30 days",
+	};
+}
+
+async function fetchUsageMetrics(
+	headers: Record<string, string>,
+	options: { teamId?: string; teamSlug?: string },
+) {
+	const to = new Date();
+	const from = new Date(to.getTime() - BILLING_RANGE_DAYS * DAY_MS);
+	const usageUrl = appendTeamQuery(
+		`https://api.vercel.com/v1/billing/charges?from=${encodeURIComponent(
+			formatIsoDate(from),
+		)}&to=${encodeURIComponent(formatIsoDate(to))}`,
+		options,
+	);
+
+	const response = await fetch(usageUrl, {
+		headers: {
+			...headers,
+			"Accept-Encoding": "gzip",
+		},
+		next: { revalidate: 0 },
+	});
+
+	if (!response.ok) {
+		throw new Error(
+			`Usage API responded with status: ${response.status} (${response.statusText})`,
+		);
+	}
+
+	const rawText = await response.text();
+	const rows = rawText
+		.split("\n")
+		.map((line) => line.trim())
+		.filter(Boolean)
+		.map((line) => JSON.parse(line) as BillingChargeRecord);
+
+	return USAGE_TARGETS.map((target) => {
+		const matches = rows.filter((row) => metricMatches(row, target.aliases));
+		const used = matches.reduce(
+			(total, row) => total + extractUsageQuantity(row),
+			0,
+		);
+		const limitCandidate = matches
+			.map((row) => extractLimitQuantity(row))
+			.find((value): value is number => typeof value === "number" && value > 0);
+		const unitCandidate =
+			matches
+				.map((row) => extractUsageUnit(row))
+				.find((value) => value.trim().length > 0) || "";
+
+		return used > 0 || typeof limitCandidate === "number"
+			? formatUsageMetric(target.label, used, limitCandidate, unitCandidate)
+			: null;
+	}).filter((metric): metric is DashboardMetric => metric !== null);
+}
+
 function computeDurationMs(deployment: VercelDeployment) {
 	const readyAt = deployment.ready;
 	const startAt = deployment.buildingAt || deployment.createdAt;
@@ -173,18 +477,6 @@ function computeDurationMs(deployment: VercelDeployment) {
 		return undefined;
 	}
 	return readyAt - startAt;
-}
-
-function median(values: number[]) {
-	if (values.length === 0) {
-		return 0;
-	}
-	const sorted = [...values].sort((a, b) => a - b);
-	const middle = Math.floor(sorted.length / 2);
-	if (sorted.length % 2 === 1) {
-		return sorted[middle];
-	}
-	return Math.round((sorted[middle - 1] + sorted[middle]) / 2);
 }
 
 function statusTone(status: string) {
@@ -224,17 +516,24 @@ function buildFallback(note?: string): VercelOverviewRecipeData {
 	const now = new Date();
 	return {
 		title: "Vercel Dashboard",
+		usageLabel: "Usage · Last 30 days",
 		currentTime: formatClock(now),
 		updatedAt: formatUpdatedAt(now, "America/New_York"),
 		globalStatus: "warning",
 		globalStatusLabel: "Attention Needed",
 		metrics: [
-			{ label: "Projects", value: "7" },
-			{ label: "Deploys 24h", value: "18" },
-			{ label: "OK 24h", value: "17", secondary: "94%" },
-			{ label: "Failed 24h", value: "1", secondary: "6%" },
-			{ label: "Median Build", value: "26s" },
-			{ label: "Active Builds", value: "3" },
+			{ label: "Fluid Active CPU", value: "3h 11m", secondary: "3h 11m / 4h" },
+			{
+				label: "Function Invocations",
+				value: "126K",
+				secondary: "126K / 1M",
+			},
+			{ label: "Edge Requests", value: "108K", secondary: "108K / 1M" },
+			{
+				label: "Fast Origin Transfer",
+				value: "651 MB",
+				secondary: "651 MB / 10 GB",
+			},
 		],
 		latestDeployments: [
 			{
@@ -328,24 +627,36 @@ export default async function getData(
 	const teamId =
 		String(params?.teamId || "").trim() ||
 		String(process.env.VERCEL_TEAM_ID || "").trim();
+	const teamSlug = String(process.env.VERCEL_TEAM_SLUG || "").trim();
 	const headers = {
 		Accept: "application/json",
 		Authorization: `Bearer ${apiToken}`,
 	};
 
 	try {
-		const [projectsResponse, deploymentsResponse] = await Promise.all([
-			fetchJsonWithTimeout<VercelProjectsResponse>(
-				appendTeamId("https://api.vercel.com/v9/projects", teamId),
-				{ headers },
-				12000,
-			),
-			fetchJsonWithTimeout<VercelDeploymentsResponse>(
-				appendTeamId("https://api.vercel.com/v6/deployments?limit=100", teamId),
-				{ headers },
-				12000,
-			),
-		]);
+		const [projectsResponse, deploymentsResponse, usageMetrics] =
+			await Promise.all([
+				fetchJsonWithTimeout<VercelProjectsResponse>(
+					appendTeamId("https://api.vercel.com/v9/projects", teamId),
+					{ headers },
+					12000,
+				),
+				fetchJsonWithTimeout<VercelDeploymentsResponse>(
+					appendTeamId(
+						"https://api.vercel.com/v6/deployments?limit=100",
+						teamId,
+					),
+					{ headers },
+					12000,
+				),
+				fetchUsageMetrics(headers, { teamId, teamSlug }).catch((error) => {
+					console.warn(
+						"Usage metric fetch failed, keeping deployment KPIs:",
+						error,
+					);
+					return [];
+				}),
+			]);
 
 		const now = Date.now();
 		const projects = extractProjects(projectsResponse);
@@ -367,10 +678,6 @@ export default async function getData(
 		const activeBuilds = deployments.filter((deployment) =>
 			ACTIVE_STATES.has(normalizeState(deployment)),
 		);
-		const durations = deployments
-			.map((deployment) => computeDurationMs(deployment))
-			.filter((value): value is number => typeof value === "number");
-		const medianDurationMs = median(durations);
 		const successRate =
 			recentDeployments.length > 0
 				? Math.round((successful24h.length / recentDeployments.length) * 100)
@@ -430,6 +737,7 @@ export default async function getData(
 
 		return {
 			title: "Vercel Dashboard",
+			usageLabel: "Usage · Last 30 days",
 			currentTime: formatClock(new Date(now)),
 			updatedAt: formatUpdatedAt(new Date(now), "America/New_York"),
 			globalStatus,
@@ -439,22 +747,23 @@ export default async function getData(
 					: globalStatus === "warning"
 						? "Attention Needed"
 						: "Production Failure",
-			metrics: [
-				{ label: "Projects", value: String(projects.length) },
-				{ label: "Deploys 24h", value: String(recentDeployments.length) },
-				{
-					label: "OK 24h",
-					value: String(successful24h.length),
-					secondary: `${successRate}%`,
-				},
-				{
-					label: "Failed 24h",
-					value: String(failed24h.length),
-					secondary: `${Math.max(0, 100 - successRate)}%`,
-				},
-				{ label: "Median Build", value: formatDuration(medianDurationMs) },
-				{ label: "Active Builds", value: String(activeBuilds.length) },
-			],
+			metrics:
+				usageMetrics.length > 0
+					? usageMetrics
+					: [
+							{ label: "Projects", value: String(projects.length) },
+							{ label: "Deploys 24h", value: String(recentDeployments.length) },
+							{
+								label: "OK 24h",
+								value: String(successful24h.length),
+								secondary: `${successRate}%`,
+							},
+							{
+								label: "Failed 24h",
+								value: String(failed24h.length),
+								secondary: `${Math.max(0, 100 - successRate)}%`,
+							},
+						],
 			latestDeployments,
 			currentProduction,
 			footer: [

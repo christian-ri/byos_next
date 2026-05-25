@@ -41,6 +41,11 @@ export async function GET(
 	const { searchParams } = new URL(request.url);
 	const width = Number(searchParams.get("width") || getTrmnlRenderWidth());
 	const height = Number(searchParams.get("height") || getTrmnlRenderHeight());
+	const paramOverrides = Object.fromEntries(
+		Array.from(searchParams.entries()).filter(
+			([key]) => key !== "width" && key !== "height",
+		),
+	);
 	const cacheSeconds = getChromiumRenderCacheSeconds();
 
 	try {
@@ -48,6 +53,7 @@ export async function GET(
 			slug: recipeId,
 			width,
 			height,
+			paramOverrides,
 		});
 
 		// TODO: Add Vercel Blob artifact caching for rendered PNG outputs.

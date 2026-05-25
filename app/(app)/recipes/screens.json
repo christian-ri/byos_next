@@ -3051,6 +3051,63 @@
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
+	"cr-weather": {
+		"title": "CR Weather",
+		"published": true,
+		"createdAt": "2026-05-24T00:00:00Z",
+		"updatedAt": "2026-05-24T00:00:00Z",
+		"description": "Pixel-perfect 800x480 monochrome eInk weather dashboard with current conditions, hourly graph, five-day forecast, and AQI summary.",
+		"componentPath": "./screens/cr-weather",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"location": {
+				"type": "string",
+				"label": "Location",
+				"description": "City or place name for Open-Meteo geocoding. Ignored when latitude and longitude are both set.",
+				"default": "Berlin"
+			},
+			"latitude": {
+				"type": "string",
+				"label": "Latitude",
+				"description": "Optional latitude override.",
+				"default": ""
+			},
+			"longitude": {
+				"type": "string",
+				"label": "Longitude",
+				"description": "Optional longitude override.",
+				"default": ""
+			},
+			"units": {
+				"type": "select",
+				"label": "Units",
+				"description": "Temperature and wind units.",
+				"default": "metric",
+				"options": [
+					{ "label": "Metric", "value": "metric" },
+					{ "label": "Imperial", "value": "imperial" }
+				]
+			},
+			"language": {
+				"type": "string",
+				"label": "Language",
+				"description": "Open-Meteo geocoding language code. Defaults to de.",
+				"default": "de"
+			}
+		},
+		"tags": ["weather", "dashboard", "trmnl", "eink", "chromium"],
+		"author": {
+			"name": "BYOS",
+			"github": "christian-ri"
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
+		},
+		"version": "0.1.0",
+		"category": "weather"
+	},
 	"github-monitor": {
 		"title": "GitHub Monitor",
 		"published": true,

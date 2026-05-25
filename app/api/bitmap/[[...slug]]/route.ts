@@ -34,6 +34,7 @@ export async function GET(
 		const heightParam = searchParams.get("height");
 		const grayscaleParam = searchParams.get("grayscale");
 		const ownerParam = searchParams.get("_owner");
+		const batteryVoltageParam = searchParams.get("_battery_voltage");
 		const reasonParam = searchParams.get("reason");
 		const detailParam = searchParams.get("detail");
 
@@ -66,6 +67,11 @@ export async function GET(
 			validHeight,
 			grayscaleLevels,
 			ownerParam,
+			batteryVoltageParam
+				? {
+						batteryVoltage: batteryVoltageParam,
+					}
+				: undefined,
 		);
 
 		if (
@@ -114,6 +120,7 @@ const renderRecipeBitmap = async (
 	height: number,
 	grayscaleLevels: number = 2,
 	userId: string | null = null,
+	paramOverrides?: Record<string, unknown>,
 ) => {
 	const recipeConfig = fetchRecipeConfig(recipeId);
 	if (recipeConfig?.renderSettings?.renderer === "chromium") {
@@ -123,6 +130,7 @@ const renderRecipeBitmap = async (
 			height,
 			grayscale: grayscaleLevels,
 			userId,
+			paramOverrides,
 		});
 	}
 

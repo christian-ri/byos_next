@@ -187,6 +187,10 @@ export async function GET(request: Request) {
 			imageUrl,
 			uniqueId,
 			userId,
+			{
+				_battery_voltage:
+					headers.batteryVoltage || device.battery_voltage?.toString() || null,
+			},
 		);
 
 		precacheImageInBackground(cacheBustedImageUrl, device.friendly_id);

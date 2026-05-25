@@ -698,10 +698,16 @@ export const appendImageCacheBust = (
 	imageUrl: string,
 	uniqueId: string,
 	userId?: string | null,
+	extraParams: Record<string, string | number | null | undefined> = {},
 ) => {
 	const params = new URLSearchParams({ _cb: uniqueId });
 	if (userId) {
 		params.set("_owner", userId);
+	}
+	for (const [key, value] of Object.entries(extraParams)) {
+		if (value !== null && value !== undefined && String(value).trim()) {
+			params.set(key, String(value));
+		}
 	}
 	const separator = imageUrl.includes("?") ? "&" : "?";
 	return `${imageUrl}${separator}${params.toString()}`;

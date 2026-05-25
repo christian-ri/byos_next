@@ -90,8 +90,12 @@ The server records the following fields on display requests to aid debugging and
 
 ## Screen Generation Pipeline
 - Image format: 800x480 pixel 1-bit BMP.
-- Renderer: Takumi (default) or Satori (`REACT_RENDERER` env var).
-- Pipeline: JSX component → renderer (PNG) → Sharp (BMP) → TRMNL-specific header.
+- Renderer:
+  - Chromium for recipes configured with `renderSettings.renderer = "chromium"` (recommended/default for new work).
+  - Legacy Takumi/Satori only for non-migrated screens.
+- Pipeline:
+  - Chromium recipes: HTML/CSS (`renderHtml`) → Chromium PNG → BMP postprocess.
+  - Legacy recipes: JSX component → legacy renderer (PNG) → BMP postprocess.
 - Caching: 60-second cache with background revalidation by Next.js (development uses in-memory cache).
 
 ## Additional Endpoints

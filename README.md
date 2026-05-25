@@ -13,7 +13,7 @@ This repository is a TRMNL BYOS fork built around:
 - stricter debugging and observability for `/api/setup`, `/api/display`, and `/api/log`
 
 ## Current rendering direction: Vercel-only Chromium renderer
-This project remains a complete Next.js BYOS server and keeps Vercel as the production target. Existing Satori/Takumi renderers remain in place as legacy compatibility paths, but new recipes should move to the Chromium HTML/CSS renderer. The preferred recipe format is TRMNL Pixel Perfect / TRMNL Framework-compatible HTML rendered at exactly `800x480`, captured by Chromium, and only then postprocessed with Sharp/Jimp for PNG/BMP output.
+This project remains a complete Next.js BYOS server and keeps Vercel as the production target. Existing Satori/Takumi renderers remain in place only as legacy compatibility paths. Chromium recipes now use Chromium across `/api/render`, `/api/bitmap`, and `/api/render-debug`. The preferred recipe format is TRMNL Pixel Perfect / TRMNL Framework-compatible HTML rendered at exactly `800x480`, captured by Chromium, and only then postprocessed with Sharp/Jimp for PNG/BMP output.
 
 ### Test the new renderer
 ```bash
@@ -69,8 +69,8 @@ For local macOS/Linux development, the Chromium route can also use an installed 
 - Device management UI with MAC/API key registration, status tracking, screen assignment, and refresh scheduling
 - Playlist-based screen rotation with time and weekday rules
 - Single-screen fallback flow for debugging or simple TRMNL device setups
-- On-demand screen rendering to 1-bit BMP via Takumi/Satori
-- Future-facing HTML/CSS screenshot rendering via Chromium for new recipes
+- On-demand screen rendering to 1-bit BMP (Chromium for Chromium recipes, legacy Takumi/Satori for legacy recipes)
+- HTML/CSS screenshot rendering via Chromium for all Chromium recipes
 - Postgres-backed persistence for devices, logs, playlists, mixups, and recipe configs
 - Recipe gallery to compare direct browser preview vs. renderer PNG/BMP output
 - Parameter-driven recipes, including booleans rendered as actual checkboxes in the recipe config UI
