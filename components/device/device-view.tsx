@@ -99,6 +99,22 @@ export default function DeviceView({
 		playlistScreens.find(
 			(screen) => screen.orderIndex === device.current_playlist_index,
 		) ?? playlistScreens[0];
+	const bitmapParams = new URLSearchParams({
+		width: String(deviceWidth),
+		height: String(deviceHeight),
+		grayscale: String(deviceGrayscaleLevels),
+	});
+	if (device.battery_voltage !== null && device.battery_voltage !== undefined) {
+		bitmapParams.set("_battery_voltage", String(device.battery_voltage));
+	}
+	if (device.battery_percent !== null && device.battery_percent !== undefined) {
+		bitmapParams.set("_battery_percent", String(device.battery_percent));
+	}
+	const bitmapQuery = bitmapParams.toString();
+	const bitmapSrc = (screen: string) =>
+		`/api/bitmap/${screen}.bmp?${bitmapQuery}`;
+	const mixupBitmapSrc = (mixupId: string) =>
+		`/api/bitmap/mixup/${mixupId}.bmp?${bitmapQuery}`;
 
 	return (
 		<Card>
@@ -166,12 +182,17 @@ export default function DeviceView({
 									const batteryEstimate = estimateBatteryLife(
 										device.battery_voltage,
 										refreshPerDay,
+										1800,
+										device.battery_percent,
+									);
+									const batteryPercentage = Math.round(
+										batteryEstimate.batteryPercentage,
 									);
 
 									let batteryColor = "bg-primary";
-									if (batteryEstimate.batteryPercentage < 20) {
+									if (batteryPercentage < 20) {
 										batteryColor = "bg-red-500";
-									} else if (batteryEstimate.batteryPercentage < 50) {
+									} else if (batteryPercentage < 50) {
 										batteryColor = "bg-yellow-500";
 									}
 
@@ -182,7 +203,7 @@ export default function DeviceView({
 													<div
 														className={`h-full rounded-[calc(var(--radius)-7px)] transition-all duration-300 ease-in-out ${batteryColor} flex items-center justify-center`}
 														style={{
-															width: `${batteryEstimate.batteryPercentage}%`,
+															width: `${batteryPercentage}%`,
 														}}
 													>
 														{batteryEstimate.isCharging && (
@@ -197,7 +218,7 @@ export default function DeviceView({
 											<span className="font-medium">
 												{batteryEstimate.isCharging
 													? "Charging"
-													: `${batteryEstimate.batteryPercentage}%`}
+													: `${batteryPercentage}%`}
 											</span>
 											<span className="font-medium">
 												{device.battery_voltage}V
@@ -283,7 +304,11 @@ export default function DeviceView({
 							>
 								<AspectRatio ratio={deviceWidth / deviceHeight}>
 									<Image
-										src={`/api/bitmap/${activePlaylistScreen?.screen || device.screen || "simple-text"}.bmp?width=${deviceWidth}&height=${deviceHeight}&grayscale=${deviceGrayscaleLevels}`}
+										src={bitmapSrc(
+											activePlaylistScreen?.screen ||
+												device.screen ||
+												"simple-text",
+										)}
 										alt="Current playlist screen"
 										fill
 										className="object-cover rounded-xs ring-2 ring-gray-200"
@@ -320,7 +345,7 @@ export default function DeviceView({
 								{device.display_mode === DeviceDisplayMode.MIXUP &&
 								device.mixup_id ? (
 									<Image
-										src={`/api/bitmap/mixup/${device.mixup_id}.bmp?width=${deviceWidth}&height=${deviceHeight}&grayscale=${deviceGrayscaleLevels}`}
+										src={mixupBitmapSrc(device.mixup_id)}
 										alt="Mixup Preview"
 										fill
 										className="object-cover rounded-xs ring-2 ring-gray-200"
@@ -329,7 +354,7 @@ export default function DeviceView({
 									/>
 								) : (
 									<Image
-										src={`/api/bitmap/${device?.screen || "simple-text"}.bmp?width=${deviceWidth}&height=${deviceHeight}&grayscale=${deviceGrayscaleLevels}`}
+										src={bitmapSrc(device?.screen || "simple-text")}
 										alt="Device Screen"
 										fill
 										className="object-cover rounded-xs ring-2 ring-gray-200"

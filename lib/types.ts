@@ -32,6 +32,7 @@ export type Device = {
 	next_expected_update: string | null;
 	last_refresh_duration: number | null;
 	battery_voltage: number | null;
+	battery_percent: number | null;
 	firmware_version: string | null;
 	rssi: number | null;
 	created_at: string | null;

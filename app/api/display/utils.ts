@@ -32,6 +32,7 @@ export interface RequestHeaders {
 	friendlyId: string | null;
 	refreshRate: string | null;
 	batteryVoltage: string | null;
+	batteryPercent: string | null;
 	fwVersion: string | null;
 	rssi: string | null;
 	model: string | null;
@@ -122,6 +123,16 @@ export const parseRequestHeaders = (request: Request): RequestHeaders => {
 				"Battery-Voltage",
 				"battery-voltage",
 				"battery_voltage",
+			]),
+		),
+		batteryPercent: normalizeIdentifier(
+			firstIdentifier([
+				"Percent-Charged",
+				"percent-charged",
+				"percent_charged",
+				"Battery-Percent",
+				"battery-percent",
+				"battery_percent",
 			]),
 		),
 		fwVersion: normalizeIdentifier(
@@ -500,6 +511,12 @@ export const updateDeviceStatus = async (
 
 	if (headers.batteryVoltage) {
 		updateData.battery_voltage = Number.parseFloat(headers.batteryVoltage);
+	}
+	if (headers.batteryPercent) {
+		const batteryPercent = Number.parseFloat(headers.batteryPercent);
+		if (Number.isFinite(batteryPercent) && batteryPercent >= 0) {
+			updateData.battery_percent = Math.max(0, Math.min(100, batteryPercent));
+		}
 	}
 	if (headers.fwVersion) {
 		updateData.firmware_version = headers.fwVersion;

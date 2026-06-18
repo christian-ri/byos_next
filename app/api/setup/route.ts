@@ -82,6 +82,7 @@ export async function GET(request: Request) {
 		);
 		const refreshRate = request.headers.get("Refresh-Rate");
 		const batteryVoltage = request.headers.get("Battery-Voltage");
+		const batteryPercent = request.headers.get("Percent-Charged");
 		const fwVersion = request.headers.get("FW-Version");
 		const rssi = request.headers.get("RSSI");
 		const macAddress = normalizeMacAddress(macIdentifier.value);
@@ -106,6 +107,7 @@ export async function GET(request: Request) {
 				modelSource: modelIdentifier.source,
 				refreshRate: refreshRate || null,
 				batteryVoltage: batteryVoltage || null,
+				batteryPercent: batteryPercent || null,
 				fwVersion: fwVersion || null,
 				rssi: rssi || null,
 			},
@@ -240,6 +242,9 @@ export async function GET(request: Request) {
 						timezone: "UTC", // Default timezone
 						battery_voltage: batteryVoltage
 							? Number.parseFloat(batteryVoltage)
+							: null,
+						battery_percent: batteryPercent
+							? Number.parseFloat(batteryPercent)
 							: null,
 						firmware_version: fwVersion || model || null,
 						rssi: rssi ? Number.parseInt(rssi, 10) : null,

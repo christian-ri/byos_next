@@ -3,6 +3,7 @@ import { withUserScope } from "@/lib/database/scoped-db";
 import { checkDbConnection } from "@/lib/database/utils";
 import { logError, logInfo } from "@/lib/logger";
 import type { Device } from "@/lib/types";
+import { estimateBatteryLife } from "@/utils/helpers";
 
 /**
  * GET /api/devices
@@ -38,27 +39,30 @@ export async function GET(_request: Request) {
 		// Transform devices to match TRMNL API format
 		const deviceData = devices.map((device) => {
 			const deviceObj = device as unknown as Device;
+			const batteryVoltage =
+				deviceObj.battery_voltage !== null &&
+				deviceObj.battery_voltage !== undefined
+					? Number.parseFloat(deviceObj.battery_voltage.toString())
+					: null;
+			const batteryPercent =
+				deviceObj.battery_percent !== null &&
+				deviceObj.battery_percent !== undefined
+					? Number.parseFloat(deviceObj.battery_percent.toString())
+					: null;
+			const percentCharged =
+				batteryPercent ??
+				(batteryVoltage
+					? estimateBatteryLife(batteryVoltage, 48).batteryPercentage
+					: null);
 			return {
 				id: Number.parseInt(device.id.toString(), 10),
 				name: deviceObj.name,
 				friendly_id: deviceObj.friendly_id,
 				mac_address: deviceObj.mac_address,
-				battery_voltage: deviceObj.battery_voltage
-					? Number.parseFloat(deviceObj.battery_voltage.toString())
-					: null,
+				battery_voltage: batteryVoltage,
+				battery_percent: batteryPercent,
 				rssi: deviceObj.rssi,
-				percent_charged: deviceObj.battery_voltage
-					? Math.min(
-							100,
-							Math.max(
-								0,
-								((Number.parseFloat(deviceObj.battery_voltage.toString()) -
-									3.0) /
-									(4.2 - 3.0)) *
-									100,
-							),
-						)
-					: null,
+				percent_charged: percentCharged,
 				wifi_strength: deviceObj.rssi
 					? Math.min(100, Math.max(0, ((deviceObj.rssi + 100) / 70) * 100))
 					: null,

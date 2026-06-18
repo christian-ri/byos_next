@@ -196,6 +196,7 @@ export async function addDevice(device: {
 				time_ranges: [],
 			}),
 			battery_voltage: null,
+			battery_percent: null,
 			firmware_version: null,
 			rssi: null,
 		};

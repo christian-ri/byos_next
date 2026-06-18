@@ -66,6 +66,7 @@ type CrWeatherParams = {
 	units?: string;
 	language?: string;
 	batteryVoltage?: string | number;
+	batteryPercent?: string | number;
 	batteryLabel?: string;
 };
 
@@ -185,7 +186,13 @@ function formatBatteryLabel(params?: CrWeatherParams) {
 	const voltage = parseOptionalNumber(params?.batteryVoltage);
 	if (!Number.isFinite(voltage)) return "--";
 
-	const estimate = estimateBatteryLife(voltage, 48);
+	const percent = parseOptionalNumber(params?.batteryPercent);
+	const estimate = estimateBatteryLife(
+		voltage,
+		48,
+		1800,
+		Number.isFinite(percent) ? percent : null,
+	);
 	if (estimate.isCharging) return "CHG";
 	return `${Math.round(estimate.batteryPercentage)}%`;
 }

@@ -203,6 +203,8 @@ export async function updateDevice(
 		updateData.display_mode = normalizedDisplayMode;
 	if (device.battery_voltage !== undefined)
 		updateData.battery_voltage = device.battery_voltage;
+	if (device.battery_percent !== undefined)
+		updateData.battery_percent = device.battery_percent;
 	if (device.firmware_version !== undefined)
 		updateData.firmware_version = device.firmware_version;
 	if (device.rssi !== undefined) updateData.rssi = device.rssi;

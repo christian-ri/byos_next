@@ -220,9 +220,16 @@ export const fetchRecipeProps = cache(
 			};
 
 			// Set a timeout for data fetching to prevent hanging
+			const dataFetchTimeoutMs =
+				typeof config.renderSettings?.dataFetchTimeoutMs === "number"
+					? config.renderSettings.dataFetchTimeoutMs
+					: 10000;
 			const fetchPromise = fetchDataFunction(params);
 			const timeoutPromise = new Promise((_, reject) => {
-				setTimeout(() => reject(new Error("Data fetch timeout")), 10000);
+				setTimeout(
+					() => reject(new Error("Data fetch timeout")),
+					dataFetchTimeoutMs,
+				);
 			});
 
 			// Race between the fetch and the timeout

@@ -63,6 +63,10 @@ export interface Devices {
 	 * Battery voltage in volts
 	 */
 	battery_voltage: Numeric | null;
+	/**
+	 * Battery state of charge percentage reported by the device fuel gauge
+	 */
+	battery_percent: Numeric | null;
 	created_at: Generated<Timestamp | null>;
 	current_playlist_index: Generated<number | null>;
 	display_mode: Generated<DeviceDisplayMode | null>;

@@ -35,6 +35,7 @@ export async function GET(
 		const grayscaleParam = searchParams.get("grayscale");
 		const ownerParam = searchParams.get("_owner");
 		const batteryVoltageParam = searchParams.get("_battery_voltage");
+		const batteryPercentParam = searchParams.get("_battery_percent");
 		const reasonParam = searchParams.get("reason");
 		const detailParam = searchParams.get("detail");
 
@@ -67,9 +68,14 @@ export async function GET(
 			validHeight,
 			grayscaleLevels,
 			ownerParam,
-			batteryVoltageParam
+			batteryVoltageParam || batteryPercentParam
 				? {
-						batteryVoltage: batteryVoltageParam,
+						...(batteryVoltageParam
+							? { batteryVoltage: batteryVoltageParam }
+							: {}),
+						...(batteryPercentParam
+							? { batteryPercent: batteryPercentParam }
+							: {}),
 					}
 				: undefined,
 		);

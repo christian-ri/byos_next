@@ -81,7 +81,10 @@ export async function GET(request: Request) {
 		});
 
 		return buildDisplayResponse(
-			appendImageCacheBust(imageUrl, uniqueId, userId),
+			appendImageCacheBust(imageUrl, uniqueId, userId, {
+				_battery_voltage: deviceData.battery_voltage?.toString() || null,
+				_battery_percent: deviceData.battery_percent?.toString() || null,
+			}),
 			`${screenToDisplay}_${uniqueId}.bmp`,
 			refreshRate,
 			{

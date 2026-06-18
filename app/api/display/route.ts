@@ -190,6 +190,8 @@ export async function GET(request: Request) {
 			{
 				_battery_voltage:
 					headers.batteryVoltage || device.battery_voltage?.toString() || null,
+				_battery_percent:
+					headers.batteryPercent || device.battery_percent?.toString() || null,
 			},
 		);
 

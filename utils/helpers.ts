@@ -218,20 +218,28 @@ export const formatTimezone = (timezone: string): string => {
 };
 
 export function estimateBatteryLife(
-	batteryVoltage: number,
+	batteryVoltage: number | string,
 	refreshPerDay: number,
 	batteryCapacity = 1800, // use 2500mAh if you have battery upgrade
+	reportedBatteryPercentage?: number | string | null,
 ): { batteryPercentage: number; remainingDays: number; isCharging: boolean } {
 	// Battery voltage range (adjust based on real battery discharge curve if needed)
 	const V_CHARGING = 4.6; // Charging voltage
 	const V_MAX = 4.2; // Fully charged
 	const V_MIN = 3.6; // Cutoff voltage
 
+	const normalizedBatteryVoltage = Number(batteryVoltage);
+	const normalizedReportedBatteryPercentage = Number(reportedBatteryPercentage);
+
 	// Estimate battery percentage (linear approximation)
-	const batteryPercentage = Math.max(
-		0,
-		Math.min(100, ((batteryVoltage - V_MIN) / (V_MAX - V_MIN)) * 100),
-	);
+	const voltageBatteryPercentage =
+		((normalizedBatteryVoltage - V_MIN) / (V_MAX - V_MIN)) * 100;
+	const batteryPercentage =
+		reportedBatteryPercentage !== null &&
+		reportedBatteryPercentage !== undefined &&
+		Number.isFinite(normalizedReportedBatteryPercentage)
+			? Math.max(0, Math.min(100, normalizedReportedBatteryPercentage))
+			: Math.max(0, Math.min(100, voltageBatteryPercentage));
 
 	// Power consumption rates
 	const SLEEP_POWER = 0.1 * 24; // 0.1mA * 24h = 2.4mAh per day in sleep mode
@@ -247,6 +255,6 @@ export function estimateBatteryLife(
 	return {
 		batteryPercentage: Number.parseFloat(batteryPercentage.toFixed(2)),
 		remainingDays: Number.parseFloat(remainingDays.toFixed(2)),
-		isCharging: batteryVoltage > V_CHARGING,
+		isCharging: normalizedBatteryVoltage > V_CHARGING,
 	};
 }

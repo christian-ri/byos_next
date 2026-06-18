@@ -410,6 +410,15 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO byos_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO byos_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO byos_app;`,
 	},
+	"0010_add_device_battery_percent": {
+		title: "Add Device Battery Percent",
+		description:
+			"Store device fuel-gauge battery percentage separately from voltage",
+		sql: `ALTER TABLE devices
+ADD COLUMN IF NOT EXISTS battery_percent NUMERIC;
+
+COMMENT ON COLUMN devices.battery_percent IS 'Battery state of charge percentage reported by the device fuel gauge';`,
+	},
 	validate_schema: {
 		title: "Validate Database Schema",
 		description:
