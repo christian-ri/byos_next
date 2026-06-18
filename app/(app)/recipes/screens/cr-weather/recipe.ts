@@ -20,10 +20,10 @@ function iconHeart(size = 14) {
 	return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.6-9.2-8.4C1.3 8.7 2.6 5 6.3 5c2.1 0 3.6 1.2 4.4 2.8C11.5 6.2 13 5 15.1 5c3.7 0 5 3.7 3.5 6.6C19 15.4 12 20 12 20Z"></path></svg>`;
 }
 
-function crLogo(size = 28) {
-	return `<svg viewBox="360 20 1820 1210" width="${size}" height="${Math.round(
+function crLogo(size = 38) {
+	return `<svg viewBox="0 0 1683.28 1113.43" width="${size}" height="${Math.round(
 		size * 0.66,
-	)}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"><path d="M952 670s1.541-113.97-144-135c-270.305-39.058-387.056 333.168-207 465 102.483 75.035 576.707 56.227 577 55.878"/><path d="M962 559.419C927.993 494.544 852.216 301.512 954 195c66.71-69.809 279.838-201.377 427 68 147.162 269.377-268.459 421.811-297 428-28.541 6.189 184.37 367.223 184.37 367.223"/><path d="M1447 579.477s-18.447 40.696-72 181.707c-57.709 151.955 11.332 320.182 125 338.816 169.145 27.728 439.336-297.375 229-340.816-144.949-29.937-133.416 306.24-2 338.816 105.376 26.121 318.151-14.916 332-328 13.064-295.342-205.956-410.411-521-363"/></svg>`;
+	)}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="200" stroke-linecap="round" stroke-linejoin="round"><path d="M444.46 723.41s-23.54-180.43-151.64-194.19c-237.91-25.55-244.01 296.06-82.14 405.73 175.34 130.37 382.57 59.04 382.82 58.73"></path><path d="M529.61 427.84c-82.22-81.41-100.49-142.12-14.78-238.63 56.17-63.26 238.57-185.27 376.03 45.88 137.46 231.15-221.56 377.9-246.35 384.24s200.11 374.35 200.11 374.35"></path><path d="M1063.99 556s-42.37 45.16-84.75 170.33c-18.31 74.43 8.43 149.38 87.67 208.62 207.48 124.52 393.03-253.29 207.48-284.6-127.87-21.57 24.17 319.01 140.27 343.32 126.38 33.75 180.15-74.47 166.57-328.71 1.99-259-173.12-373.01-447.44-321.42"></path></svg>`;
 }
 
 function iconWind(size = 28) {
@@ -93,7 +93,8 @@ function renderHourlyGraph(data: CrWeatherData) {
 		const x = plotLeft + (index / (data.hourly.length - 1)) * chartWidth;
 		const yTemp = top + ((max - point.temp) / range) * chartHeight;
 		const yFeels = top + ((max - point.feels) / range) * chartHeight;
-		return { ...point, x, yTemp, yFeels };
+		const labelY = Math.max(10, Math.min(yTemp, yFeels) - 11);
+		return { ...point, x, yTemp, yFeels, labelY };
 	});
 	const tempPath = points.map((point) => `${point.x},${point.yTemp}`).join(" ");
 	const feelsPath = points
@@ -125,8 +126,7 @@ function renderHourlyGraph(data: CrWeatherData) {
 				(point) => `
 					<circle cx="${point.x}" cy="${point.yTemp}" r="3.6" fill="#111"></circle>
 					<circle cx="${point.x}" cy="${point.yFeels}" r="2.8" fill="#111"></circle>
-					<text x="${point.x}" y="${point.yTemp - 12}" text-anchor="middle" font-size="10" font-weight="700" fill="#111">${point.temp}°</text>
-					<text x="${point.x}" y="${point.yFeels + 15}" text-anchor="middle" font-size="10" font-weight="700" fill="#111">${point.feels}°</text>
+					<text x="${point.x}" y="${point.labelY}" text-anchor="middle" font-size="10" font-weight="700" fill="#111">${point.temp}°</text>
 					<text x="${point.x}" y="${height - 8}" text-anchor="middle" font-size="11" font-weight="600" fill="#111">${escapeHtml(point.label)}</text>
 				`,
 			)
@@ -139,7 +139,7 @@ export function renderHtml(data: CrWeatherData) {
 		<section class="screen crw-screen">
 			<div class="crw-shell">
 				<header class="crw-header">
-					<div class="crw-header__left"><span>CR WEATHER</span>${crLogo(28)}</div>
+					<div class="crw-header__left"><span>CR WEATHER</span>${crLogo(38)}</div>
 					<div class="crw-header__center">${iconMapPin(18)}<span>${escapeHtml(data.location.toUpperCase())}</span></div>
 					<div class="crw-header__right">${iconBattery(22)}<span class="crw-battery">${escapeHtml(data.batteryLabel)}</span><span class="crw-clock">${escapeHtml(data.time)}</span></div>
 				</header>
