@@ -163,6 +163,17 @@ export const parseRequestHeaders = (request: Request): RequestHeaders => {
 
 // --- Helper Functions ---
 
+const TRUE_VALUES = new Set(["true", "1", "yes", "on"]);
+
+const parseBooleanEnv = (value: string | undefined, defaultValue: boolean) => {
+	if (!value) return defaultValue;
+	return TRUE_VALUES.has(value.trim().toLowerCase());
+};
+
+export const isDisplayPrecacheEnabled = (): boolean => {
+	return parseBooleanEnv(process.env.DISPLAY_PRECACHE_ENABLED, false);
+};
+
 export const precacheImageInBackground = (
 	imageUrl: string,
 	friendlyId: string,

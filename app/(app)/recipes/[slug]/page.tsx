@@ -30,20 +30,29 @@ import {
 	renderRecipeOutputs,
 } from "@/lib/recipes/recipe-renderer";
 
-const getChromiumRenderHref = (slug: string) => {
-	return `/api/render/${slug}`;
+const getChromiumRenderHref = (slug: string, userId?: string | null) => {
+	const params = new URLSearchParams();
+	if (userId) {
+		params.set("_owner", userId);
+	}
+	const query = params.toString();
+	return `/api/render/${slug}${query ? `?${query}` : ""}`;
 };
 
 const getChromiumBitmapHref = (
 	slug: string,
 	imageWidth: number,
 	imageHeight: number,
+	userId?: string | null,
 ) => {
 	const params = new URLSearchParams({
 		width: String(imageWidth),
 		height: String(imageHeight),
 		grayscale: "2",
 	});
+	if (userId) {
+		params.set("_owner", userId);
+	}
 	return `/api/bitmap/${slug}?${params.toString()}`;
 };
 
@@ -118,12 +127,14 @@ const RenderComponent = ({
 	title,
 	imageWidth,
 	imageHeight,
+	userId,
 }: {
 	slug: string;
 	format: "bitmap" | "png";
 	title: string;
 	imageWidth: number;
 	imageHeight: number;
+	userId?: string | null;
 }) => {
 	// Fetch config and handle null case
 	const configResult = use(Promise.resolve(fetchRecipeConfig(slug)));
@@ -155,11 +166,12 @@ const RenderComponent = ({
 	const useDoubling = config.renderSettings?.doubleSizeForSharperText ?? false;
 
 	if (isChromiumRecipe) {
-		const chromiumPngHref = getChromiumRenderHref(slug);
+		const chromiumPngHref = getChromiumRenderHref(slug, userId);
 		const chromiumBitmapHref = getChromiumBitmapHref(
 			slug,
 			imageWidth,
 			imageHeight,
+			userId,
 		);
 
 		if (format === "bitmap") {
@@ -291,8 +303,9 @@ export default async function RecipePage({
 		slug,
 		imageWidth,
 		imageHeight,
+		userId,
 	);
-	const chromiumRenderHref = getChromiumRenderHref(slug);
+	const chromiumRenderHref = getChromiumRenderHref(slug, userId);
 
 	return (
 		<div className="@container">
@@ -352,6 +365,7 @@ export default async function RecipePage({
 										title={config.title}
 										imageWidth={imageWidth}
 										imageHeight={imageHeight}
+										userId={userId}
 									/>
 								</Suspense>
 							</AspectRatio>
@@ -376,6 +390,7 @@ export default async function RecipePage({
 										title={config.title}
 										imageWidth={imageWidth}
 										imageHeight={imageHeight}
+										userId={userId}
 									/>
 								</Suspense>
 							</AspectRatio>

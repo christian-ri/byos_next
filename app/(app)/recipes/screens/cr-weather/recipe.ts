@@ -90,22 +90,45 @@ function renderHourlyGraph(data: CrWeatherData) {
 	const max = Math.ceil(maxValue) + 4;
 	const range = max - min;
 	const points = data.hourly.map((point, index) => {
-		const x = plotLeft + (index / (data.hourly.length - 1)) * chartWidth;
+		const x =
+			plotLeft + (index / Math.max(data.hourly.length - 1, 1)) * chartWidth;
 		const yTemp = top + ((max - point.temp) / range) * chartHeight;
 		const yFeels = top + ((max - point.feels) / range) * chartHeight;
+		const yPrecip =
+			top +
+			((100 - Math.max(0, Math.min(100, point.precipitationProbability))) /
+				100) *
+				chartHeight;
 		const labelY = Math.max(10, Math.min(yTemp, yFeels) - 11);
-		return { ...point, x, yTemp, yFeels, labelY };
+		return { ...point, x, yTemp, yFeels, yPrecip, labelY };
 	});
 	const tempPath = points.map((point) => `${point.x},${point.yTemp}`).join(" ");
 	const feelsPath = points
 		.map((point) => `${point.x},${point.yFeels}`)
 		.join(" ");
+	const precipPath = points
+		.map((point) => `${point.x},${point.yPrecip}`)
+		.join(" ");
+	const precipAreaPath =
+		points.length > 0
+			? [
+					`M${points[0].x},${top + chartHeight}`,
+					...points.map((point) => `L${point.x},${point.yPrecip}`),
+					`L${points[points.length - 1].x},${top + chartHeight}`,
+					"Z",
+				].join(" ")
+			: "";
 	const yTicks = Array.from({ length: 5 }, (_, index) => {
 		const ratio = index / 4;
 		return Math.round((max - range * ratio) * 10) / 10;
 	});
 
 	return `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" aria-hidden="true" class="cr-graph">
+		<defs>
+			<pattern id="crw-precip-hatch" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)">
+				<line x1="0" y1="0" x2="0" y2="5" stroke="#111" stroke-width="1" opacity="0.42"></line>
+			</pattern>
+		</defs>
 		<path d="M${axisX},${top} V${height - bottom} H${width - right}" fill="none" stroke="#111" stroke-width="1.6"></path>
 		${yTicks
 			.map((tick) => {
@@ -113,6 +136,8 @@ function renderHourlyGraph(data: CrWeatherData) {
 				return `<text x="${axisX - 10}" y="${y + 4}" text-anchor="end" font-size="11" font-weight="700" fill="#111">${tick}°</text>`;
 			})
 			.join("")}
+		<path d="${precipAreaPath}" fill="url(#crw-precip-hatch)" opacity="1"></path>
+		<polyline points="${precipPath}" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"></polyline>
 		${points
 			.map(
 				(point) =>
@@ -127,6 +152,7 @@ function renderHourlyGraph(data: CrWeatherData) {
 					<circle cx="${point.x}" cy="${point.yTemp}" r="3.6" fill="#111"></circle>
 					<circle cx="${point.x}" cy="${point.yFeels}" r="2.8" fill="#111"></circle>
 					<text x="${point.x}" y="${point.labelY}" text-anchor="middle" font-size="10" font-weight="700" fill="#111">${point.temp}°</text>
+					<text x="${point.x}" y="${top + chartHeight - 9}" text-anchor="middle" font-size="8" font-weight="800" fill="#111">${point.precipitationProbability}%</text>
 					<text x="${point.x}" y="${height - 8}" text-anchor="middle" font-size="11" font-weight="600" fill="#111">${escapeHtml(point.label)}</text>
 				`,
 			)
@@ -198,8 +224,9 @@ export function renderHtml(data: CrWeatherData) {
 							<div class="crw-section-header">
 								<div class="crw-section-title">NÄCHSTE 5 STUNDEN</div>
 								<div class="crw-legend">
-									<div class="crw-legend__item"><span class="crw-legend__line"></span>TEMPERATUR (°C)</div>
-									<div class="crw-legend__item"><span class="crw-legend__line crw-legend__line--dashed"></span>FEELS LIKE (°C)</div>
+									<div class="crw-legend__item"><span class="crw-legend__line"></span>TEMP</div>
+									<div class="crw-legend__item"><span class="crw-legend__line crw-legend__line--dashed"></span>FEELS</div>
+									<div class="crw-legend__item"><span class="crw-legend__line crw-legend__line--precip"></span>REGEN (%)</div>
 								</div>
 							</div>
 							${renderHourlyGraph(data)}
@@ -457,11 +484,15 @@ export function renderHtml(data: CrWeatherData) {
 				gap: 8px;
 			}
 
+			.crw-section-title {
+				white-space: nowrap;
+			}
+
 			.crw-legend {
 				display: flex;
 				align-items: center;
-				gap: 12px;
-				font-size: 11px;
+				gap: 8px;
+				font-size: 10px;
 				line-height: 1;
 				font-weight: 600;
 				letter-spacing: 0.04em;
@@ -475,7 +506,7 @@ export function renderHtml(data: CrWeatherData) {
 			}
 
 			.crw-legend__line {
-				width: 36px;
+				width: 30px;
 				height: 0;
 				border-top: 2px solid #111;
 				display: inline-block;
@@ -483,6 +514,11 @@ export function renderHtml(data: CrWeatherData) {
 
 			.crw-legend__line--dashed {
 				border-top-style: dotted;
+			}
+
+			.crw-legend__line--precip {
+				border-top-width: 1px;
+				opacity: 0.5;
 			}
 
 			.crw-graph {

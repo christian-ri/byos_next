@@ -1,4 +1,5 @@
 import { GripVertical, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ interface PlaylistItemProps {
 	};
 	onUpdate: (id: string, data: Partial<PlaylistItemProps["item"]>) => void;
 	onDelete: (id: string) => void;
+	onReorder: (draggedId: string, targetId: string) => void;
 	screenOptions: { id: string; name: string }[];
 }
 
@@ -41,14 +43,53 @@ export function PlaylistItem({
 	item,
 	onUpdate,
 	onDelete,
+	onReorder,
 	screenOptions,
 }: PlaylistItemProps) {
+	const [isDragOver, setIsDragOver] = useState(false);
+
 	return (
-		<Card className="mb-4">
+		<Card
+			className={`mb-4 transition-colors ${isDragOver ? "border-primary bg-muted/40" : ""}`}
+			onDragOver={(event) => {
+				event.preventDefault();
+				event.dataTransfer.dropEffect = "move";
+				setIsDragOver(true);
+			}}
+			onDragLeave={() => setIsDragOver(false)}
+			onDrop={(event) => {
+				event.preventDefault();
+				setIsDragOver(false);
+
+				const draggedId =
+					event.dataTransfer.getData("application/x-playlist-item-id") ||
+					event.dataTransfer.getData("text/plain");
+
+				if (draggedId) {
+					onReorder(draggedId, item.id);
+				}
+			}}
+		>
 			<CardHeader className="-mb-2">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
-						<GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+						<button
+							type="button"
+							draggable
+							aria-label={`Move item ${item.order_index + 1}`}
+							className="rounded-sm p-1 text-muted-foreground cursor-grab hover:bg-muted hover:text-foreground active:cursor-grabbing"
+							onDragStart={(event) => {
+								event.dataTransfer.effectAllowed = "move";
+								event.dataTransfer.setData(
+									"application/x-playlist-item-id",
+									item.id,
+								);
+								event.dataTransfer.setData("text/plain", item.id);
+							}}
+							onDragEnd={() => setIsDragOver(false)}
+						>
+							<GripVertical className="h-4 w-4" />
+						</button>
 						<CardTitle className="text-base">
 							Item {item.order_index + 1}
 						</CardTitle>

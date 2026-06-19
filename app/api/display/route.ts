@@ -5,6 +5,7 @@ import {
 	appendImageCacheBust,
 	buildDisplayResponse,
 	buildErrorResponse,
+	isDisplayPrecacheEnabled,
 	parseRequestHeaders,
 	precacheImageInBackground,
 	resolveDeviceDisplayTarget,
@@ -195,7 +196,11 @@ export async function GET(request: Request) {
 			},
 		);
 
-		precacheImageInBackground(cacheBustedImageUrl, device.friendly_id);
+		const displayPrecacheEnabled = isDisplayPrecacheEnabled();
+
+		if (displayPrecacheEnabled) {
+			precacheImageInBackground(cacheBustedImageUrl, device.friendly_id);
+		}
 
 		// Update device status in background
 		updateDeviceStatus(device, headers, refreshRate);
@@ -205,6 +210,7 @@ export async function GET(request: Request) {
 			refreshRate,
 			displayMode: device.display_mode,
 			imageUrl: cacheBustedImageUrl,
+			displayPrecacheEnabled,
 			matchedBy: deviceResolution.matchedBy,
 			debug: {
 				accessTokenPresent: Boolean(headers.apiKey),
@@ -229,6 +235,7 @@ export async function GET(request: Request) {
 				foundByFriendlyId: deviceResolution.foundByFriendlyId,
 				finalScreen: screenToDisplay,
 				imageUrl: cacheBustedImageUrl,
+				displayPrecacheEnabled,
 				fallbackUsed,
 				fallbackReason,
 				model: headers.model,

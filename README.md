@@ -112,12 +112,14 @@ CHROMIUM_RENDER_TIMEOUT_MS=25000
 CHROMIUM_RENDER_CACHE_SECONDS=300
 TRMNL_RENDER_WIDTH=800
 TRMNL_RENDER_HEIGHT=480
+DISPLAY_PRECACHE_ENABLED=false
 REACT_RENDERER=takumi
 ```
 
 Notes:
 - `AUTH_ENABLED=false` is useful for local BYOS-style setups.
 - `TRMNL_RENDERER=chromium` is the future default for new recipes.
+- `DISPLAY_PRECACHE_ENABLED=true` makes `/api/display` pre-render the returned bitmap URL server-side before the device fetches it. Leave it `false` on Vercel unless you explicitly want the extra background render work.
 - `REACT_RENDERER` remains as a legacy selector during migration, and this fork has primarily been hardened around real Takumi bitmap output for existing screens.
 
 ## Project structure

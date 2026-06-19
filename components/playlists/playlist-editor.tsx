@@ -7,34 +7,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlaylistForm } from "./playlist-form";
 import { PlaylistItem } from "./playlist-item";
 
+type PlaylistEditorItem = {
+	id: string;
+	screen_id: string;
+	duration: number;
+	order_index: number;
+	start_time?: string;
+	end_time?: string;
+	days_of_week?: string[];
+};
+
 interface PlaylistEditorProps {
 	playlist?: {
 		id: string;
 		name: string;
-		items?: Array<{
-			id: string;
-			screen_id: string;
-			duration: number;
-			order_index: number;
-			start_time?: string;
-			end_time?: string;
-			days_of_week?: string[];
-		}>;
+		items?: PlaylistEditorItem[];
 	};
 	onSave: (data: {
 		id?: string;
 		name: string;
-		items: Array<{
-			id: string;
-			screen_id: string;
-			duration: number;
-			order_index: number;
-			start_time?: string;
-			end_time?: string;
-			days_of_week?: string[];
-		}>;
+		items: PlaylistEditorItem[];
 	}) => void;
 	onCancel: () => void;
+}
+
+function normalizeItems(items: PlaylistEditorItem[]) {
+	return [...items]
+		.sort((a, b) => a.order_index - b.order_index)
+		.map((item, index) => ({ ...item, order_index: index }));
 }
 
 export function PlaylistEditor({
@@ -43,7 +43,9 @@ export function PlaylistEditor({
 	onCancel,
 }: PlaylistEditorProps) {
 	const [name, setName] = useState(playlist?.name || "");
-	const [items, setItems] = useState(playlist?.items || []);
+	const [items, setItems] = useState<PlaylistEditorItem[]>(
+		normalizeItems(playlist?.items || []),
+	);
 	const [screenOptions, setScreenOptions] = useState<
 		{ id: string; name: string }[]
 	>([]);
@@ -61,15 +63,17 @@ export function PlaylistEditor({
 					}
 					// Convert null to undefined for optional fields
 					setItems(
-						result.items.map((item) => ({
-							id: item.id,
-							screen_id: item.screen_id,
-							duration: item.duration,
-							order_index: item.order_index,
-							start_time: item.start_time ?? undefined,
-							end_time: item.end_time ?? undefined,
-							days_of_week: item.days_of_week ?? undefined,
-						})),
+						normalizeItems(
+							result.items.map((item) => ({
+								id: item.id,
+								screen_id: item.screen_id,
+								duration: item.duration,
+								order_index: item.order_index,
+								start_time: item.start_time ?? undefined,
+								end_time: item.end_time ?? undefined,
+								days_of_week: item.days_of_week ?? undefined,
+							})),
+						),
 					);
 				} catch (error) {
 					console.error("Error fetching playlist items:", error);
@@ -78,12 +82,14 @@ export function PlaylistEditor({
 				}
 			} else if (playlist?.items) {
 				setItems(
-					playlist.items.map((item) => ({
-						...item,
-						start_time: item.start_time ?? undefined,
-						end_time: item.end_time ?? undefined,
-						days_of_week: item.days_of_week ?? undefined,
-					})),
+					normalizeItems(
+						playlist.items.map((item) => ({
+							...item,
+							start_time: item.start_time ?? undefined,
+							end_time: item.end_time ?? undefined,
+							days_of_week: item.days_of_week ?? undefined,
+						})),
+					),
 				);
 			}
 		};
@@ -105,7 +111,7 @@ export function PlaylistEditor({
 	};
 
 	const handleAddItem = () => {
-		const newItem = {
+		const newItem: PlaylistEditorItem = {
 			id: `temp-${Date.now()}`,
 			screen_id: "simple-text",
 			duration: 30,
@@ -114,28 +120,46 @@ export function PlaylistEditor({
 			end_time: undefined,
 			days_of_week: undefined,
 		};
-		setItems([...items, newItem]);
+		setItems((currentItems) => normalizeItems([...currentItems, newItem]));
 	};
 
-	const handleUpdateItem = (
-		id: string,
-		data: Partial<{
-			id: string;
-			screen_id: string;
-			duration: number;
-			order_index: number;
-			start_time?: string;
-			end_time?: string;
-			days_of_week?: string[];
-		}>,
-	) => {
-		setItems(
-			items.map((item) => (item.id === id ? { ...item, ...data } : item)),
+	const handleUpdateItem = (id: string, data: Partial<PlaylistEditorItem>) => {
+		setItems((currentItems) =>
+			currentItems.map((item) =>
+				item.id === id ? { ...item, ...data } : item,
+			),
 		);
 	};
 
 	const handleDeleteItem = (id: string) => {
-		setItems(items.filter((item) => item.id !== id));
+		setItems((currentItems) =>
+			normalizeItems(currentItems.filter((item) => item.id !== id)),
+		);
+	};
+
+	const handleReorderItem = (draggedId: string, targetId: string) => {
+		if (draggedId === targetId) {
+			return;
+		}
+
+		setItems((currentItems) => {
+			const draggedIndex = currentItems.findIndex(
+				(item) => item.id === draggedId,
+			);
+			const targetIndex = currentItems.findIndex(
+				(item) => item.id === targetId,
+			);
+
+			if (draggedIndex === -1 || targetIndex === -1) {
+				return currentItems;
+			}
+
+			const reorderedItems = [...currentItems];
+			const [draggedItem] = reorderedItems.splice(draggedIndex, 1);
+			reorderedItems.splice(targetIndex, 0, draggedItem);
+
+			return normalizeItems(reorderedItems);
+		});
 	};
 
 	const handleSave = () => {
@@ -184,6 +208,7 @@ export function PlaylistEditor({
 									item={item}
 									onUpdate={handleUpdateItem}
 									onDelete={handleDeleteItem}
+									onReorder={handleReorderItem}
 									screenOptions={screenOptions}
 								/>
 							))}

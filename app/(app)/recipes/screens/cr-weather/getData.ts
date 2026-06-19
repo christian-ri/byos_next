@@ -21,6 +21,7 @@ export type HourPoint = {
 	label: string;
 	temp: number;
 	feels: number;
+	precipitationProbability: number;
 };
 
 export type DayPoint = {
@@ -100,6 +101,7 @@ type ForecastResponse = {
 		temperature_2m?: number[];
 		apparent_temperature?: number[];
 		weather_code?: number[];
+		precipitation_probability?: number[];
 	};
 	daily?: {
 		time?: string[];
@@ -404,12 +406,12 @@ function buildFallback(): CrWeatherData {
 		pressure: "1016 hPa",
 		currentIcon: "partly-cloudy-day",
 		hourly: [
-			{ label: "11:00", temp: 18, feels: 17 },
-			{ label: "12:00", temp: 19, feels: 18 },
-			{ label: "13:00", temp: 20, feels: 19 },
-			{ label: "14:00", temp: 21, feels: 20 },
-			{ label: "15:00", temp: 20, feels: 19 },
-			{ label: "16:00", temp: 19, feels: 18 },
+			{ label: "11:00", temp: 18, feels: 17, precipitationProbability: 10 },
+			{ label: "12:00", temp: 19, feels: 18, precipitationProbability: 20 },
+			{ label: "13:00", temp: 20, feels: 19, precipitationProbability: 35 },
+			{ label: "14:00", temp: 21, feels: 20, precipitationProbability: 30 },
+			{ label: "15:00", temp: 20, feels: 19, precipitationProbability: 15 },
+			{ label: "16:00", temp: 19, feels: 18, precipitationProbability: 5 },
 		],
 		days: [
 			{
@@ -471,7 +473,7 @@ export default async function getData(
 
 	try {
 		const location = await resolveLocation(params);
-		const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,surface_pressure,weather_code,wind_speed_10m,wind_direction_10m,is_day&hourly=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant&timezone=${encodeURIComponent(location.timezone || "auto")}&forecast_days=5${units === "imperial" ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : ""}`;
+		const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,surface_pressure,weather_code,wind_speed_10m,wind_direction_10m,is_day&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,wind_direction_10m_dominant&timezone=${encodeURIComponent(location.timezone || "auto")}&forecast_days=5${units === "imperial" ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : ""}`;
 		const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${location.latitude}&longitude=${location.longitude}&current=european_aqi,pm2_5&timezone=${encodeURIComponent(location.timezone || "auto")}`;
 
 		const [forecast, airQuality] = await Promise.all([
@@ -517,6 +519,19 @@ export default async function getData(
 			feels: Math.round(
 				Number(
 					forecast.hourly?.apparent_temperature?.[startIndex + index] || 0,
+				),
+			),
+			precipitationProbability: Math.max(
+				0,
+				Math.min(
+					100,
+					Math.round(
+						Number(
+							forecast.hourly?.precipitation_probability?.[
+								startIndex + index
+							] || 0,
+						),
+					),
 				),
 			),
 		}));

@@ -41,9 +41,10 @@ export async function GET(
 	const { searchParams } = new URL(request.url);
 	const width = Number(searchParams.get("width") || getTrmnlRenderWidth());
 	const height = Number(searchParams.get("height") || getTrmnlRenderHeight());
+	const ownerParam = searchParams.get("_owner");
 	const paramOverrides = Object.fromEntries(
 		Array.from(searchParams.entries()).filter(
-			([key]) => key !== "width" && key !== "height",
+			([key]) => key !== "width" && key !== "height" && key !== "_owner",
 		),
 	);
 	const cacheSeconds = getChromiumRenderCacheSeconds();
@@ -53,6 +54,7 @@ export async function GET(
 			slug: recipeId,
 			width,
 			height,
+			userId: ownerParam,
 			paramOverrides,
 		});
 
