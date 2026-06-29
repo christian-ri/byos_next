@@ -2995,6 +2995,36 @@
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
+	"fifa-world-cup-2026-bracket": {
+		"title": "FIFA World Cup 2026 Bracket",
+		"published": true,
+		"createdAt": "2026-06-29T00:00:00Z",
+		"updatedAt": "2026-06-29T00:00:00Z",
+		"description": "Knockout bracket from Round of 32 through the final with live scores, venues, and next match details using the worldcup2026 API.",
+		"componentPath": "./screens/fifa-world-cup-2026-bracket",
+		"hasDataFetch": true,
+		"props": {},
+		"params": {
+			"timezone": {
+				"type": "string",
+				"label": "Time Zone",
+				"description": "IANA time zone used for the updated timestamp.",
+				"default": "America/New_York"
+			}
+		},
+		"tags": ["fifa", "world-cup", "soccer", "football", "sports", "live-data", "bracket", "knockout"],
+		"author": {
+			"name": "worldcup2026 API import",
+			"github": "rezarahiminia"
+		},
+		"renderSettings": {
+			"dataFetchTimeoutMs": 24000,
+			"doubleSizeForSharperText": true,
+			"renderer": "chromium"
+		},
+		"version": "0.1.0",
+		"category": "trmnl-imports"
+	},
 	"f1-weekend-teams": {
 		"title": "F1 Weekend + Constructors",
 		"published": true,
