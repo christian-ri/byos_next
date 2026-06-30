@@ -2,6 +2,7 @@ import { escapeHtml } from "@/lib/renderer/chromium/escape-html";
 import { buildTrmnlHtmlShell } from "@/lib/renderer/chromium/html-shell";
 import getData, {
 	type BracketMatch,
+	type BracketTeam,
 	type WorldCupBracketData,
 } from "./getData";
 
@@ -24,12 +25,12 @@ const MAIN_WIDTH = 800;
 const MAIN_HEIGHT = 340;
 
 const BOXES = {
-	r32: { w: 104, h: 30 },
-	r16: { w: 78, h: 26 },
-	qf: { w: 56, h: 24 },
-	sf: { w: 156, h: 36 },
-	final: { w: 118, h: 28 },
-	third: { w: 118, h: 28 },
+	r32: { w: 132, h: 31 },
+	r16: { w: 76, h: 28 },
+	qf: { w: 58, h: 28 },
+	sf: { w: 152, h: 40 },
+	final: { w: 128, h: 34 },
+	third: { w: 128, h: 34 },
 } as const;
 
 function centerY(box: Box) {
@@ -41,29 +42,29 @@ function centerX(box: Box) {
 }
 
 function buildBracketGeometry() {
-	const leftR32 = [46, 82, 118, 154, 190, 226, 262, 298].map((y) => ({
-		x: 18,
+	const leftR32 = [38, 76, 114, 152, 190, 228, 266, 304].map((y) => ({
+		x: 12,
 		y,
 		w: BOXES.r32.w,
 		h: BOXES.r32.h,
 	}));
 	const rightR32 = leftR32.map((box) => ({
 		...box,
-		x: 678,
+		x: 656,
 	}));
 
-	const leftR16 = [66, 138, 210, 282].map((y) => ({
-		x: 150,
+	const leftR16 = [58, 134, 210, 286].map((y) => ({
+		x: 160,
 		y,
 		w: BOXES.r16.w,
 		h: BOXES.r16.h,
 	}));
 	const rightR16 = leftR16.map((box) => ({
 		...box,
-		x: 572,
+		x: 564,
 	}));
 
-	const leftQf = [103, 247].map((y) => ({
+	const leftQf = [96, 248].map((y) => ({
 		x: 254,
 		y,
 		w: BOXES.qf.w,
@@ -71,26 +72,26 @@ function buildBracketGeometry() {
 	}));
 	const rightQf = leftQf.map((box) => ({
 		...box,
-		x: 490,
+		x: 488,
 	}));
 
 	const semiFinals = {
-		x: 322,
-		y: 144,
+		x: 324,
+		y: 142,
 		w: BOXES.sf.w,
 		h: BOXES.sf.h,
 	};
 
 	const final = {
-		x: 341,
+		x: 336,
 		y: 208,
 		w: BOXES.final.w,
 		h: BOXES.final.h,
 	};
 
 	const third = {
-		x: 341,
-		y: 282,
+		x: 336,
+		y: 296,
 		w: BOXES.third.w,
 		h: BOXES.third.h,
 	};
@@ -113,29 +114,18 @@ function pinIcon(size = 16) {
 function connectorBetween(from: Box, to: Box, side: Side) {
 	const startX = side === "left" ? from.x + from.w : from.x;
 	const endX = side === "left" ? to.x : to.x + to.w;
-	const elbowX = side === "left" ? startX + 12 : startX - 12;
+	const elbowX = side === "left" ? startX + 8 : startX - 8;
 	return `M ${startX} ${centerY(from)} L ${elbowX} ${centerY(from)} L ${elbowX} ${centerY(to)} L ${endX} ${centerY(to)}`;
 }
 
 function connectorToPoint(from: Box, targetX: number, targetY: number, side: Side) {
 	const startX = side === "left" ? from.x + from.w : from.x;
-	const elbowX = side === "left" ? startX + 12 : startX - 12;
+	const elbowX = side === "left" ? startX + 7 : startX - 7;
 	return `M ${startX} ${centerY(from)} L ${elbowX} ${centerY(from)} L ${elbowX} ${targetY} L ${targetX} ${targetY}`;
 }
 
 function connectorVertical(fromX: number, fromY: number, toY: number) {
 	return `M ${fromX} ${fromY} L ${fromX} ${toY}`;
-}
-
-function fitText(value: string, fontSize: number, maxWidth: number) {
-	const estimated = value.length * fontSize * 0.58;
-	if (estimated <= maxWidth) {
-		return { textLength: "", adjust: "" };
-	}
-	return {
-		textLength: ` textLength="${maxWidth}"`,
-		adjust: ` lengthAdjust="spacingAndGlyphs"`,
-	};
 }
 
 function svgText(
@@ -147,41 +137,66 @@ function svgText(
 	weight: number,
 	anchor: "start" | "middle" | "end" = "start",
 ) {
-	const { textLength, adjust } = fitText(value, fontSize, maxWidth);
-	return `<text x="${x}" y="${y}" font-size="${fontSize}" font-weight="${weight}" text-anchor="${anchor}" dominant-baseline="hanging"${textLength}${adjust}>${escapeHtml(value)}</text>`;
+	const estimatedWidth = Math.max(value.length * fontSize * 0.54, 1);
+	const fittedSize =
+		estimatedWidth > maxWidth
+			? Math.max(7.8, fontSize * (maxWidth / estimatedWidth))
+			: fontSize;
+	return `<text x="${x}" y="${y}" font-size="${fittedSize.toFixed(2)}" font-weight="${weight}" text-anchor="${anchor}" dominant-baseline="hanging" class="wc-svg-text">${escapeHtml(value)}</text>`;
 }
 
-function compactMatchLabel(match: BracketMatch) {
-	return match.compactLabel || `${match.home.pathLabel} / ${match.away.pathLabel}`;
+const EINK_TEAM_NAMES: Record<string, string> = {
+	"Bosnia and Herzegovina": "Bosnia & Herz.",
+	"Democratic Republic of the Congo": "DR Congo",
+};
+
+function einkTeamName(name: string) {
+	return EINK_TEAM_NAMES[name] || name;
+}
+
+function detailedTeamName(team: BracketTeam) {
+	if (team.isKnown) {
+		return einkTeamName(team.name);
+	}
+
+	const qualifier = team.seedLabel || team.pathLabel;
+	return qualifier ? `TBD ${qualifier}` : "TBD";
 }
 
 function renderDetailedMatchCard(match: BracketMatch, box: Box, highlightMatchId: string) {
 	const isHighlight = match.id === highlightMatchId;
 	const borderWidth = isHighlight ? 2 : 1;
-	const scoreX = box.x + box.w - 8;
-	const homeFont = match.home.name.length > 22 ? 6.2 : 6.8;
-	const awayFont = match.away.name.length > 22 ? 6.2 : 6.8;
+	const scoreX = box.x + box.w - 7;
+	const homeName = detailedTeamName(match.home);
+	const awayName = detailedTeamName(match.away);
+	const nameWidth = box.w - 25;
 	return `
 		<g class="wc-card wc-card--detail">
-			<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="4" ry="4" fill="#fff" stroke="#111" stroke-width="${borderWidth}" />
-			${svgText(match.home.seedLabel || match.home.pathLabel, box.x + 8, box.y + 5, 6.4, 18, 700)}
-			${svgText(match.home.name, box.x + 24, box.y + 5, homeFont, box.w - 38, 700)}
-			${svgText(match.home.score, scoreX, box.y + 5, 6.8, 8, 700, "end")}
-			<line x1="${box.x + 6}" y1="${box.y + 15}" x2="${box.x + box.w - 6}" y2="${box.y + 15}" stroke="#111" stroke-width="1" stroke-dasharray="1.2 1.8" />
-			${svgText(match.away.seedLabel || match.away.pathLabel, box.x + 8, box.y + 18, 6.4, 18, 700)}
-			${svgText(match.away.name, box.x + 24, box.y + 18, awayFont, box.w - 38, 700)}
-			${svgText(match.away.score, scoreX, box.y + 18, 6.8, 8, 700, "end")}
+			<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="3" ry="3" fill="#fff" stroke="#000" stroke-width="${borderWidth}" />
+			${svgText(homeName, box.x + 7, box.y + 3, 9.8, nameWidth, 700)}
+			${svgText(match.home.score, scoreX, box.y + 3, 9.8, 7, 800, "end")}
+			<line x1="${box.x + 5}" y1="${box.y + 15.5}" x2="${box.x + box.w - 5}" y2="${box.y + 15.5}" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
+			${svgText(awayName, box.x + 7, box.y + 17, 9.8, nameWidth, 700)}
+			${svgText(match.away.score, scoreX, box.y + 17, 9.8, 7, 800, "end")}
 		</g>
 	`;
 }
 
+function compactTeamLabel(match: BracketMatch, side: "home" | "away") {
+	const team = match[side];
+	return team.isKnown ? einkTeamName(team.name) : team.pathLabel || team.name;
+}
+
 function renderCompactMatchCard(match: BracketMatch, box: Box, highlightMatchId: string) {
 	const isHighlight = match.id === highlightMatchId;
-	const label = compactMatchLabel(match);
+	const homeLabel = compactTeamLabel(match, "home");
+	const awayLabel = compactTeamLabel(match, "away");
 	return `
 		<g class="wc-card wc-card--compact">
-			<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="4" ry="4" fill="#fff" stroke="#111" stroke-width="${isHighlight ? 2 : 1}" />
-			${svgText(label, centerX(box), box.y + 8, 7.8, box.w - 12, 700, "middle")}
+			<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="3" ry="3" fill="#fff" stroke="#000" stroke-width="${isHighlight ? 2 : 1.25}" />
+			${svgText(homeLabel, centerX(box), box.y + 4, 8.8, box.w - 10, 700, "middle")}
+			<line x1="${box.x + 5}" y1="${box.y + box.h / 2}" x2="${box.x + box.w - 5}" y2="${box.y + box.h / 2}" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
+			${svgText(awayLabel, centerX(box), box.y + 17, 8.8, box.w - 10, 700, "middle")}
 		</g>
 	`;
 }
@@ -204,7 +219,7 @@ function renderBracketColumn(
 		align === "left" ? "start" : align === "right" ? "end" : "middle";
 	return `
 		<g class="wc-column" fill="#111">
-			${svgText(label, labelX, 18, 7.8, mode === "detail" ? 96 : 80, 700, labelAnchor)}
+			${svgText(label, labelX, 16, 9.2, mode === "detail" ? 112 : 82, 800, labelAnchor)}
 			${matches
 				.map((match, index) =>
 					mode === "detail"
@@ -222,32 +237,33 @@ function renderCenterStage(
 	finalBox: Box,
 	thirdBox: Box,
 ) {
-	const leftSemiLabel = compactMatchLabel(data.left.semiFinal);
-	const rightSemiLabel = compactMatchLabel(data.right.semiFinal);
-	const finalLabel = compactMatchLabel(data.final);
-	const thirdLabel = compactMatchLabel(data.thirdPlace);
+	const leftSemiHome = compactTeamLabel(data.left.semiFinal, "home");
+	const leftSemiAway = compactTeamLabel(data.left.semiFinal, "away");
+	const rightSemiHome = compactTeamLabel(data.right.semiFinal, "home");
+	const rightSemiAway = compactTeamLabel(data.right.semiFinal, "away");
 
 	return `
 		<g class="wc-center-stage" fill="#111">
-			${svgText("SEMI FINALS", centerX(semiBox), 124, 7.8, 86, 700, "middle")}
-			<rect x="${semiBox.x}" y="${semiBox.y}" width="${semiBox.w}" height="${semiBox.h}" rx="4" ry="4" fill="#fff" stroke="#111" stroke-width="1" />
-			<line x1="${centerX(semiBox)}" y1="${semiBox.y + 6}" x2="${centerX(semiBox)}" y2="${semiBox.y + semiBox.h - 6}" stroke="#111" stroke-width="1" />
-			${svgText(leftSemiLabel, semiBox.x + 10, semiBox.y + 12, 7.8, semiBox.w / 2 - 18, 700)}
-			${svgText(rightSemiLabel, semiBox.x + semiBox.w - 10, semiBox.y + 12, 7.8, semiBox.w / 2 - 18, 700, "end")}
-			${svgText("FINAL", centerX(finalBox), 191, 7.8, 40, 700, "middle")}
-			<rect x="${finalBox.x}" y="${finalBox.y}" width="${finalBox.w}" height="${finalBox.h}" rx="4" ry="4" fill="#fff" stroke="#111" stroke-width="1" />
-			${svgText(finalLabel, centerX(finalBox), finalBox.y + 8, 7.8, finalBox.w - 14, 700, "middle")}
-			<g transform="translate(${centerX(finalBox) - 9}, 244)">${trophyIcon(18)}</g>
-			<line x1="${centerX(finalBox) - 52}" y1="268" x2="${centerX(finalBox) + 52}" y2="268" stroke="#111" stroke-width="1" stroke-dasharray="1.2 1.8" />
-			${svgText("3RD PLACE", centerX(thirdBox), 273, 7.8, 58, 700, "middle")}
-			<rect x="${thirdBox.x}" y="${thirdBox.y}" width="${thirdBox.w}" height="${thirdBox.h}" rx="4" ry="4" fill="#fff" stroke="#111" stroke-width="1" />
-			${svgText(thirdLabel, centerX(thirdBox), thirdBox.y + 8, 7.8, thirdBox.w - 14, 700, "middle")}
+			${svgText("SEMI FINALS", centerX(semiBox), 123, 9.2, 92, 800, "middle")}
+			<rect x="${semiBox.x}" y="${semiBox.y}" width="${semiBox.w}" height="${semiBox.h}" rx="3" ry="3" fill="#fff" stroke="#000" stroke-width="1.25" />
+			<line x1="${centerX(semiBox)}" y1="${semiBox.y}" x2="${centerX(semiBox)}" y2="${semiBox.y + semiBox.h}" stroke="#000" stroke-width="1" />
+			<line x1="${semiBox.x + 5}" y1="${semiBox.y + semiBox.h / 2}" x2="${semiBox.x + semiBox.w - 5}" y2="${semiBox.y + semiBox.h / 2}" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
+			${svgText(leftSemiHome, semiBox.x + semiBox.w / 4, semiBox.y + 5, 8.8, semiBox.w / 2 - 10, 700, "middle")}
+			${svgText(leftSemiAway, semiBox.x + semiBox.w / 4, semiBox.y + 24, 8.8, semiBox.w / 2 - 10, 700, "middle")}
+			${svgText(rightSemiHome, semiBox.x + semiBox.w * 0.75, semiBox.y + 5, 8.8, semiBox.w / 2 - 10, 700, "middle")}
+			${svgText(rightSemiAway, semiBox.x + semiBox.w * 0.75, semiBox.y + 24, 8.8, semiBox.w / 2 - 10, 700, "middle")}
+			${svgText("FINAL", centerX(finalBox), 192, 9.2, 44, 800, "middle")}
+			${renderCompactMatchCard(data.final, finalBox, data.highlightMatchId)}
+			<g transform="translate(${centerX(finalBox) - 9}, 250)">${trophyIcon(18)}</g>
+			<line x1="${centerX(finalBox) - 56}" y1="273" x2="${centerX(finalBox) + 56}" y2="273" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
+			${svgText("3RD PLACE", centerX(thirdBox), 279, 9.2, 66, 800, "middle")}
+			${renderCompactMatchCard(data.thirdPlace, thirdBox, data.highlightMatchId)}
 		</g>
 	`;
 }
 
 function renderConnector(paths: string[]) {
-	return `<g class="wc-connectors" fill="none" stroke="#111" stroke-width="1" stroke-linecap="square" stroke-linejoin="miter">${paths.map((path) => `<path d="${path}" />`).join("")}</g>`;
+	return `<g class="wc-connectors" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter">${paths.map((path) => `<path d="${path}" />`).join("")}</g>`;
 }
 
 function renderBracket(data: WorldCupBracketData) {
@@ -367,7 +383,7 @@ export function renderHtml(data: WorldCupBracketData) {
 			.wc-screen {
 				--space-4: 4px;
 				--space-8: 8px;
-				--border-color: #111;
+				--border-color: #000;
 				--font-size-xs: 10px;
 				--font-size-sm: 12px;
 				--font-size-md: 14px;
@@ -380,12 +396,17 @@ export function renderHtml(data: WorldCupBracketData) {
 				box-sizing: border-box;
 				border: 1px solid var(--border-color);
 				background: #fff;
-				color: #111;
+				color: #000;
 				display: grid;
 				grid-template-rows: var(--header-height) var(--main-height) var(--panel-height);
-				font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-				text-rendering: geometricPrecision;
-				-webkit-font-smoothing: none;
+				font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+				text-rendering: optimizeLegibility;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			.wc-svg-text {
+				font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+				letter-spacing: 0;
 			}
 
 			.wc-header {
@@ -393,9 +414,11 @@ export function renderHtml(data: WorldCupBracketData) {
 				padding: 8px 12px;
 				border-bottom: 1px solid var(--border-color);
 				display: grid;
-				grid-template-columns: 320px 1fr 158px;
+				grid-template-columns: 298px minmax(0, 1fr) 130px;
+				column-gap: 8px;
 				align-items: center;
 				box-sizing: border-box;
+				overflow: hidden;
 			}
 
 			.wc-header__left {
@@ -415,11 +438,12 @@ export function renderHtml(data: WorldCupBracketData) {
 			}
 
 			.wc-header__title {
-				font-size: 20px;
+				font-size: 19px;
 				line-height: 1;
-				font-weight: 700;
-				letter-spacing: 0.06em;
+				font-weight: 800;
+				letter-spacing: 0.035em;
 				text-transform: uppercase;
+				white-space: nowrap;
 			}
 
 			.wc-header__subtitle,
@@ -427,10 +451,10 @@ export function renderHtml(data: WorldCupBracketData) {
 			.wc-next-panel__kicker,
 			.wc-next-panel__stage,
 			.wc-pill {
-				font-size: 10px;
+				font-size: 10.5px;
 				line-height: 1;
-				font-weight: 700;
-				letter-spacing: 0.08em;
+				font-weight: 800;
+				letter-spacing: 0.06em;
 				text-transform: uppercase;
 			}
 
@@ -442,12 +466,13 @@ export function renderHtml(data: WorldCupBracketData) {
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				gap: 12px;
+				gap: 8px;
+				min-width: 0;
 			}
 
 			.wc-pill {
 				height: 26px;
-				padding: 0 16px;
+				padding: 0 11px;
 				border: 1px solid var(--border-color);
 				display: flex;
 				align-items: center;
@@ -460,14 +485,17 @@ export function renderHtml(data: WorldCupBracketData) {
 				display: grid;
 				justify-items: end;
 				gap: 5px;
+				min-width: 0;
+				overflow: hidden;
 			}
 
 			.wc-header__updated-time {
-				font-size: 12px;
+				font-size: 11px;
 				line-height: 1;
-				font-weight: 700;
-				letter-spacing: 0.04em;
+				font-weight: 800;
+				letter-spacing: 0.02em;
 				text-transform: uppercase;
+				white-space: nowrap;
 			}
 
 			.wc-bracket {
@@ -486,7 +514,7 @@ export function renderHtml(data: WorldCupBracketData) {
 				height: 84px;
 				border-top: 1px solid var(--border-color);
 				display: grid;
-				grid-template-columns: 1fr 272px;
+				grid-template-columns: minmax(0, 1fr) 320px;
 				box-sizing: border-box;
 				padding: 10px 12px;
 				align-items: stretch;
@@ -501,9 +529,9 @@ export function renderHtml(data: WorldCupBracketData) {
 			}
 
 			.wc-next-panel__title {
-				font-size: 18px;
+				font-size: 20px;
 				line-height: 1;
-				font-weight: 700;
+				font-weight: 800;
 				letter-spacing: 0.01em;
 			}
 
@@ -531,19 +559,19 @@ export function renderHtml(data: WorldCupBracketData) {
 				display: flex;
 				align-items: center;
 				gap: 10px;
-				font-size: 11px;
+				font-size: 11.5px;
 				line-height: 1;
-				font-weight: 700;
-				letter-spacing: 0.05em;
+				font-weight: 800;
+				letter-spacing: 0.02em;
 				text-transform: uppercase;
 			}
 
 			.wc-next-panel__detail-sub {
 				padding-left: 26px;
-				font-size: 11px;
-				line-height: 1;
-				font-weight: 700;
-				letter-spacing: 0.05em;
+				font-size: 10.5px;
+				line-height: 1.05;
+				font-weight: 800;
+				letter-spacing: 0.02em;
 				text-transform: uppercase;
 			}
 
