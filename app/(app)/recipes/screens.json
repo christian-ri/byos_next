@@ -625,6 +625,248 @@
 		"version": "0.1.0",
 		"category": "trmnl-imports"
 	},
+	"multi-calendar-two-day": {
+		"title": "Multi-Kalender · Zwei Tage",
+		"published": true,
+		"createdAt": "2026-07-12T00:00:00Z",
+		"updatedAt": "2026-07-12T00:00:00Z",
+		"description": "Pixel-perfect two-day agenda combining multiple labeled ICS calendars for an 800×480 monochrome eInk display.",
+		"componentPath": "./screens/multi-calendar-two-day",
+		"hasDataFetch": true,
+		"props": {
+			"providerLabel": "Kalender",
+			"title": "Mein Kalender",
+			"subtitle": "Mein Kalender",
+			"displayName": "Mein Kalender",
+			"timeZone": "America/New_York",
+			"updatedAt": "12.07.2026, 10:30",
+			"note": "Vorschau – nach dem Eintragen der ICS-Feeds erscheinen Live-Termine.",
+			"eventLayout": "two-day",
+			"includeDescription": true,
+			"includeEventTime": true,
+			"showCalendarLabels": true,
+			"showLocation": false,
+			"firstDay": 1,
+			"defaultDays": [],
+			"weekDays": [],
+			"monthWeeks": [],
+			"monthLabel": "Juli 2026"
+		},
+		"params": {
+			"icsUrl": {
+				"type": "multiline",
+				"label": "Kalender-Feeds",
+				"description": "Ein Feed pro Zeile. Für sichtbare Quellenlabels: Name | URL. webcal:// wird automatisch unterstützt.",
+				"default": "",
+				"placeholder": "Arbeit | https://example.com/work.ics\nPrivat | webcal://example.com/private.ics"
+			},
+			"calendarName": {
+				"type": "string",
+				"label": "Anzeigename",
+				"description": "Titel in der Kopfzeile.",
+				"default": "Mein Kalender"
+			},
+			"headers": {
+				"type": "multiline",
+				"label": "HTTP-Header",
+				"description": "Optionale gemeinsame Header, ein Eintrag pro Zeile als Header: Wert oder key=value.",
+				"default": ""
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Zeitzone",
+				"description": "IANA-Zeitzone für Tagesgrenzen und Uhrzeiten.",
+				"default": "America/New_York"
+			},
+			"timeFormat": {
+				"type": "select",
+				"label": "Zeitformat",
+				"description": "Darstellung der Terminzeiten.",
+				"default": "24h",
+				"options": [
+					{ "label": "24 Stunden", "value": "24h" },
+					{ "label": "12 Stunden", "value": "12h" }
+				]
+			},
+			"includeEventTime": {
+				"type": "boolean",
+				"label": "Terminzeiten anzeigen",
+				"description": "Zeigt Start- und Endzeit oder Ganztägig/Fortlaufend.",
+				"default": true
+			},
+			"includeDescription": {
+				"type": "boolean",
+				"label": "Beschreibungen anzeigen",
+				"description": "Zeigt eine kompakte zweite Textzeile, wenn Platz vorhanden ist.",
+				"default": true
+			},
+			"showCalendarLabels": {
+				"type": "boolean",
+				"label": "Kalenderquelle anzeigen",
+				"description": "Markiert jeden Termin mit dem Namen seines Feeds.",
+				"default": true
+			},
+			"showLocation": {
+				"type": "boolean",
+				"label": "Ort anzeigen",
+				"description": "Ergänzt den Veranstaltungsort in der Detailzeile.",
+				"default": false
+			},
+			"ignoredPhrases": {
+				"type": "multiline",
+				"label": "Ignorierte Begriffe",
+				"description": "Termine mit diesen Begriffen in Titel oder Beschreibung werden ausgeblendet; ein Begriff pro Zeile.",
+				"default": ""
+			},
+			"maxEventsPerDay": {
+				"type": "number",
+				"label": "Maximale Termine pro Tag",
+				"description": "Begrenzt die verarbeiteten Termine; das Layout zeigt höchstens fünf und weist auf weitere hin.",
+				"default": 6
+			}
+		},
+		"tags": [
+			"calendar",
+			"ics",
+			"multi-calendar",
+			"two-day",
+			"pixel-perfect",
+			"eink",
+			"800x480"
+		],
+		"author": {
+			"name": "Christian Richter",
+			"github": ""
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": false,
+			"renderer": "chromium",
+			"dataFetchTimeoutMs": 12000
+		},
+		"version": "1.0.0",
+		"category": "display-components"
+	},
+	"multi-calendar-five-day": {
+		"title": "Multi-Kalender · Nächste 5 Tage",
+		"published": true,
+		"createdAt": "2026-07-12T00:00:00Z",
+		"updatedAt": "2026-07-12T00:00:00Z",
+		"description": "Pixel-perfect five-day agenda combining multiple labeled ICS calendars from tomorrow through day +5 on an 800×480 monochrome eInk display.",
+		"componentPath": "./screens/multi-calendar-five-day",
+		"hasDataFetch": true,
+		"props": {
+			"providerLabel": "Kalender",
+			"title": "Die nächsten fünf Tage",
+			"subtitle": "Die nächsten fünf Tage",
+			"displayName": "Die nächsten fünf Tage",
+			"timeZone": "America/New_York",
+			"updatedAt": "12.07.2026, 10:30",
+			"note": "Vorschau – nach dem Eintragen der ICS-Feeds erscheinen Live-Termine.",
+			"eventLayout": "default",
+			"includeDescription": true,
+			"includeEventTime": true,
+			"showCalendarLabels": true,
+			"showLocation": false,
+			"firstDay": 1,
+			"defaultDays": [],
+			"weekDays": [],
+			"monthWeeks": [],
+			"monthLabel": "Juli 2026"
+		},
+		"params": {
+			"icsUrl": {
+				"type": "multiline",
+				"label": "Kalender-Feeds",
+				"description": "Ein Feed pro Zeile. Für sichtbare Quellenlabels: Name | URL. webcal:// wird automatisch unterstützt.",
+				"default": "",
+				"placeholder": "Arbeit | https://example.com/work.ics\nPrivat | webcal://example.com/private.ics"
+			},
+			"calendarName": {
+				"type": "string",
+				"label": "Anzeigename",
+				"description": "Titel in der Kopfzeile.",
+				"default": "Die nächsten fünf Tage"
+			},
+			"headers": {
+				"type": "multiline",
+				"label": "HTTP-Header",
+				"description": "Optionale gemeinsame Header als Header: Wert oder key=value.",
+				"default": ""
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Zeitzone",
+				"description": "IANA-Zeitzone für Tagesgrenzen und Uhrzeiten.",
+				"default": "America/New_York"
+			},
+			"timeFormat": {
+				"type": "select",
+				"label": "Zeitformat",
+				"description": "Darstellung der Terminzeiten.",
+				"default": "24h",
+				"options": [
+					{ "label": "24 Stunden", "value": "24h" },
+					{ "label": "12 Stunden", "value": "12h" }
+				]
+			},
+			"includeEventTime": {
+				"type": "boolean",
+				"label": "Terminzeiten anzeigen",
+				"description": "Zeigt Uhrzeit oder Ganztägig/Fortlaufend.",
+				"default": true
+			},
+			"includeDescription": {
+				"type": "boolean",
+				"label": "Beschreibungen anzeigen",
+				"description": "Zeigt eine kompakte Detailzeile, soweit Platz vorhanden ist.",
+				"default": true
+			},
+			"showCalendarLabels": {
+				"type": "boolean",
+				"label": "Kalenderquelle anzeigen",
+				"description": "Zeigt die Kalenderquelle links oberhalb des Termintitels.",
+				"default": true
+			},
+			"showLocation": {
+				"type": "boolean",
+				"label": "Ort anzeigen",
+				"description": "Ergänzt den Veranstaltungsort in der Detailzeile.",
+				"default": false
+			},
+			"ignoredPhrases": {
+				"type": "multiline",
+				"label": "Ignorierte Begriffe",
+				"description": "Blendet passende Titel oder Beschreibungen aus; ein Begriff pro Zeile.",
+				"default": ""
+			},
+			"maxEventsPerDay": {
+				"type": "number",
+				"label": "Maximale Termine pro Tag",
+				"description": "Das Layout zeigt höchstens vier Termine je Tag und weist auf weitere hin.",
+				"default": 4
+			}
+		},
+		"tags": [
+			"calendar",
+			"ics",
+			"multi-calendar",
+			"five-day",
+			"pixel-perfect",
+			"eink",
+			"800x480"
+		],
+		"author": {
+			"name": "Christian Richter",
+			"github": ""
+		},
+		"renderSettings": {
+			"doubleSizeForSharperText": false,
+			"renderer": "chromium",
+			"dataFetchTimeoutMs": 12000
+		},
+		"version": "1.0.0",
+		"category": "display-components"
+	},
 	"iss-position": {
 		"title": "ISS Position",
 		"published": true,
@@ -3012,7 +3254,16 @@
 				"default": "America/New_York"
 			}
 		},
-		"tags": ["fifa", "world-cup", "soccer", "football", "sports", "live-data", "bracket", "knockout"],
+		"tags": [
+			"fifa",
+			"world-cup",
+			"soccer",
+			"football",
+			"sports",
+			"live-data",
+			"bracket",
+			"knockout"
+		],
 		"author": {
 			"name": "worldcup2026 API import",
 			"github": "rezarahiminia"

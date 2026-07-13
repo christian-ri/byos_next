@@ -27,6 +27,7 @@ export type CalendarDayEvent = {
 	endDateTime: string;
 	startMinute: number | null;
 	endMinute: number | null;
+	calendarLabel?: string;
 };
 
 export type CalendarDay = {
@@ -56,6 +57,7 @@ export type CalendarRecipeData = {
 	weekDays: CalendarDay[];
 	monthWeeks: CalendarDay[][];
 	monthLabel: string;
+	sourceLabels?: string[];
 };
 
 type CalendarParams = {
@@ -89,6 +91,19 @@ type RawCalendarEvent = {
 	end: Date;
 	rrule?: string;
 	exdates: Date[];
+	calendarLabel?: string;
+	recurrenceTimeZone: string;
+	recurrenceId?: Date;
+	seriesId?: string;
+};
+
+type CalendarSource = {
+	label: string;
+	url: string;
+};
+
+type LoadedCalendarSource = CalendarSource & {
+	content: string;
 };
 
 type BuildDayOptions = {
@@ -173,7 +188,10 @@ function normalizeTimeFormat(value?: string): "12h" | "24h" {
 	return (value || "").trim().toLowerCase() === "24h" ? "24h" : "12h";
 }
 
-function normalizeTimeZoneIdentifier(value?: string) {
+function normalizeTimeZoneIdentifier(
+	value?: string,
+	fallback = DEFAULT_TIME_ZONE,
+) {
 	const trimmed = String(value || "")
 		.trim()
 		.replace(/^"+|"+$/g, "")
@@ -194,6 +212,15 @@ function normalizeTimeZoneIdentifier(value?: string) {
 			)?.[1];
 		if (aliased) {
 			return aliased;
+		}
+	}
+
+	if (fallback !== value) {
+		try {
+			new Intl.DateTimeFormat("en-US", { timeZone: fallback });
+			return fallback;
+		} catch {
+			// Fall through to the guaranteed-safe default.
 		}
 	}
 
@@ -369,52 +396,87 @@ function parseList(value?: string) {
 		.filter(Boolean);
 }
 
+function parseCalendarSources(value?: string): CalendarSource[] {
+	return parseList(value).map((entry, index) => {
+		const separator = entry.indexOf("|");
+		const hasLabel = separator > 0;
+		const label = hasLabel ? entry.slice(0, separator).trim() : "";
+		const rawUrl = hasLabel ? entry.slice(separator + 1).trim() : entry;
+
+		return {
+			label: label || `Kalender ${index + 1}`,
+			url: rawUrl.replace(/^webcal:/i, "https:"),
+		};
+	});
+}
+
 function buildFallbackRawEvents() {
 	const now = new Date();
 	return [
 		{
 			id: "sample-1",
-			summary: "Michael OOO",
-			description: "Quarterly strategy meeting",
+			summary: "Projektabstimmung",
+			description: "Prioritäten und offene Punkte",
+			location: "Teams",
+			status: "confirmed",
+			allDay: false,
+			start: new Date(now.getTime() - 30 * 60 * 1000),
+			end: new Date(now.getTime() + 45 * 60 * 1000),
+			exdates: [],
+			calendarLabel: "Arbeit",
+			recurrenceTimeZone: DEFAULT_TIME_ZONE,
+		},
+		{
+			id: "sample-2",
+			summary: "Einkaufen",
+			description: "Wochenmarkt und Apotheke",
+			location: "Innenstadt",
+			status: "confirmed",
+			allDay: false,
+			start: new Date(now.getTime() + 90 * 60 * 1000),
+			end: new Date(now.getTime() + 150 * 60 * 1000),
+			exdates: [],
+			calendarLabel: "Privat",
+			recurrenceTimeZone: DEFAULT_TIME_ZONE,
+		},
+		{
+			id: "sample-3",
+			summary: "Geburtstag Anna",
+			description: "",
 			location: "",
 			status: "confirmed",
 			allDay: true,
 			start: addDays(startOfDay(now), 1),
-			end: addDays(startOfDay(now), 3),
+			end: addDays(startOfDay(now), 2),
 			exdates: [],
-		},
-		{
-			id: "sample-2",
-			summary: "Code Review",
-			description: "Hackathon planning and BYOS handoff",
-			location: "GitHub",
-			status: "confirmed",
-			allDay: false,
-			start: new Date(addDays(now, 2).setHours(10, 0, 0, 0)),
-			end: new Date(addDays(now, 2).setHours(11, 0, 0, 0)),
-			exdates: [],
-		},
-		{
-			id: "sample-3",
-			summary: "Sprint Planning",
-			description: "One-on-one with John",
-			location: "Studio",
-			status: "confirmed",
-			allDay: false,
-			start: new Date(addDays(now, 4).setHours(13, 0, 0, 0)),
-			end: new Date(addDays(now, 4).setHours(15, 0, 0, 0)),
-			exdates: [],
+			calendarLabel: "Familie",
+			recurrenceTimeZone: DEFAULT_TIME_ZONE,
 		},
 		{
 			id: "sample-4",
-			summary: "Weekly Review",
-			description: "Team building",
-			location: "",
+			summary: "Design Review",
+			description: "Freigabe des Display-Layouts",
+			location: "Studio",
 			status: "confirmed",
 			allDay: false,
-			start: new Date(addDays(now, 5).setHours(9, 30, 0, 0)),
-			end: new Date(addDays(now, 5).setHours(10, 30, 0, 0)),
+			start: new Date(addDays(now, 1).setHours(10, 0, 0, 0)),
+			end: new Date(addDays(now, 1).setHours(11, 0, 0, 0)),
 			exdates: [],
+			calendarLabel: "Arbeit",
+			recurrenceTimeZone: DEFAULT_TIME_ZONE,
+		},
+		{
+			id: "sample-5",
+			summary: "Abendessen mit Familie",
+			description: "Tisch ist reserviert",
+			location: "Restaurant",
+			status: "confirmed",
+			allDay: false,
+			start: new Date(addDays(now, 1).setHours(18, 30, 0, 0)),
+			end: new Date(addDays(now, 1).setHours(20, 0, 0, 0)),
+			exdates: [],
+			calendarLabel: "Familie",
+			recurrenceTimeZone: DEFAULT_TIME_ZONE,
 		},
 	] satisfies RawCalendarEvent[];
 }
@@ -428,6 +490,8 @@ function buildFallbackData(
 	includeEventTime: boolean,
 	note: string,
 	calendarName?: string,
+	timeFormat: "12h" | "24h" = "12h",
+	maxEventsPerDay = 4,
 ) {
 	const subtitle =
 		calendarName?.trim() ||
@@ -442,8 +506,8 @@ function buildFallbackData(
 		includeDescription,
 		includeEventTime,
 		firstDay,
-		timeFormat: "12h",
-		maxEventsPerDay: 4,
+		timeFormat,
+		maxEventsPerDay,
 		rawEvents: buildFallbackRawEvents(),
 		note,
 	});
@@ -606,9 +670,8 @@ function parseIcsDate(
 	}
 
 	const dateBits = parseDateBits(value);
-	const timeZone = normalizeTimeZoneIdentifier(
-		params.TZID?.trim() || fallbackTimeZone,
-	);
+	const fallback = normalizeTimeZoneIdentifier(fallbackTimeZone);
+	const timeZone = normalizeTimeZoneIdentifier(params.TZID?.trim(), fallback);
 
 	return {
 		date: timeZone
@@ -626,7 +689,7 @@ function parseIcsDate(
 }
 
 function dayCodeToIndex(code: string) {
-	return DAY_NAMES.indexOf(code);
+	return DAY_NAMES.indexOf(code.replace(/^[+-]?\d+/, ""));
 }
 
 function parseRRule(rule: string) {
@@ -656,6 +719,7 @@ function cloneOccurrence(
 	return {
 		...event,
 		id: `${event.id}-${index}`,
+		seriesId: event.seriesId || event.id,
 		start,
 		end,
 	};
@@ -678,46 +742,175 @@ function expandRecurringEvent(
 	const freq = rule.FREQ;
 	const interval = Number(rule.INTERVAL || "1");
 	const count = Number(rule.COUNT || "0");
-	const until = rule.UNTIL ? parseIcsDate(rule.UNTIL, {})?.date : null;
+	const until = rule.UNTIL
+		? parseIcsDate(rule.UNTIL, {}, event.recurrenceTimeZone)?.date
+		: null;
 	const durationMs = event.end.getTime() - event.start.getTime();
-	const maxIterations = count > 0 ? count : 80;
 
 	if (!freq || !["DAILY", "WEEKLY", "MONTHLY"].includes(freq)) {
 		return eventIntersectsWindow(event, windowStart, windowEnd) ? [event] : [];
 	}
 
 	const results: RawCalendarEvent[] = [];
+	const recurrenceZone = event.recurrenceTimeZone;
+	const startBits = zonedDateBits(event.start, recurrenceZone);
+	const startTime = zonedTimeParts(event.start, recurrenceZone);
+	const startDate = new Date(
+		startBits.year,
+		startBits.month - 1,
+		startBits.day,
+		12,
+		0,
+		0,
+		0,
+	);
+	const endBits = zonedDateBits(windowEnd, recurrenceZone);
+	const finalDate = new Date(
+		endBits.year,
+		endBits.month - 1,
+		endBits.day,
+		12,
+		0,
+		0,
+		0,
+	);
+
+	const occurrenceStart = (calendarDate: Date) => {
+		if (event.allDay) {
+			return new Date(
+				Date.UTC(
+					calendarDate.getFullYear(),
+					calendarDate.getMonth(),
+					calendarDate.getDate(),
+					12,
+				),
+			);
+		}
+
+		return zonedDateTimeToUtc(
+			{
+				year: calendarDate.getFullYear(),
+				month: calendarDate.getMonth(),
+				day: calendarDate.getDate(),
+				hour: startTime.hour,
+				minute: startTime.minute,
+				second: 0,
+			},
+			recurrenceZone,
+		);
+	};
+
+	let occurrenceIndex = 0;
+	const appendOccurrence = (calendarDate: Date) => {
+		const start = occurrenceStart(calendarDate);
+		if (start < event.start) return true;
+		if (until && start > until) return false;
+		if (count > 0 && occurrenceIndex >= count) return false;
+
+		const index = occurrenceIndex;
+		occurrenceIndex += 1;
+		const end = new Date(start.getTime() + durationMs);
+		if (!isExcluded(start, event.exdates)) {
+			const occurrence = cloneOccurrence(event, start, end, index);
+			if (eventIntersectsWindow(occurrence, windowStart, windowEnd)) {
+				results.push(occurrence);
+			}
+		}
+		return true;
+	};
 
 	if (freq === "DAILY") {
-		let current = new Date(event.start);
-		for (let index = 0; index < maxIterations; index += 1) {
-			if (until && current > until) break;
-			const end = new Date(current.getTime() + durationMs);
-			if (!isExcluded(current, event.exdates)) {
-				const occurrence = cloneOccurrence(event, current, end, index);
-				if (eventIntersectsWindow(occurrence, windowStart, windowEnd)) {
-					results.push(occurrence);
-				}
-			}
-			if (current > windowEnd) break;
-			current = addDays(current, interval);
+		for (
+			let cursor = new Date(startDate);
+			cursor <= finalDate;
+			cursor = addDays(cursor, interval)
+		) {
+			if (!appendOccurrence(cursor)) break;
 		}
 		return results;
 	}
 
 	if (freq === "MONTHLY") {
-		let current = new Date(event.start);
-		for (let index = 0; index < maxIterations; index += 1) {
-			if (until && current > until) break;
-			const end = new Date(current.getTime() + durationMs);
-			if (!isExcluded(current, event.exdates)) {
-				const occurrence = cloneOccurrence(event, current, end, index);
-				if (eventIntersectsWindow(occurrence, windowStart, windowEnd)) {
-					results.push(occurrence);
+		const byMonthDays = (rule.BYMONTHDAY || "")
+			.split(",")
+			.map(Number)
+			.filter((day) => Number.isInteger(day) && day !== 0);
+		const byDayRules = (rule.BYDAY || "")
+			.split(",")
+			.map((value) => {
+				const match = value.match(/^([+-]?\d+)?([A-Z]{2})$/);
+				if (!match) return null;
+				const weekday = dayCodeToIndex(match[2]);
+				if (weekday < 0) return null;
+				return {
+					ordinal: match[1] ? Number(match[1]) : null,
+					weekday,
+				};
+			})
+			.filter(
+				(value): value is { ordinal: number | null; weekday: number } =>
+					value !== null,
+			);
+		const datesForMonth = (monthCursor: Date) => {
+			const year = monthCursor.getFullYear();
+			const month = monthCursor.getMonth();
+			const daysInMonth = new Date(year, month + 1, 0).getDate();
+			const dates: Date[] = [];
+
+			for (const monthDay of byMonthDays) {
+				const resolvedDay =
+					monthDay > 0 ? monthDay : daysInMonth + monthDay + 1;
+				if (resolvedDay >= 1 && resolvedDay <= daysInMonth) {
+					dates.push(new Date(year, month, resolvedDay, 12));
 				}
 			}
-			if (current > windowEnd) break;
-			current = addMonths(current, interval);
+
+			for (const byDay of byDayRules) {
+				const matches = Array.from(
+					{ length: daysInMonth },
+					(_, index) => new Date(year, month, index + 1, 12),
+				).filter((date) => date.getDay() === byDay.weekday);
+				if (byDay.ordinal === null) {
+					dates.push(...matches);
+				} else {
+					const match =
+						byDay.ordinal > 0
+							? matches[byDay.ordinal - 1]
+							: matches[matches.length + byDay.ordinal];
+					if (match) dates.push(match);
+				}
+			}
+
+			if (dates.length === 0) {
+				const defaultDay = startDate.getDate();
+				if (defaultDay <= daysInMonth) {
+					dates.push(new Date(year, month, defaultDay, 12));
+				}
+			}
+
+			return dates
+				.filter(
+					(date, index, allDates) =>
+						allDates.findIndex(
+							(candidate) => candidate.getTime() === date.getTime(),
+						) === index,
+				)
+				.sort((a, b) => a.getTime() - b.getTime());
+		};
+
+		for (
+			let monthCursor = new Date(
+				startDate.getFullYear(),
+				startDate.getMonth(),
+				1,
+				12,
+			);
+			monthCursor <= finalDate;
+			monthCursor = addMonths(monthCursor, interval)
+		) {
+			for (const occurrenceDate of datesForMonth(monthCursor)) {
+				if (!appendOccurrence(occurrenceDate)) return results;
+			}
 		}
 		return results;
 	}
@@ -726,52 +919,38 @@ function expandRecurringEvent(
 		rule.BYDAY?.split(",")
 			.map(dayCodeToIndex)
 			.filter((day) => day >= 0) || [];
-	const byDay = parsedByDay.length > 0 ? parsedByDay : [event.start.getDay()];
-	const cursor = new Date(windowStart);
-	cursor.setHours(
-		event.start.getHours(),
-		event.start.getMinutes(),
-		event.start.getSeconds(),
-		0,
-	);
-	const baseWeek = startOfWeek(event.start, 0).getTime();
+	const byDay = parsedByDay.length > 0 ? parsedByDay : [startDate.getDay()];
+	const baseWeek = startOfWeek(startDate, 0).getTime();
 
-	for (let index = 0; index < 120; index += 1) {
-		if (cursor > windowEnd) break;
-
-		const weekOffset =
-			(startOfWeek(cursor, 0).getTime() - baseWeek) / (7 * 24 * 60 * 60 * 1000);
-		const matchesWeek = weekOffset >= 0 && weekOffset % interval === 0;
-		if (
-			matchesWeek &&
-			byDay.includes(cursor.getDay()) &&
-			cursor >= event.start &&
-			(!until || cursor <= until) &&
-			!isExcluded(cursor, event.exdates)
-		) {
-			const end = new Date(cursor.getTime() + durationMs);
-			const occurrence = cloneOccurrence(event, new Date(cursor), end, index);
-			if (eventIntersectsWindow(occurrence, windowStart, windowEnd)) {
-				results.push(occurrence);
-			}
-			if (count > 0 && results.length >= count) {
-				break;
-			}
+	for (
+		let cursor = new Date(startDate);
+		cursor <= finalDate;
+		cursor = addDays(cursor, 1)
+	) {
+		const weekOffset = Math.round(
+			(startOfWeek(cursor, 0).getTime() - baseWeek) / (7 * 24 * 60 * 60 * 1000),
+		);
+		if (weekOffset % interval !== 0 || !byDay.includes(cursor.getDay())) {
+			continue;
 		}
-
-		cursor.setDate(cursor.getDate() + 1);
+		if (!appendOccurrence(cursor)) break;
 	}
 
 	return results;
 }
 
-function parseEventsFromIcs(source: string) {
+function parseEventsFromIcs(
+	source: string,
+	calendarLabel: string | undefined,
+	displayTimeZone: string,
+) {
 	const lines = unfoldIcs(source).split(/\r?\n/);
 	const events: RawCalendarEvent[] = [];
 	const calendarTimeZone = normalizeTimeZoneIdentifier(
 		lines
 			.map((line) => parseProperty(line))
 			.find((prop) => prop?.name === "X-WR-TIMEZONE")?.value,
+		displayTimeZone,
 	);
 	let inEvent = false;
 	let bucket: ParsedProperty[] = [];
@@ -813,11 +992,30 @@ function parseEventsFromIcs(source: string) {
 						)
 						.filter((value): value is Date => value instanceof Date),
 				);
+			const recurrenceTimeZone = dtStartProp?.value.endsWith("Z")
+				? "UTC"
+				: normalizeTimeZoneIdentifier(
+						dtStartProp?.params.TZID,
+						calendarTimeZone,
+					);
+			const recurrenceIdProp = props.find(
+				(prop) => prop.name === "RECURRENCE-ID",
+			);
+			const recurrenceId = recurrenceIdProp
+				? parseIcsDate(
+						recurrenceIdProp.value,
+						recurrenceIdProp.params,
+						calendarTimeZone,
+					)?.date
+				: undefined;
+
+			const eventId =
+				props.find((prop) => prop.name === "UID")?.value ||
+				`${startParsed.date.toISOString()}-${props.find((prop) => prop.name === "SUMMARY")?.value || "event"}`;
 
 			events.push({
-				id:
-					props.find((prop) => prop.name === "UID")?.value ||
-					`${startParsed.date.toISOString()}-${props.find((prop) => prop.name === "SUMMARY")?.value || "event"}`,
+				id: eventId,
+				seriesId: eventId,
 				summary:
 					unescapeIcsText(
 						props.find((prop) => prop.name === "SUMMARY")?.value || "Busy",
@@ -834,6 +1032,9 @@ function parseEventsFromIcs(source: string) {
 				end: endParsed?.date || fallbackEnd,
 				rrule: props.find((prop) => prop.name === "RRULE")?.value,
 				exdates,
+				calendarLabel,
+				recurrenceTimeZone,
+				recurrenceId,
 			});
 			bucket = [];
 			continue;
@@ -850,6 +1051,35 @@ function parseEventsFromIcs(source: string) {
 	}
 
 	return events;
+}
+
+function expandCalendarEvents(
+	events: RawCalendarEvent[],
+	windowStart: Date,
+	windowEnd: Date,
+) {
+	const overrides = events.filter((event) => event.recurrenceId);
+	const overriddenOccurrences = new Set(
+		overrides.map(
+			(event) => `${event.seriesId}|${event.recurrenceId?.toISOString() || ""}`,
+		),
+	);
+	const expanded = events
+		.filter((event) => !event.recurrenceId)
+		.flatMap((event) => expandRecurringEvent(event, windowStart, windowEnd))
+		.filter(
+			(event) =>
+				!overriddenOccurrences.has(
+					`${event.seriesId}|${event.start.toISOString()}`,
+				),
+		);
+	const activeOverrides = overrides.filter(
+		(event) =>
+			event.status.toUpperCase() !== "CANCELLED" &&
+			eventIntersectsWindow(event, windowStart, windowEnd),
+	);
+
+	return [...expanded, ...activeOverrides];
 }
 
 function filterIgnoredEvents(
@@ -951,6 +1181,7 @@ function buildEventForDay(
 		endDateTime: event.end.toISOString(),
 		startMinute,
 		endMinute,
+		calendarLabel: event.calendarLabel,
 	};
 }
 
@@ -1011,6 +1242,7 @@ function buildCalendarData({
 	maxEventsPerDay,
 	rawEvents,
 	note,
+	sourceLabels,
 }: {
 	providerLabel: string;
 	title: string;
@@ -1024,6 +1256,7 @@ function buildCalendarData({
 	maxEventsPerDay: number;
 	rawEvents: RawCalendarEvent[];
 	note?: string;
+	sourceLabels?: string[];
 }): CalendarRecipeData {
 	const today = zonedCalendarDate(new Date(), timeZone);
 	const todayBits = zonedDateBits(today, timeZone);
@@ -1048,7 +1281,9 @@ function buildCalendarData({
 	const monthGridStart = startOfWeek(currentMonthStart, firstDay);
 	const monthGridEnd = endOfWeek(currentMonthEnd, firstDay);
 
-	const defaultDays = Array.from({ length: 3 }, (_, index) =>
+	// Six days keep the existing today-based recipes intact while allowing
+	// forward-looking views to render tomorrow through day +5.
+	const defaultDays = Array.from({ length: 6 }, (_, index) =>
 		buildDay(addZonedDays(today, index, timeZone), rawEvents, {
 			timeZone,
 			timeFormat,
@@ -1104,25 +1339,32 @@ function buildCalendarData({
 		weekDays,
 		monthWeeks,
 		monthLabel: monthLabel(today, timeZone),
+		sourceLabels:
+			sourceLabels ||
+			Array.from(
+				new Set(
+					rawEvents
+						.map((event) => event.calendarLabel)
+						.filter((label): label is string => Boolean(label)),
+				),
+			),
 	};
 }
 
 async function loadIcsSources(
 	icsUrlInput: string,
 	headers?: string,
-): Promise<string[]> {
-	const urls = parseList(icsUrlInput).map((url) =>
-		url.replace(/^webcal:/i, "https:"),
-	);
+): Promise<{ sources: LoadedCalendarSource[]; failedLabels: string[] }> {
+	const calendarSources = parseCalendarSources(icsUrlInput);
 
-	if (urls.length === 0) {
-		return [];
+	if (calendarSources.length === 0) {
+		return { sources: [], failedLabels: [] };
 	}
 
 	const results = await Promise.allSettled(
-		urls.map((url) =>
+		calendarSources.map((source) =>
 			fetchTextWithTimeout(
-				url,
+				source.url,
 				{
 					headers: parseLooseHeaderString(headers),
 				},
@@ -1131,12 +1373,16 @@ async function loadIcsSources(
 		),
 	);
 
-	return results
-		.filter(
-			(result): result is PromiseFulfilledResult<string> =>
-				result.status === "fulfilled",
-		)
-		.map((result) => result.value);
+	const sources = results.flatMap((result, index) =>
+		result.status === "fulfilled"
+			? [{ ...calendarSources[index], content: result.value }]
+			: [],
+	);
+	const failedLabels = results.flatMap((result, index) =>
+		result.status === "rejected" ? [calendarSources[index].label] : [],
+	);
+
+	return { sources, failedLabels };
 }
 
 export async function loadCalendarRecipeData(
@@ -1171,11 +1417,16 @@ export async function loadCalendarRecipeData(
 			includeEventTime,
 			"Preview - your device will show actual data once an ICS feed is configured.",
 			calendarName,
+			timeFormat,
+			maxEventsPerDay,
 		);
 	}
 
 	try {
-		const sources = await loadIcsSources(icsUrlInput, params?.headers);
+		const { sources, failedLabels } = await loadIcsSources(
+			icsUrlInput,
+			params?.headers,
+		);
 		if (sources.length === 0) {
 			return buildFallbackData(
 				providerLabel,
@@ -1186,6 +1437,8 @@ export async function loadCalendarRecipeData(
 				includeEventTime,
 				"No valid ICS feeds were fetched, so this preview is showing sample events.",
 				calendarName,
+				timeFormat,
+				maxEventsPerDay,
 			);
 		}
 
@@ -1198,18 +1451,29 @@ export async function loadCalendarRecipeData(
 			addZonedDays(now, 45, timeZone),
 			timeZone,
 		);
+		const parsedEvents = sources.flatMap((source) =>
+			parseEventsFromIcs(source.content, source.label, timeZone),
+		);
 		const rawEvents = filterIgnoredEvents(
-			sources
-				.flatMap((source) => parseEventsFromIcs(source))
-				.flatMap((event) => expandRecurringEvent(event, windowStart, windowEnd))
-				.filter(
-					(event) =>
-						event.status.toUpperCase() !== "CANCELLED" &&
-						eventEndInclusive(event) >= windowStart &&
-						event.start <= windowEnd,
-				),
+			expandCalendarEvents(parsedEvents, windowStart, windowEnd).filter(
+				(event) =>
+					event.status.toUpperCase() !== "CANCELLED" &&
+					eventEndInclusive(event) >= windowStart &&
+					event.start <= windowEnd,
+			),
 			ignoredPhrases,
-		).sort((a, b) => a.start.getTime() - b.start.getTime());
+		)
+			.filter((event, index, events) => {
+				const fingerprint = `${event.start.toISOString()}|${event.end.toISOString()}|${event.summary.trim().toLowerCase()}`;
+				return (
+					events.findIndex(
+						(candidate) =>
+							`${candidate.start.toISOString()}|${candidate.end.toISOString()}|${candidate.summary.trim().toLowerCase()}` ===
+							fingerprint,
+					) === index
+				);
+			})
+			.sort((a, b) => a.start.getTime() - b.start.getTime());
 
 		if (rawEvents.length === 0) {
 			return buildFallbackData(
@@ -1221,6 +1485,8 @@ export async function loadCalendarRecipeData(
 				includeEventTime,
 				"No matching events were found for the selected layout window.",
 				calendarName,
+				timeFormat,
+				maxEventsPerDay,
 			);
 		}
 
@@ -1236,7 +1502,11 @@ export async function loadCalendarRecipeData(
 			timeFormat,
 			maxEventsPerDay,
 			rawEvents,
-			note: undefined,
+			note:
+				failedLabels.length > 0
+					? `Nicht erreichbar: ${failedLabels.join(", ")}`
+					: undefined,
+			sourceLabels: sources.map((source) => source.label),
 		});
 	} catch (error) {
 		console.error(`Error loading ${providerLabel} calendar data:`, error);
@@ -1249,6 +1519,8 @@ export async function loadCalendarRecipeData(
 			includeEventTime,
 			"Live calendar fetch failed, so this preview is showing sample events.",
 			calendarName,
+			timeFormat,
+			maxEventsPerDay,
 		);
 	}
 }

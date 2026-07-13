@@ -36,10 +36,14 @@ export const getChromiumRecipeHtml = async ({
 	slug,
 	userId,
 	paramOverrides,
+	width,
+	height,
 }: {
 	slug: string;
 	userId?: string | null;
 	paramOverrides?: Record<string, unknown>;
+	width?: number;
+	height?: number;
 }) => {
 	const config = fetchRecipeConfig(slug);
 	if (!config) {
@@ -61,7 +65,7 @@ export const getChromiumRecipeHtml = async ({
 		userId,
 		paramOverrides,
 	});
-	return recipeModule.renderHtml(data);
+	return recipeModule.renderHtml({ ...data, width, height });
 };
 
 export const renderChromiumRecipePng = async ({
@@ -81,6 +85,8 @@ export const renderChromiumRecipePng = async ({
 		slug,
 		userId,
 		paramOverrides,
+		width,
+		height,
 	});
 	const result = await renderHtmlToPng(html, {
 		width,
