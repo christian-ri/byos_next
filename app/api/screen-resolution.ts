@@ -16,6 +16,7 @@ const SCREEN_ALIASES: Record<string, string> = {
 	"calendar-recipe": "calendar-apple",
 	"calendar-recipes": "calendar-apple",
 	calendar: "calendar-apple",
+	"multi-calendar-today": "calendar-today",
 	nasa: "nasa-deep-space-network",
 	"nasa-dsn": "nasa-deep-space-network",
 	"nasa-deep-space-network": "nasa-deep-space-network",

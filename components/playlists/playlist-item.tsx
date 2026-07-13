@@ -1,5 +1,4 @@
 import { GripVertical, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,7 +24,9 @@ interface PlaylistItemProps {
 	};
 	onUpdate: (id: string, data: Partial<PlaylistItemProps["item"]>) => void;
 	onDelete: (id: string) => void;
-	onReorder: (draggedId: string, targetId: string) => void;
+	onDragStart: (id: string) => void;
+	onDragEnd: () => void;
+	isDragging: boolean;
 	screenOptions: { id: string; name: string }[];
 }
 
@@ -43,32 +44,14 @@ export function PlaylistItem({
 	item,
 	onUpdate,
 	onDelete,
-	onReorder,
+	onDragStart,
+	onDragEnd,
+	isDragging,
 	screenOptions,
 }: PlaylistItemProps) {
-	const [isDragOver, setIsDragOver] = useState(false);
-
 	return (
 		<Card
-			className={`mb-4 transition-colors ${isDragOver ? "border-primary bg-muted/40" : ""}`}
-			onDragOver={(event) => {
-				event.preventDefault();
-				event.dataTransfer.dropEffect = "move";
-				setIsDragOver(true);
-			}}
-			onDragLeave={() => setIsDragOver(false)}
-			onDrop={(event) => {
-				event.preventDefault();
-				setIsDragOver(false);
-
-				const draggedId =
-					event.dataTransfer.getData("application/x-playlist-item-id") ||
-					event.dataTransfer.getData("text/plain");
-
-				if (draggedId) {
-					onReorder(draggedId, item.id);
-				}
-			}}
+			className={`transition-[opacity,box-shadow] ${isDragging ? "opacity-45 shadow-none" : ""}`}
 		>
 			<CardHeader className="-mb-2">
 				<div className="flex items-center justify-between">
@@ -85,8 +68,9 @@ export function PlaylistItem({
 									item.id,
 								);
 								event.dataTransfer.setData("text/plain", item.id);
+								onDragStart(item.id);
 							}}
-							onDragEnd={() => setIsDragOver(false)}
+							onDragEnd={onDragEnd}
 						>
 							<GripVertical className="h-4 w-4" />
 						</button>

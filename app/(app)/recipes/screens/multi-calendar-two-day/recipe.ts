@@ -91,7 +91,9 @@ function renderDay(
 	const date = formatDay(day, tomorrow);
 	const now = Date.now();
 	const visible = day.events.slice(0, 5);
-	const hidden = Math.max(0, day.eventCount - visible.length);
+	const previousCount = day.previousEventCount || 0;
+	const remainingCount = Math.max(0, day.eventCount - previousCount);
+	const hidden = Math.max(0, remainingCount - visible.length);
 
 	return `
 		<section class="day${tomorrow ? " day--tomorrow" : ""}">
@@ -102,9 +104,10 @@ function renderDay(
 				</div>
 				<div class="day__meta">
 					<div class="day__date">${escapeHtml(date.calendarDate)}</div>
-					<div class="day__count">${day.eventCount} ${day.eventCount === 1 ? "Termin" : "Termine"}</div>
+					<div class="day__count">${remainingCount} ${remainingCount === 1 ? "Termin" : "Termine"}</div>
 				</div>
 			</header>
+			${previousCount > 0 ? `<div class="previous">↑ ${previousCount} ${previousCount === 1 ? "VORHERIGER TERMIN" : "VORHERIGE TERMINE"}</div>` : ""}
 			<ul class="events">
 				${
 					visible.length > 0
@@ -113,7 +116,7 @@ function renderDay(
 									renderEvent(
 										event,
 										data,
-										!tomorrow &&
+										day.isToday &&
 											new Date(event.startDateTime).getTime() <= now &&
 											new Date(event.endDateTime).getTime() >= now,
 									),
@@ -179,6 +182,7 @@ export function renderHtml(data: MultiCalendarTwoDayData) {
 			.day__meta { text-align: right; flex: 0 0 auto; }
 			.day__date { font-size: 15px; line-height: 16px; font-weight: 800; }
 			.day__count { font-size: 9px; line-height: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .7px; }
+			.previous { height: 20px; flex: 0 0 20px; border-bottom: 2px solid var(--ink); padding: 0 9px; font-size: 9px; line-height: 18px; font-weight: 900; letter-spacing: .7px; text-transform: uppercase; background-image: repeating-linear-gradient(135deg, #fff 0 3px, #e5e5e5 3px 4px); }
 			.events { margin: 0; padding: 0; list-style: none; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 			.event { position: relative; min-height: 50px; flex: 1 1 0; display: grid; grid-template-columns: 7px 83px minmax(0, 1fr); align-items: stretch; border-bottom: 1px solid var(--ink); overflow: hidden; }
 			.event:last-child { border-bottom: 0; }

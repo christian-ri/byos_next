@@ -66,6 +66,7 @@ type CrWeatherParams = {
 	longitude?: string | number;
 	units?: string;
 	language?: string;
+	timezone?: string;
 	batteryVoltage?: string | number;
 	batteryPercent?: string | number;
 	batteryLabel?: string;
@@ -151,6 +152,11 @@ function normalizeLanguage(value?: string) {
 }
 
 function formatClock(value: string | Date, timeZone?: string) {
+	if (typeof value === "string" && !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)) {
+		const localClock = value.match(/T(\d{2}):(\d{2})/);
+		if (localClock) return `${localClock[1]}:${localClock[2]}`;
+	}
+
 	return formatDateTime(
 		value,
 		{
@@ -163,20 +169,34 @@ function formatClock(value: string | Date, timeZone?: string) {
 }
 
 function formatHourLabel(value: string, timeZone?: string) {
-	return formatDateTime(
-		value,
-		{
-			hour: "2-digit",
-			minute: "2-digit",
-			hour12: false,
-		},
+	return formatClock(value, timeZone);
+}
+
+function localIsoMinute(value: Date, timeZone: string) {
+	const parts = new Intl.DateTimeFormat("en-CA", {
 		timeZone,
-	);
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hourCycle: "h23",
+	}).formatToParts(value);
+	const values = parts.reduce<Record<string, string>>((result, part) => {
+		if (part.type !== "literal") result[part.type] = part.value;
+		return result;
+	}, {});
+
+	return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
 }
 
 function formatDayLabel(value: string, index: number, timeZone?: string) {
 	if (index === 0) return "HEUTE";
-	return formatDateTime(value, { weekday: "short" }, timeZone)
+	return formatDateTime(
+		/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00Z` : value,
+		{ weekday: "short" },
+		/^\d{4}-\d{2}-\d{2}$/.test(value) ? "UTC" : timeZone,
+	)
 		.replace(".", "")
 		.toUpperCase();
 }
@@ -333,7 +353,7 @@ async function resolveLocation(params?: CrWeatherParams) {
 			latitude,
 			longitude,
 			name: `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`,
-			timezone: "auto",
+			timezone: String(params?.timezone || "auto").trim() || "auto",
 		};
 	}
 
@@ -351,7 +371,8 @@ async function resolveLocation(params?: CrWeatherParams) {
 			latitude: DEFAULT_LATITUDE,
 			longitude: DEFAULT_LONGITUDE,
 			name: DEFAULT_LOCATION,
-			timezone: "Europe/Berlin",
+			timezone:
+				String(params?.timezone || "Europe/Berlin").trim() || "Europe/Berlin",
 		};
 	}
 
@@ -361,7 +382,8 @@ async function resolveLocation(params?: CrWeatherParams) {
 		name: [first.name, first.country_code || first.country]
 			.filter(Boolean)
 			.join(", "),
-		timezone: first.timezone || "auto",
+		timezone:
+			String(params?.timezone || first.timezone || "auto").trim() || "auto",
 	};
 }
 
@@ -388,11 +410,17 @@ function buildDescription(
 	return `${tempTone} ${windTone} aus ${windDirection}. ${condition}.`;
 }
 
-function buildFallback(): CrWeatherData {
+function buildFallback(timeZone = "Europe/Berlin"): CrWeatherData {
+	const now = new Date();
+	const nextHour = new Date(now);
+	nextHour.setMinutes(0, 0, 0);
+	nextHour.setHours(nextHour.getHours() + 1);
+	const fallbackHours = [18, 19, 20, 21, 20, 19];
+
 	return {
 		location: DEFAULT_LOCATION,
-		time: "10:42",
-		updatedAt: "10:41",
+		time: formatClock(now, timeZone),
+		updatedAt: formatClock(now, timeZone),
 		batteryLabel: "--",
 		temperatureUnit: "C",
 		windUnit: "km/h",
@@ -405,14 +433,15 @@ function buildFallback(): CrWeatherData {
 		humidity: "63 %",
 		pressure: "1016 hPa",
 		currentIcon: "partly-cloudy-day",
-		hourly: [
-			{ label: "11:00", temp: 18, feels: 17, precipitationProbability: 10 },
-			{ label: "12:00", temp: 19, feels: 18, precipitationProbability: 20 },
-			{ label: "13:00", temp: 20, feels: 19, precipitationProbability: 35 },
-			{ label: "14:00", temp: 21, feels: 20, precipitationProbability: 30 },
-			{ label: "15:00", temp: 20, feels: 19, precipitationProbability: 15 },
-			{ label: "16:00", temp: 19, feels: 18, precipitationProbability: 5 },
-		],
+		hourly: fallbackHours.map((temp, index) => ({
+			label: formatClock(
+				new Date(nextHour.getTime() + index * 60 * 60 * 1000),
+				timeZone,
+			),
+			temp,
+			feels: temp - 1,
+			precipitationProbability: [10, 20, 35, 30, 15, 5][index],
+		})),
 		days: [
 			{
 				label: "HEUTE",
@@ -494,10 +523,11 @@ export default async function getData(
 		]);
 
 		const timeZone = forecast.timezone || location.timezone || "Europe/Berlin";
-		const currentTime = forecast.current?.time || new Date().toISOString();
+		const now = new Date();
+		const currentLocalTime = localIsoMinute(now, timeZone);
 		const hourlyTimes = forecast.hourly?.time || [];
 		const currentIndex = hourlyTimes.findIndex(
-			(time) => new Date(time).getTime() >= new Date(currentTime).getTime(),
+			(time) => time.slice(0, 16) >= currentLocalTime,
 		);
 		const startIndex = currentIndex >= 0 ? currentIndex : 0;
 		const visibleHours = hourlyTimes.slice(startIndex, startIndex + 5);
@@ -569,8 +599,8 @@ export default async function getData(
 
 		return {
 			location: location.name.toUpperCase(),
-			time: formatClock(currentTime, timeZone),
-			updatedAt: formatClock(new Date(), timeZone),
+			time: formatClock(now, timeZone),
+			updatedAt: formatClock(now, timeZone),
 			batteryLabel,
 			temperatureUnit: units === "imperial" ? "F" : "C",
 			windUnit: unitLabel,
@@ -591,8 +621,8 @@ export default async function getData(
 				forecast.current?.weather_code,
 				Number(forecast.current?.is_day || 1) === 1,
 			),
-			hourly: hourly.length > 0 ? hourly : buildFallback().hourly,
-			days: days.length > 0 ? days : buildFallback().days,
+			hourly: hourly.length > 0 ? hourly : buildFallback(timeZone).hourly,
+			days: days.length > 0 ? days : buildFallback(timeZone).days,
 			aqi: hasAqi ? String(aqiValue) : "--",
 			aqiStatus: aqi.status,
 			aqiScale: "AQI (DE)",
@@ -603,6 +633,11 @@ export default async function getData(
 		};
 	} catch (error) {
 		console.error("Error loading CR Weather data:", error);
-		return { ...buildFallback(), batteryLabel };
+		return {
+			...buildFallback(
+				String(params?.timezone || "Europe/Berlin").trim() || "Europe/Berlin",
+			),
+			batteryLabel,
+		};
 	}
 }

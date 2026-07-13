@@ -110,6 +110,11 @@ function renderBadge(label: string, inverted = true) {
 	return `<span class="cal-badge${inverted ? " cal-badge--inverted" : ""}">${escapeHtml(label.toUpperCase())}</span>`;
 }
 
+function renderSourceLabel(label?: string) {
+	if (!label) return "";
+	return `<div class="cal-source">${escapeHtml(label.toUpperCase())}</div>`;
+}
+
 function renderEventList(
 	events: CalendarDayEvent[],
 	includeDescription: boolean,
@@ -332,6 +337,10 @@ function renderTodayBody(data: CalendarRecipeData, variant: TodayVariant) {
 	const currentEvent = allEvents.find((event) => isEventActive(event, now));
 	const nextEvent = allEvents.find((event) => isEventUpcoming(event, now));
 	const featuredEvent = currentEvent || nextEvent;
+	const previousCount = today?.previousEventCount || 0;
+	const remainingCount = Math.max(0, (today?.eventCount || 0) - previousCount);
+	const visibleEvents = allEvents.slice(0, 5);
+	const hiddenCount = Math.max(0, remainingCount - visibleEvents.length);
 	const displayTitle =
 		variant === "pixel-perfect"
 			? buildDisplayTitle(data.title, data.subtitle)
@@ -349,28 +358,32 @@ function renderTodayBody(data: CalendarRecipeData, variant: TodayVariant) {
 					</div>
 					<div class="cal-today-hero__middle">
 						<div class="meta">${escapeHtml(currentEvent ? "Aktuell" : nextEvent ? "Als Nächstes" : "Heute")}</div>
+						${renderSourceLabel(featuredEvent?.calendarLabel)}
 						<div class="value">${escapeHtml(featuredEvent?.summary || "Keine anstehenden Termine")}</div>
-						<div class="description">${escapeHtml(featuredEvent ? eventTimeLabel(featuredEvent, data.includeEventTime) : eventCountLabel(today?.eventCount || 0))}</div>
+						<div class="description">${escapeHtml(featuredEvent ? eventTimeLabel(featuredEvent, data.includeEventTime) : eventCountLabel(remainingCount))}</div>
 					</div>
 					<div class="cal-today-hero__right">
 						${renderCalendarGlyph()}
-						<div class="value">${escapeHtml(String(today?.eventCount || 0))}</div>
-						<div class="meta">${escapeHtml(eventCountLabel(today?.eventCount || 0))}</div>
+						<div class="value">${escapeHtml(String(remainingCount))}</div>
+						<div class="meta">${escapeHtml(eventCountLabel(remainingCount))}</div>
 					</div>
 				</div>
+				${previousCount > 0 ? `<div class="cal-previous">↑ ${previousCount} ${previousCount === 1 ? "VORHERIGER TERMIN" : "VORHERIGE TERMINE"}</div>` : ""}
 				<div class="cal-today-list">
 					${
-						allEvents.length > 0
-							? allEvents
-									.slice(0, 5)
+						visibleEvents.length > 0
+							? visibleEvents
 									.map((event, index) => {
 										return `
-										<div class="cal-today-row${isEventActive(event, now) ? " cal-today-row--active" : ""}${index === allEvents.length - 1 ? " cal-today-row--last" : ""}">
+										<div class="cal-today-row${isEventActive(event, now) ? " cal-today-row--active" : ""}${index === visibleEvents.length - 1 ? " cal-today-row--last" : ""}">
 											<div class="cal-today-row__time">${escapeHtml(eventTimeLabel(event, data.includeEventTime))}</div>
 											<div class="cal-today-row__dot"></div>
 											<div class="cal-today-row__content">
-												${isEventActive(event, now) ? renderBadge("Aktuell") : ""}
-												<div class="cal-today-row__summary">${escapeHtml(event.summary)}</div>
+												${renderSourceLabel(event.calendarLabel)}
+												<div class="cal-today-row__titleline">
+													${isEventActive(event, now) ? renderBadge("Jetzt") : ""}
+													<div class="cal-today-row__summary">${escapeHtml(event.summary)}</div>
+												</div>
 											</div>
 										</div>
 									`;
@@ -379,6 +392,7 @@ function renderTodayBody(data: CalendarRecipeData, variant: TodayVariant) {
 							: `<div class="cal-empty">Keine Termine für heute</div>`
 					}
 				</div>
+				${hiddenCount > 0 ? `<div class="cal-more">+ ${hiddenCount} WEITERE TERMINE</div>` : ""}
 			</div>
 		</section>
 	`;
@@ -700,6 +714,25 @@ const CALENDAR_CSS = `
 		flex: 1;
 	}
 
+	.cal-previous,
+	.cal-more {
+		flex: 0 0 22px;
+		height: 22px;
+		padding: 0 10px;
+		border: 2px solid #111;
+		font-size: 9px;
+		line-height: 18px;
+		font-weight: 900;
+		letter-spacing: .8px;
+		text-transform: uppercase;
+		background-image: repeating-linear-gradient(135deg, #fff 0 3px, #e5e5e5 3px 4px);
+	}
+
+	.cal-more {
+		text-align: center;
+		background-image: none;
+	}
+
 	.cal-today-row {
 		display: grid;
 		grid-template-columns: 160px 36px minmax(0, 1fr);
@@ -728,9 +761,41 @@ const CALENDAR_CSS = `
 
 	.cal-today-row__content {
 		display: flex;
-		align-items: center;
-		gap: 10px;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
 		min-width: 0;
+	}
+
+	.cal-today-row__titleline {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+		min-width: 0;
+	}
+
+	.cal-today-row__summary {
+		flex: 1;
+		min-width: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.cal-source {
+		display: block;
+		width: fit-content;
+		max-width: 100%;
+		border: 1px solid #111;
+		padding: 2px 5px 1px;
+		font-size: 8px;
+		line-height: 9px;
+		font-weight: 900;
+		letter-spacing: .5px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 `;
 
@@ -743,11 +808,13 @@ export function renderCalendarRecipeHtml(data: CalendarRecipeData) {
 }
 
 export function renderCalendarTodayRecipeHtml(
-	data: CalendarRecipeData,
+	data: CalendarRecipeData & { width?: number; height?: number },
 	variant: TodayVariant = "standard",
 ) {
 	return buildTrmnlHtmlShell({
 		title: data.title,
+		width: data.width,
+		height: data.height,
 		bodyHtml: renderTodayBody(data, variant),
 		extraCss: CALENDAR_CSS,
 	});

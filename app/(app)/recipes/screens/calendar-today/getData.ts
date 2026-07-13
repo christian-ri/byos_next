@@ -20,14 +20,14 @@ type CalendarTodayParams = {
 export default async function getData(
 	params?: CalendarTodayParams,
 ): Promise<CalendarRecipeData> {
-	const data = await loadCalendarRecipeData("Apple", {
+	const data = await loadCalendarRecipeData("Multi", {
 		...params,
 		eventLayout: "default",
 	});
 
 	return {
 		...data,
-		providerLabel: "Calendar",
-		title: "Calendar Today",
+		providerLabel: "Kalender",
+		title: "Multi-Kalender · Heute",
 	};
 }

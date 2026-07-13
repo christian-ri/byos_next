@@ -278,16 +278,16 @@
 		"category": "display-components"
 	},
 	"calendar-today": {
-		"title": "Calendar Today",
+		"title": "Multi-Kalender · Heute",
 		"published": true,
 		"createdAt": "2026-05-08T00:00:00Z",
 		"updatedAt": "2026-05-08T00:00:00Z",
-		"description": "A focused day view that shows only today's calendar events from an ICS feed.",
+		"description": "Zeitbewusste Pixel-Perfect-Tagesansicht, die mehrere beschriftete ICS-Kalender zusammenführt.",
 		"componentPath": "./screens/calendar-today",
 		"hasDataFetch": true,
 		"props": {
 			"providerLabel": "Calendar",
-			"title": "Calendar Today",
+			"title": "Multi-Kalender · Heute",
 			"subtitle": "Christian's Kalender",
 			"timeZone": "America/New_York",
 			"updatedAt": "May 8, 11:40 AM",
@@ -385,16 +385,16 @@
 		"params": {
 			"icsUrl": {
 				"type": "multiline",
-				"label": "ICS URL(s)",
-				"description": "Published ICS URL. Multiple feeds may be entered on separate lines. Replace webcal:// with https://.",
+				"label": "Kalender-Feeds",
+				"description": "Ein Feed pro Zeile. Für sichtbare Quellenlabels: Name | URL. webcal:// wird automatisch unterstützt.",
 				"default": "",
-				"placeholder": "https://example.com/calendar.ics"
+				"placeholder": "Arbeit | https://example.com/work.ics\nPrivat | webcal://example.com/private.ics"
 			},
 			"calendarName": {
 				"type": "string",
-				"label": "Calendar Name",
-				"description": "Name shown in the header.",
-				"default": "Personal Calendar"
+				"label": "Anzeigename",
+				"description": "Titel der gemeinsamen Tagesansicht.",
+				"default": "Mein Kalender"
 			},
 			"headers": {
 				"type": "multiline",
@@ -404,27 +404,31 @@
 			},
 			"timezone": {
 				"type": "string",
-				"label": "Time Zone",
-				"description": "IANA time zone used for display.",
+				"label": "Zeitzone",
+				"description": "IANA-Zeitzone für Tagesgrenzen und Uhrzeiten.",
 				"default": "America/New_York"
 			},
 			"timeFormat": {
-				"type": "string",
-				"label": "Time Format",
-				"description": "Use 12h or 24h.",
-				"default": "12h"
+				"type": "select",
+				"label": "Zeitformat",
+				"description": "Darstellung der Terminzeiten.",
+				"default": "24h",
+				"options": [
+					{ "label": "24 Stunden", "value": "24h" },
+					{ "label": "12 Stunden", "value": "12h" }
+				]
 			},
 			"includeDescription": {
-				"type": "string",
-				"label": "Include Description",
-				"description": "Use yes or no.",
-				"default": "yes"
+				"type": "boolean",
+				"label": "Beschreibungen berücksichtigen",
+				"description": "Behält Beschreibungen in den geladenen Kalenderdaten.",
+				"default": true
 			},
 			"includeEventTime": {
-				"type": "string",
-				"label": "Include Event Time",
-				"description": "Use yes or no.",
-				"default": "yes"
+				"type": "boolean",
+				"label": "Terminzeiten anzeigen",
+				"description": "Zeigt Uhrzeit oder Ganztägig/Fortlaufend.",
+				"default": true
 			},
 			"ignoredPhrases": {
 				"type": "multiline",
@@ -439,7 +443,14 @@
 				"default": 6
 			}
 		},
-		"tags": ["calendar", "ics", "today", "agenda"],
+		"tags": [
+			"calendar",
+			"ics",
+			"multi-calendar",
+			"today",
+			"agenda",
+			"pixel-perfect"
+		],
 		"author": {
 			"name": "TRMNL",
 			"github": "usetrmnl"
@@ -3405,6 +3416,12 @@
 				"label": "Language",
 				"description": "Open-Meteo geocoding language code. Defaults to de.",
 				"default": "de"
+			},
+			"timezone": {
+				"type": "string",
+				"label": "Time Zone",
+				"description": "Optional IANA time zone override. Leave empty to use the location time zone returned by Open-Meteo.",
+				"default": ""
 			}
 		},
 		"tags": ["weather", "dashboard", "trmnl", "eink", "chromium"],

@@ -37,6 +37,60 @@ function normalizeItems(items: PlaylistEditorItem[]) {
 		.map((item, index) => ({ ...item, order_index: index }));
 }
 
+function PlaylistDropZone({
+	index,
+	isDragging,
+	onDropItem,
+}: {
+	index: number;
+	isDragging: boolean;
+	onDropItem: (draggedId: string, insertionIndex: number) => void;
+}) {
+	const [isActive, setIsActive] = useState(false);
+
+	return (
+		<div
+			data-playlist-drop-index={index}
+			aria-hidden={!isDragging}
+			className={`group relative flex items-center justify-center rounded-md border-2 border-dashed transition-[height,border-color,background-color,opacity] duration-150 ${
+				isDragging
+					? "my-1 h-9 border-muted-foreground/35 bg-muted/25 opacity-100"
+					: "h-3 border-transparent opacity-0"
+			} ${isActive ? "!h-12 !border-primary !bg-primary/10" : ""}`}
+			onDragEnter={(event) => {
+				event.preventDefault();
+				setIsActive(true);
+			}}
+			onDragOver={(event) => {
+				event.preventDefault();
+				event.dataTransfer.dropEffect = "move";
+				setIsActive(true);
+			}}
+			onDragLeave={(event) => {
+				const nextTarget = event.relatedTarget;
+				if (
+					!(nextTarget instanceof Node) ||
+					!event.currentTarget.contains(nextTarget)
+				) {
+					setIsActive(false);
+				}
+			}}
+			onDrop={(event) => {
+				event.preventDefault();
+				setIsActive(false);
+				const draggedId =
+					event.dataTransfer.getData("application/x-playlist-item-id") ||
+					event.dataTransfer.getData("text/plain");
+				if (draggedId) onDropItem(draggedId, index);
+			}}
+		>
+			<span className="pointer-events-none text-xs font-medium text-muted-foreground">
+				{isActive ? "Hier einfügen" : "Zwischenposition"}
+			</span>
+		</div>
+	);
+}
+
 export function PlaylistEditor({
 	playlist,
 	onSave,
@@ -50,6 +104,7 @@ export function PlaylistEditor({
 		{ id: string; name: string }[]
 	>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
 
 	// Fetch playlist items if editing an existing playlist
 	useEffect(() => {
@@ -106,10 +161,6 @@ export function PlaylistEditor({
 		);
 	}, [playlist?.id, playlist?.items]);
 
-	const handleSavePlaylist = (data: { name: string }) => {
-		setName(data.name);
-	};
-
 	const handleAddItem = () => {
 		const newItem: PlaylistEditorItem = {
 			id: `temp-${Date.now()}`,
@@ -137,29 +188,30 @@ export function PlaylistEditor({
 		);
 	};
 
-	const handleReorderItem = (draggedId: string, targetId: string) => {
-		if (draggedId === targetId) {
-			return;
-		}
-
+	const handleReorderItem = (draggedId: string, insertionIndex: number) => {
 		setItems((currentItems) => {
 			const draggedIndex = currentItems.findIndex(
 				(item) => item.id === draggedId,
 			);
-			const targetIndex = currentItems.findIndex(
-				(item) => item.id === targetId,
-			);
 
-			if (draggedIndex === -1 || targetIndex === -1) {
+			if (draggedIndex === -1) {
 				return currentItems;
 			}
 
 			const reorderedItems = [...currentItems];
 			const [draggedItem] = reorderedItems.splice(draggedIndex, 1);
-			reorderedItems.splice(targetIndex, 0, draggedItem);
+			const adjustedIndex = Math.max(
+				0,
+				Math.min(
+					reorderedItems.length,
+					draggedIndex < insertionIndex ? insertionIndex - 1 : insertionIndex,
+				),
+			);
+			reorderedItems.splice(adjustedIndex, 0, draggedItem);
 
 			return normalizeItems(reorderedItems);
 		});
+		setDraggedItemId(null);
 	};
 
 	const handleSave = () => {
@@ -174,16 +226,17 @@ export function PlaylistEditor({
 
 	return (
 		<div className="space-y-6">
-			<PlaylistForm
-				playlist={playlist ? { id: playlist.id, name } : undefined}
-				onSave={handleSavePlaylist}
-				onCancel={onCancel}
-			/>
+			<PlaylistForm name={name} onNameChange={setName} />
 
 			<Card>
 				<CardHeader>
 					<div className="flex justify-between items-center">
-						<CardTitle>Playlist Items</CardTitle>
+						<div className="space-y-1">
+							<CardTitle>Playlist Items</CardTitle>
+							<p className="text-sm text-muted-foreground">
+								Am Griff ziehen und zwischen zwei Einträgen ablegen.
+							</p>
+						</div>
 						<Button onClick={handleAddItem} size="sm">
 							<Plus className="h-4 w-4 mr-2" />
 							Add Item
@@ -201,25 +254,38 @@ export function PlaylistEditor({
 							started.
 						</div>
 					) : (
-						<div className="space-y-4">
-							{items.map((item) => (
-								<PlaylistItem
-									key={item.id}
-									item={item}
-									onUpdate={handleUpdateItem}
-									onDelete={handleDeleteItem}
-									onReorder={handleReorderItem}
-									screenOptions={screenOptions}
-								/>
+						<div>
+							<PlaylistDropZone
+								index={0}
+								isDragging={Boolean(draggedItemId)}
+								onDropItem={handleReorderItem}
+							/>
+							{items.map((item, index) => (
+								<div key={item.id}>
+									<PlaylistItem
+										item={item}
+										onUpdate={handleUpdateItem}
+										onDelete={handleDeleteItem}
+										onDragStart={setDraggedItemId}
+										onDragEnd={() => setDraggedItemId(null)}
+										isDragging={draggedItemId === item.id}
+										screenOptions={screenOptions}
+									/>
+									<PlaylistDropZone
+										index={index + 1}
+										isDragging={Boolean(draggedItemId)}
+										onDropItem={handleReorderItem}
+									/>
+								</div>
 							))}
 						</div>
 					)}
 				</CardContent>
 			</Card>
 
-			<div className="flex gap-2">
+			<div className="sticky bottom-4 z-20 flex gap-2 rounded-lg border bg-background/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80">
 				<Button onClick={handleSave} disabled={!name.trim()}>
-					{playlist ? "Update Playlist" : "Create Playlist"}
+					{playlist ? "Playlist speichern" : "Playlist erstellen"}
 				</Button>
 				<Button variant="outline" onClick={onCancel}>
 					Cancel

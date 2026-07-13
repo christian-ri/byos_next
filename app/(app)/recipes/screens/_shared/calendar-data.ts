@@ -39,6 +39,7 @@ export type CalendarDay = {
 	isToday: boolean;
 	isCurrentMonth: boolean;
 	eventCount: number;
+	previousEventCount?: number;
 	events: CalendarDayEvent[];
 };
 
@@ -1202,13 +1203,17 @@ function buildDay(
 			return inclusiveEnd >= dayStart && event.start <= dayEnd;
 		})
 		.sort((a, b) => a.start.getTime() - b.start.getTime());
+	const previousEventCount = isToday
+		? matchingEvents.filter(
+				(event) => eventEndInclusive(event).getTime() < Date.now(),
+			).length
+		: 0;
 
-	const visibleSource =
-		isToday && matchingEvents.length > options.maxEventsPerDay
-			? matchingEvents.filter(
-					(event) => eventEndInclusive(event).getTime() >= Date.now(),
-				)
-			: matchingEvents;
+	const visibleSource = isToday
+		? matchingEvents.filter(
+				(event) => eventEndInclusive(event).getTime() >= Date.now(),
+			)
+		: matchingEvents;
 
 	const dayEvents = visibleSource
 		.slice(0, options.maxEventsPerDay)
@@ -1225,6 +1230,7 @@ function buildDay(
 			options.currentMonth === undefined ||
 			dayDate.getMonth() === options.currentMonth,
 		eventCount: matchingEvents.length,
+		previousEventCount,
 		events: dayEvents,
 	};
 }

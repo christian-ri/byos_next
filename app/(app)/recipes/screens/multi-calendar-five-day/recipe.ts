@@ -56,7 +56,11 @@ function sourceClass(label: string) {
 	return `source-${hash % 4}`;
 }
 
-function renderEvent(event: CalendarDayEvent, data: MultiCalendarFiveDayData) {
+function renderEvent(
+	event: CalendarDayEvent,
+	data: MultiCalendarFiveDayData,
+	isNow: boolean,
+) {
 	const label = event.calendarLabel || "Kalender";
 	const details = [
 		data.includeDescription ? event.description : "",
@@ -66,7 +70,7 @@ function renderEvent(event: CalendarDayEvent, data: MultiCalendarFiveDayData) {
 		.join(" · ");
 
 	return `
-		<li class="event">
+		<li class="event${isNow ? " event--now" : ""}">
 			<div class="event__rail ${sourceClass(label)}"></div>
 			<div class="event__body">
 				<div class="event__time">${escapeHtml(eventTime(event, data.includeEventTime))}</div>
@@ -74,13 +78,17 @@ function renderEvent(event: CalendarDayEvent, data: MultiCalendarFiveDayData) {
 				<div class="event__title">${escapeHtml(event.summary)}</div>
 				${details ? `<div class="event__details">${escapeHtml(details)}</div>` : ""}
 			</div>
+			${isNow ? '<div class="now-flag">JETZT</div>' : ""}
 		</li>`;
 }
 
 function renderDay(day: CalendarDay, data: MultiCalendarFiveDayData) {
 	const formatted = formatDay(day);
 	const events = day.events.slice(0, 4);
-	const hiddenCount = Math.max(0, day.eventCount - events.length);
+	const previousCount = day.previousEventCount || 0;
+	const remainingCount = Math.max(0, day.eventCount - previousCount);
+	const hiddenCount = Math.max(0, remainingCount - events.length);
+	const now = Date.now();
 
 	return `
 		<section class="day">
@@ -90,12 +98,23 @@ function renderDay(day: CalendarDay, data: MultiCalendarFiveDayData) {
 					<div class="day__date">${escapeHtml(formatted.date)}</div>
 				</div>
 				<div class="day__name">${escapeHtml(formatted.fullWeekday)}</div>
-				<div class="day__count">${day.eventCount} ${day.eventCount === 1 ? "TERMIN" : "TERMINE"}</div>
+				<div class="day__count">${remainingCount} ${remainingCount === 1 ? "TERMIN" : "TERMINE"}</div>
 			</header>
+			${previousCount > 0 ? `<div class="previous">↑ ${previousCount} VORHERIGE</div>` : ""}
 			<ul class="events">
 				${
 					events.length > 0
-						? events.map((event) => renderEvent(event, data)).join("")
+						? events
+								.map((event) =>
+									renderEvent(
+										event,
+										data,
+										day.isToday &&
+											new Date(event.startDateTime).getTime() <= now &&
+											new Date(event.endDateTime).getTime() >= now,
+									),
+								)
+								.join("")
 						: '<li class="empty"><span>✓</span><strong>FREI</strong></li>'
 				}
 			</ul>
@@ -151,15 +170,19 @@ export function renderHtml(data: MultiCalendarFiveDayData) {
 			.day__date { font-size: 12px; line-height: 13px; font-weight: 900; }
 			.day__name { margin-top: 4px; font-size: 15px; line-height: 16px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 			.day__count { margin-top: 1px; font-size: 8px; line-height: 9px; font-weight: 900; letter-spacing: .6px; }
+			.previous { height: 18px; flex: 0 0 18px; border-bottom: 2px solid var(--ink); padding: 0 6px; font-size: 8px; line-height: 16px; font-weight: 900; letter-spacing: .4px; white-space: nowrap; background-image: repeating-linear-gradient(135deg, #fff 0 3px, #e5e5e5 3px 4px); }
 			.events { margin: 0; padding: 0; list-style: none; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 			.event { position: relative; flex: 1 1 0; min-height: 62px; display: grid; grid-template-columns: 6px minmax(0, 1fr); border-bottom: 1px solid var(--ink); overflow: hidden; }
 			.event:last-child { border-bottom: 0; }
+			.event--now { outline: 3px solid var(--ink); outline-offset: -3px; }
 			.event__rail { border-right: 1px solid var(--ink); }
 			.event__body { min-width: 0; align-self: center; padding: 5px 6px; }
 			.event__time { font-size: 9px; line-height: 11px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 			.source { display: block; width: fit-content; max-width: 100%; margin-top: 3px; border: 1px solid var(--ink); padding: 1px 3px; font-size: 7px; line-height: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .35px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 			.event__title { margin-top: 3px; font-size: 12px; line-height: 13px; font-weight: 800; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 			.event__details { margin-top: 2px; font-size: 8px; line-height: 9px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			.now-flag { position: absolute; right: 4px; top: 4px; background: var(--ink); color: white; padding: 2px 3px 1px; font-size: 7px; line-height: 8px; font-weight: 900; letter-spacing: .5px; }
+			.event--now .event__time { padding-right: 34px; }
 			.source-0 { background: var(--ink); color: white; }
 			.event__rail.source-0 { background: var(--ink); }
 			.source-1 { background-image: repeating-linear-gradient(135deg, var(--ink) 0 1px, white 1px 4px); }

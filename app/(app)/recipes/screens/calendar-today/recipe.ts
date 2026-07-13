@@ -3,7 +3,7 @@ import type { CalendarRecipeData } from "@/app/(app)/recipes/screens/_shared/cal
 import getData from "./getData";
 
 export const id = "calendar-today";
-export const title = "Calendar Today";
+export const title = "Multi-Kalender · Heute";
 export const renderer = "chromium";
 
 export { getData };
